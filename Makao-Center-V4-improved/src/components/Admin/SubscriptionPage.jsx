@@ -1,0 +1,318 @@
+import React, { useState } from 'react';
+import { 
+  Check,
+  Crown,
+  Building2,
+  Users,
+  TrendingUp,
+  Shield,
+  Zap,
+  Star,
+  Phone,
+  Mail
+} from 'lucide-react';
+
+const SubscriptionPage = () => {
+  const [currentPlan] = useState('onetime');
+
+  // unified features for monthly subscription tiers
+  const commonFeatures = [
+    'Free updates forever',
+    'Advanced tenant management',
+    'Automated payment tracking',
+    'Payment tracking & reminders',
+    'Comprehensive reports & analytics',
+    'Detailed reports',
+    'Email notifications',
+    'Priority support',
+    'Data export capabilities'
+  ];
+
+  const pricingTiers = [
+    { 
+      id: 'tier1',
+      min: 1, 
+      max: 10, 
+      price: 2000, 
+      label: '1-10 Units',
+      billingPeriod: 'month',
+      features: commonFeatures
+    },
+    { 
+      id: 'tier2',
+      min: 11, 
+      max: 20, 
+      price: 2500, 
+      label: '11-20 Units',
+      billingPeriod: 'month',
+      features: commonFeatures
+    },
+    { 
+      id: 'tier3',
+      min: 21, 
+      max: 50, 
+      price: 4500, 
+      label: '21-50 Units',
+      billingPeriod: 'month',
+      features: commonFeatures
+    },
+    { 
+      id: 'tier4',
+      min: 51, 
+      max: 100, 
+      price: 7500, 
+      label: '51-100 Units',
+      billingPeriod: 'month',
+      features: commonFeatures
+    },
+    { 
+      id: 'tier5',
+      min: 101, 
+      max: Infinity, 
+      price: 0, 
+      label: '100+ Units',
+      billingPeriod: 'custom',
+      enterprise: true,
+      features: [
+        'Unlimited rental units',
+        'White-label solution',
+        'Custom features',
+        'Dedicated account manager',
+        'SLA guarantee',
+        'On-premise deployment option',
+        'Custom training',
+        'Contact us for pricing'
+      ]
+    }
+  ];
+
+  const oneTimePlan = {
+    id: 'onetime',
+    name: 'Lifetime Access',
+    price: 40000,
+    maxUnits: 50,
+    features: [
+      'Up to 50 rental units',
+      'Lifetime access',
+      'All premium features included',
+      'Free updates forever',
+      'Advanced tenant management',
+      'Automated payment tracking',
+      'Comprehensive reports & analytics',
+      'Email notifications',
+      'Priority support',
+      'Data export capabilities',
+      'Payment tracking & reminders',
+      'Detailed reports',
+      'No recurring fees',
+      'Custom branding',
+      'Data export capabilities'
+    ],
+    badge: 'Recommended'
+  };
+
+  const handleSelectPlan = (planId) => {
+    console.log('Selected plan:', planId);
+    alert(`You selected: ${planId}. This will redirect to payment processing.`);
+  };
+
+  const handleContactSales = () => {
+    window.location.href = 'mailto:sales@makao.com?subject=Enterprise%20Plan%20Inquiry';
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Subscription Plans</h1>
+          <p className="text-base sm:text-lg text-gray-600 px-4">Choose the plan that fits your property portfolio</p>
+        </div>
+
+        {/* One-Time Purchase - Professional Design */}
+        <div className="mb-8 sm:mb-12">
+          <div className={`bg-white rounded-lg sm:rounded-xl shadow-sm border-2 ${
+            currentPlan === 'onetime' ? 'border-blue-600' : 'border-gray-200'
+          } overflow-hidden`}>
+            {/* Header Badge */}
+            {currentPlan === 'onetime' && (
+              <div className="bg-blue-600 text-white text-center py-2 px-4">
+                <span className="text-sm font-medium">Current Plan</span>
+              </div>
+            )}
+            
+            <div className="p-6 sm:p-8">
+              {/* Plan Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                    <span className="bg-blue-50 text-blue-700 text-xs sm:text-sm font-medium px-3 py-1 rounded-full">
+                      {oneTimePlan.badge}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{oneTimePlan.name}</h2>
+                  <p className="text-sm sm:text-base text-gray-600">One-time payment, lifetime value</p>
+                </div>
+                <div className="text-left sm:text-right">
+                  <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">
+                    KSh {oneTimePlan.price.toLocaleString()}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-500">Pay once, use forever</div>
+                </div>
+              </div>
+
+              {/* Key Metrics */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Building2 className="w-5 h-5 text-gray-600 mb-2" />
+                  <div className="text-xs text-gray-500 mb-1">Maximum Units</div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900">{oneTimePlan.maxUnits}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <TrendingUp className="w-5 h-5 text-green-600 mb-2" />
+                  <div className="text-xs text-gray-500 mb-1">Annual Savings</div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900">KSh 54K+</div>
+                </div>
+              </div>
+
+              {/* Features Grid */}
+              <div className="mb-6 sm:mb-8">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">What's included</h3>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {oneTimePlan.features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              {currentPlan !== 'onetime' && (
+                <button
+                  onClick={() => handleSelectPlan('onetime')}
+                  className="w-full bg-blue-600 text-white py-3 sm:py-4 rounded-lg font-semibold text-sm sm:text-base hover:bg-blue-700 transition-colors"
+                >
+                  Upgrade to Lifetime Access
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Monthly Plans */}
+        <div className="mb-8 sm:mb-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 px-4 sm:px-0">Monthly Subscriptions</h2>
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {pricingTiers.slice(0, 4).map((tier) => (
+              <div
+                key={tier.id}
+                className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow ${
+                  tier.popular ? 'border-blue-500' : 'border-gray-200'
+                }`}
+              >
+                <div className="p-5 sm:p-6">
+                  {tier.popular && (
+                    <div className="bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full inline-block mb-4">
+                      Popular
+                    </div>
+                  )}
+                  
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">{tier.label}</h3>
+                  <div className="mb-5">
+                    <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                      KSh {tier.price.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-gray-500 ml-1">/{tier.billingPeriod}</span>
+                  </div>
+
+                  <div className="space-y-2.5 mb-6">
+                    {tier.features.map((feature, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-xs sm:text-sm text-gray-600">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => handleSelectPlan(tier.id)}
+                    className={`w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-colors ${
+                      tier.popular
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    Select Plan
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Enterprise Plan */}
+        <div className="bg-gray-900 rounded-lg sm:rounded-xl shadow-sm overflow-hidden mb-8 sm:mb-12">
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Star className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400" />
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white">Enterprise</h3>
+                </div>
+                <p className="text-sm sm:text-base text-gray-300 mb-5">
+                  Custom solutions for organizations managing 100+ units
+                </p>
+                <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3">
+                  {pricingTiers[4].features.slice(0, 4).map((feature, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-xs sm:text-sm text-gray-300">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={handleContactSales}
+                  className="w-full sm:w-auto bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-colors"
+                >
+                  Contact Sales
+                </button>
+                <p className="text-xs sm:text-sm text-gray-400 mt-2 text-center sm:text-left">Custom pricing</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Support Section */}
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Need Help Choosing?</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-2xl mx-auto">
+            Our team is here to help you find the perfect plan for your property management needs
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+            <a 
+              href="mailto:support@makao.com" 
+              className="flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              <Mail className="w-5 h-5" />
+              <span>support@makao.com</span>
+            </a>
+            <a 
+              href="tel:+254700000000" 
+              className="flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+              <span>+254 700 000 000</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SubscriptionPage;

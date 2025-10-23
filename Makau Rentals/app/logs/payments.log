@@ -1,0 +1,348 @@
+INFO 2025-10-22 11:27:26,816 autoreload 13868 16888 Watching for file changes with StatReloader
+WARNING 2025-10-22 11:27:36,479 log 13868 3396 Method Not Allowed: /api/accounts/token/
+ERROR 2025-10-22 11:27:43,070 log 13868 15776 Internal Server Error: /api/accounts/token/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: accounts_customuser
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework_simplejwt\views.py", line 43, in post
+    serializer.is_valid(raise_exception=True)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 227, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 429, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\serializers.py", line 28, in validate
+    user = authenticate(self.context['request'], email=email, password=password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\debug.py", line 42, in sensitive_variables_wrapper
+    return func(*func_args, **func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\__init__.py", line 77, in authenticate
+    user = backend.authenticate(request, **credentials)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\backends.py", line 46, in authenticate
+    user = UserModel._default_manager.get_by_natural_key(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\base_user.py", line 54, in get_by_natural_key
+    return self.get(**{self.model.USERNAME_FIELD: username})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: accounts_customuser
+ERROR 2025-10-22 11:33:19,227 log 13868 9340 Internal Server Error: /api/accounts/token/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: accounts_customuser
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework_simplejwt\views.py", line 43, in post
+    serializer.is_valid(raise_exception=True)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 227, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 429, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\serializers.py", line 28, in validate
+    user = authenticate(self.context['request'], email=email, password=password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\debug.py", line 42, in sensitive_variables_wrapper
+    return func(*func_args, **func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\__init__.py", line 77, in authenticate
+    user = backend.authenticate(request, **credentials)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\backends.py", line 46, in authenticate
+    user = UserModel._default_manager.get_by_natural_key(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\base_user.py", line 54, in get_by_natural_key
+    return self.get(**{self.model.USERNAME_FIELD: username})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: accounts_customuser
+INFO 2025-10-22 11:33:46,349 autoreload 17664 15052 Watching for file changes with StatReloader
+ERROR 2025-10-22 11:33:52,379 log 17664 18604 Internal Server Error: /api/accounts/token/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: accounts_customuser
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework_simplejwt\views.py", line 43, in post
+    serializer.is_valid(raise_exception=True)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 227, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\serializers.py", line 429, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\serializers.py", line 28, in validate
+    user = authenticate(self.context['request'], email=email, password=password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\debug.py", line 42, in sensitive_variables_wrapper
+    return func(*func_args, **func_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\__init__.py", line 77, in authenticate
+    user = backend.authenticate(request, **credentials)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\backends.py", line 46, in authenticate
+    user = UserModel._default_manager.get_by_natural_key(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\contrib\auth\base_user.py", line 54, in get_by_natural_key
+    return self.get(**{self.model.USERNAME_FIELD: username})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: accounts_customuser
+INFO 2025-10-22 11:41:13,070 autoreload 12796 8572 Watching for file changes with StatReloader
+WARNING 2025-10-22 11:41:17,972 log 12796 19480 Method Not Allowed: /api/accounts/token/
+WARNING 2025-10-22 11:41:32,909 log 12796 13808 Bad Request: /api/accounts/token/
+WARNING 2025-10-22 11:41:43,775 log 12796 6980 Bad Request: /api/accounts/token/
+WARNING 2025-10-22 11:41:53,140 log 12796 6980 Bad Request: /api/accounts/token/
+WARNING 2025-10-22 11:42:37,187 log 12796 6980 Bad Request: /api/accounts/token/
+INFO 2025-10-22 15:47:22,081 autoreload 16060 7176 Watching for file changes with StatReloader
+WARNING 2025-10-22 15:47:30,021 log 16060 14984 Method Not Allowed: /api/accounts/token/
+WARNING 2025-10-22 15:47:31,483 log 16060 14984 Not Found: /favicon.ico
+WARNING 2025-10-22 15:47:43,797 log 16060 16148 Bad Request: /api/accounts/token/
+WARNING 2025-10-22 16:16:25,555 log 16060 1836 Bad Request: /api/accounts/token/
+WARNING 2025-10-23 04:47:08,922 log 16060 9692 Not Found: /api/validate-landlord/
+WARNING 2025-10-23 04:49:16,979 log 16060 9692 Not Found: /api/register/
+WARNING 2025-10-23 04:50:58,819 log 16060 9692 Not Found: /api/token/
+WARNING 2025-10-23 04:51:12,096 log 16060 9692 Not Found: /api/token/
+WARNING 2025-10-23 04:51:27,650 log 16060 9692 Not Found: /api/token/
+WARNING 2025-10-23 04:52:10,255 log 16060 15076 Not Found: /api/accounts/units/
+WARNING 2025-10-23 04:52:10,632 log 16060 15076 Not Found: /api/accounts/units/
+WARNING 2025-10-23 04:52:11,114 log 16060 15444 Not Found: /api/accounts/tenants/
+WARNING 2025-10-23 04:52:11,299 log 16060 6172 Not Found: /api/accounts/landlords/profile/
+WARNING 2025-10-23 04:52:11,465 log 16060 7848 Not Found: /api/accounts/tenants/
+WARNING 2025-10-23 04:52:11,999 log 16060 15444 Not Found: /api/accounts/landlords/profile/
+WARNING 2025-10-23 04:52:45,457 log 16060 15076 Not Found: /api/accounts/units/
+WARNING 2025-10-23 04:52:45,529 log 16060 7848 Not Found: /api/accounts/units/
+WARNING 2025-10-23 04:52:46,373 log 16060 7848 Not Found: /api/accounts/tenants/
+WARNING 2025-10-23 04:52:46,457 log 16060 15444 Not Found: /api/accounts/tenants/
+WARNING 2025-10-23 04:52:46,479 log 16060 15076 Not Found: /api/accounts/landlords/profile/
+WARNING 2025-10-23 04:52:46,773 log 16060 15444 Not Found: /api/accounts/landlords/profile/
+INFO 2025-10-23 04:55:56,506 autoreload 16060 7176 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-23 04:56:05,437 autoreload 15080 7888 Watching for file changes with StatReloader
+INFO 2025-10-23 05:10:55,581 autoreload 15080 7888 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-23 05:11:07,913 autoreload 5048 15472 Watching for file changes with StatReloader
+INFO 2025-10-23 05:11:50,825 autoreload 5048 15472 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-23 05:11:54,967 autoreload 10456 8524 Watching for file changes with StatReloader
+INFO 2025-10-23 05:12:01,328 autoreload 10456 8524 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-23 05:12:07,139 autoreload 13260 7848 Watching for file changes with StatReloader
+INFO 2025-10-23 05:14:46,270 autoreload 13260 7848 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-23 05:14:51,213 autoreload 15260 10428 Watching for file changes with StatReloader
+INFO 2025-10-23 05:15:15,011 autoreload 15260 10428 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-23 05:15:22,632 autoreload 9156 13528 Watching for file changes with StatReloader
+INFO 2025-10-23 05:15:31,933 autoreload 9156 13528 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-23 05:15:36,071 autoreload 8352 10720 Watching for file changes with StatReloader
+INFO 2025-10-23 05:16:01,204 autoreload 8352 10720 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-23 05:16:05,880 autoreload 7692 12580 Watching for file changes with StatReloader
+INFO 2025-10-23 05:17:44,765 autoreload 7692 12580 C:\Users\George Mwangi\Desktop\MAKAU RENTALS -COMBINED\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-23 05:17:50,387 autoreload 3948 10488 Watching for file changes with StatReloader
+WARNING 2025-10-23 05:19:53,860 log 3948 13544 Not Found: /api/validate-landlord/
+WARNING 2025-10-23 05:21:41,497 log 3948 13544 Not Found: /api/register/
+WARNING 2025-10-23 06:08:17,900 log 3948 7376 Not Found: /api/accounts/auth/landlord/complete/
+WARNING 2025-10-23 06:08:32,233 log 3948 7376 Not Found: /api/accounts/auth/landlord/complete/
+WARNING 2025-10-23 06:09:12,280 log 3948 7376 Not Found: /api/accounts/auth/landlord/complete/
+INFO 2025-10-23 06:44:35,777 autoreload 9228 8996 Watching for file changes with StatReloader
+WARNING 2025-10-23 06:50:54,378 log 9228 9948 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-23 06:50:54,387 log 9228 9948 Unauthorized: /api/accounts/tenants/
+INFO 2025-10-23 06:59:46,013 autoreload 13564 15828 Watching for file changes with StatReloader
+WARNING 2025-10-23 07:00:14,731 log 13564 16084 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-23 07:00:15,119 log 13564 15820 Unauthorized: /api/accounts/landlords/profile/
+WARNING 2025-10-23 07:00:15,133 log 13564 16084 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-23 07:00:15,546 log 13564 15820 Unauthorized: /api/accounts/landlords/profile/
+WARNING 2025-10-23 07:02:09,039 log 13564 15820 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-23 07:02:09,041 log 13564 16084 Unauthorized: /api/accounts/landlords/profile/
+WARNING 2025-10-23 07:02:09,057 log 13564 16084 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-23 07:02:09,064 log 13564 16084 Unauthorized: /api/accounts/landlords/profile/
