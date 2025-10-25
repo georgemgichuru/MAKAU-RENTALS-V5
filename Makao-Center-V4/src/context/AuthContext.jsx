@@ -1,102 +1,88 @@
+// AuthContext.js
 import { createContext, useContext, useState, useEffect } from "react";
-import { apiService } from "../services/api";
+import { authAPI } from '../services/api';
 
-// 1. Create the context (this is like a box to store shared data)
 const AuthContext = createContext();
 
-// 2. Create a provider component
 export function AuthProvider({ children }) {
-  // State to keep track of login status and user type
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState(null); // can be "tenant" or "landlord"
+  const [userType, setUserType] = useState(null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing tokens on app load
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      const storedUserType = localStorage.getItem('userType');
-
-      if (accessToken) {
-        try {
-          // Try to get current user data
-          const userData = await apiService.getCurrentUser();
-          setUser(userData);
-          setUserType(storedUserType || userData.user_type);
-          setIsLoggedIn(true);
-        } catch (error) {
-          console.error('Failed to authenticate with stored tokens:', error);
-          // Clear invalid tokens
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('userType');
-        }
-      }
-      setLoading(false);
-    };
-
     checkAuthStatus();
   }, []);
 
-  // Function to log in
-  const login = async (email, password, userType) => {
+  const checkAuthStatus = async () => {
     try {
-      const response = await apiService.login(email, password, userType);
+      const token = localStorage.getItem('accessToken');
+      const storedUserType = localStorage.getItem('userType');
       
-      // Get user data
-      let userData;
-      try {
-        userData = await apiService.getCurrentUser();
-      } catch (userError) {
-        console.warn('Could not fetch user profile, using basic info:', userError);
-        userData = {
-          email: email,
-          user_type: userType,
-          ...(response.user || {})
-        };
+      if (token && storedUserType) {
+        // Verify token is still valid
+        const response = await authAPI.getCurrentUser();
+        const userData = response.data;
+        
+        if (userData.user_type === storedUserType) {
+          setIsLoggedIn(true);
+          setUserType(userData.user_type);
+          setUser(userData);
+        } else {
+          console.warn('User type mismatch, logging out');
+          logout();
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserType(null);
+        setUser(null);
       }
-      
-      // Set context state
-      setUser(userData);
-      setUserType(userType);
-      setIsLoggedIn(true);
-      
-      return { success: true, userData };
     } catch (error) {
-      console.error('Login error in AuthContext:', error);
-      return { success: false, error: error.message };
+      console.error('Auth check failed:', error);
+      logout();
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Function to log out
+  const login = async (type, userData, tokens) => {
+    localStorage.setItem('accessToken', tokens.access);
+    localStorage.setItem('refreshToken', tokens.refresh);
+    localStorage.setItem('userType', type);
+    localStorage.setItem('userData', JSON.stringify(userData));
+
+    setIsLoggedIn(true);
+    setUserType(type);
+    setUser(userData);
+  };
+
   const logout = () => {
-    setIsLoggedIn(false);
-    setUserType(null);
-    setUser(null);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userType');
+    localStorage.removeItem('userData');
+
+    setIsLoggedIn(false);
+    setUserType(null);
+    setUser(null);
   };
 
-  // What we want to share with the whole app
   const value = {
     isLoggedIn,
     userType,
     user,
+    isLoading,
     login,
     logout,
-    loading,
+    checkAuthStatus
   };
 
-  // Wrap children with our context provider
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 3. Custom hook to use the auth context (makes it easier to access)
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

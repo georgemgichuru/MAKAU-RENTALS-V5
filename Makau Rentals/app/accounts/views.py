@@ -1213,48 +1213,149 @@ class LandlordRegistrationStepView(APIView):
 
 class CompleteTenantRegistrationView(APIView):
     def post(self, request):
-        data = request.data
-        session_id = data.get('session_id')
-        
-        # Retrieve all step data from cache
-        all_data = {}
-        for step in range(2, 7):  # Steps 2-6
-            cache_key = f"tenant_registration_{session_id}_step_{step}"
-            step_data = cache.get(cache_key)
-            if step_data:
-                all_data.update(step_data)
-        
-        # Merge with final data
-        all_data.update(data)
-        
-        # Create the user (your existing user creation logic)
+        """
+        Complete tenant registration after all steps are done
+        """
         try:
-            user = CustomUser.objects.create_user(
-                email=all_data['email'],
-                full_name=all_data['full_name'],
-                user_type='tenant',
-                password=all_data['password'],
-                phone_number=all_data['phone_number'],
-                government_id=all_data['government_id'],
-                emergency_contact=all_data['emergency_contact']
-            )
-            
-            # Clean up cache
-            for step in range(2, 7):
+            data = request.data
+            session_id = data.get('session_id')
+
+            if not session_id:
+                return Response({
+                    'status': 'error',
+                    'message': 'Session ID is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Retrieve all step data from cache
+            all_data = {}
+            for step in range(2, 7):  # Steps 2-6
                 cache_key = f"tenant_registration_{session_id}_step_{step}"
-                cache.delete(cache_key)
-            
-            return Response({
-                'status': 'success',
-                'user_id': user.id,
-                'message': 'Tenant registration completed successfully'
-            })
-            
+                step_data = cache.get(cache_key)
+                if step_data:
+                    all_data.update(step_data)
+
+            # Merge with final data
+            all_data.update(data)
+
+            # Validate required fields
+            required_fields = ['email', 'full_name', 'password', 'phone_number',
+                             'national_id', 'emergency_contact']
+
+            missing_fields = [field for field in required_fields if not all_data.get(field)]
+            if missing_fields:
+                return Response({
+                    'status': 'error',
+                    'message': f'Missing required fields: {", ".join(missing_fields)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if email already exists
+            if CustomUser.objects.filter(email=all_data['email']).exists():
+                return Response({
+                    'status': 'error',
+                    'message': 'Email already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create the tenant user
+            try:
+                user = CustomUser.objects.create_user(
+                    email=all_data['email'],
+                    full_name=all_data['full_name'],
+                    user_type='tenant',
+                    password=all_data['password'],
+                    phone_number=all_data['phone_number'],
+                    national_id=all_data['national_id'],
+                    emergency_contact=all_data['emergency_contact']
+                )
+
+                logger.info(f"✅ Tenant user created: {user.email} (ID: {user.id})")
+
+                # Landlord onboarding: assign unit if landlord_code and unit_code provided
+                landlord_code = all_data.get('landlord_id') or all_data.get('landlord_code')
+                unit_code = all_data.get('unit_code')
+
+                if landlord_code and unit_code:
+                    try:
+                        landlord = CustomUser.objects.get(
+                            landlord_code=landlord_code,
+                            user_type='landlord',
+                            is_active=True
+                        )
+                        unit = Unit.objects.get(
+                            unit_code=unit_code,
+                            property_obj__landlord=landlord
+                        )
+
+                        # Check for deposit payments
+                        from payments.models import Payment
+                        deposit_payments = Payment.objects.filter(
+                            tenant=user,
+                            unit=unit,
+                            payment_type='deposit',
+                            status='Success',
+                            amount__gte=unit.deposit
+                        )
+
+                        if deposit_payments.exists():
+                            unit.tenant = user
+                            unit.is_available = False
+                            unit.save()
+
+                            # Create tenant profile
+                            TenantProfile.objects.update_or_create(
+                                tenant=user,
+                                defaults={
+                                    'current_unit': unit,
+                                    'landlord': landlord,
+                                    'move_in_date': timezone.now()
+                                }
+                            )
+
+                            logger.info(f"✅ Tenant {user.full_name} assigned to unit {unit.unit_number}")
+                        else:
+                            logger.info(f"ℹ️  Tenant {user.full_name} created but no deposit payment found for unit assignment")
+
+                    except CustomUser.DoesNotExist:
+                        logger.warning(f"Landlord with code {landlord_code} not found")
+                    except Unit.DoesNotExist:
+                        logger.warning(f"Unit with code {unit_code} not found")
+                    except Exception as assign_error:
+                        logger.error(f"Error assigning tenant to unit: {str(assign_error)}")
+
+                # Clean up cache
+                for step in range(2, 7):
+                    cache_key = f"tenant_registration_{session_id}_step_{step}"
+                    cache.delete(cache_key)
+
+                return Response({
+                    'status': 'success',
+                    'user_id': user.id,
+                    'email': user.email,
+                    'full_name': user.full_name,
+                    'message': 'Tenant registration completed successfully'
+                }, status=status.HTTP_201_CREATED)
+
+            except ValidationError as e:
+                return Response({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            except Exception as e:
+                logger.error(f"Error creating tenant user: {str(e)}")
+                # If user creation fails but user was created, delete it
+                if 'user' in locals():
+                    user.delete()
+                return Response({
+                    'status': 'error',
+                    'message': 'Failed to create tenant account'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         except Exception as e:
+            logger.error(f"Unexpected error in tenant registration: {str(e)}")
             return Response({
                 'status': 'error',
-                'message': str(e)
-            }, status=400)
+                'message': 'Internal server error'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class CompleteLandlordRegistrationView(APIView):
     def post(self, request):
         """
@@ -1281,10 +1382,9 @@ class CompleteLandlordRegistrationView(APIView):
 
             all_data.update(data)
             
-            # Validate required fields
-            required_fields = ['full_name', 'email', 'phone_number', 'national_id', 
-                             'mpesa_till_number', 'password']
-            
+            # Validate required fields (only essential ones for landlord creation)
+            required_fields = ['full_name', 'email', 'password']
+
             missing_fields = [field for field in required_fields if not all_data.get(field)]
             if missing_fields:
                 return Response({
@@ -1307,7 +1407,7 @@ class CompleteLandlordRegistrationView(APIView):
                     'user_type': 'landlord',
                     'password': all_data['password'],
                     'phone_number': all_data['phone_number'],
-                    'government_id': all_data['national_id'],
+                    'national_id': all_data['national_id'],
                     'mpesa_till_number': all_data['mpesa_till_number'],
                 }
                 

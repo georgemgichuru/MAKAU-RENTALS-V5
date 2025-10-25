@@ -1,476 +1,495 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTenantToast } from '../../context/TenantToastContext';
-import { useAuth } from '../../context/AuthContext';
-import { Send, AlertTriangle, Home, Wifi, Droplets, Zap, Shield, Volume2, Wrench } from 'lucide-react';
-
-// API service functions
-const reportAPI = {
-  createReport: async (reportData) => {
-    const response = await fetch('/api/reports/create/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      },
-      body: JSON.stringify(reportData)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Failed to create report');
-    }
-    
-    return response.json();
-  }
-};
-
-const authAPI = {
-  getCurrentUser: async () => {
-    const response = await fetch('/api/auth/me/', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch user data');
-    }
-    
-    return response.json();
-  }
-};
+import { Send, AlertTriangle, X, CheckCircle } from 'lucide-react';
 
 const TenantReportIssue = () => {
   const navigate = useNavigate();
-  const { showToast } = useTenantToast();
-  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    issue_category: '',
-    priority_level: '',
-    issue_title: '',
-    description: '',
-    unit: ''
+    category: '',
+    priority: '',
+    title: '',
+    description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTenant, setCurrentTenant] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const disclaimerRef = useRef(null);
 
-  // Load tenant data on component mount
+  // Show disclaimer after 2 seconds of loading the page
   useEffect(() => {
-    const loadTenantData = async () => {
-      if (user?.id) {
-        try {
-          setLoading(true);
-          const tenantData = await authAPI.getCurrentUser();
-          const userUnit = tenantData.unit || {};
-          
-          setCurrentTenant({
-            id: tenantData.id,
-            name: tenantData.full_name || `${tenantData.first_name} ${tenantData.last_name}`,
-            email: tenantData.email,
-            room: userUnit.unit_number || 'N/A',
-            phone: tenantData.phone_number,
-            status: tenantData.is_active ? 'active' : 'inactive',
-            unitId: userUnit.id
-          });
+    const timer = setTimeout(() => {
+      setShowDisclaimer(true);
+    }, 2000);
 
-          // Set unit ID in form data
-          if (userUnit.id) {
-            setFormData(prev => ({ ...prev, unit: userUnit.id }));
-          }
-        } catch (error) {
-          console.error('Error loading tenant data:', error);
-          showToast('Failed to load tenant data', 'error');
-        } finally {
-          setLoading(false);
-        }
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Check if user has scrolled to bottom of disclaimer
+  const handleDisclaimerScroll = () => {
+    const element = disclaimerRef.current;
+    if (element) {
+      const isAtBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+      if (isAtBottom && !hasScrolledToBottom) {
+        setHasScrolledToBottom(true);
       }
-    };
+    }
+  };
 
-    loadTenantData();
-  }, [user, showToast]);
+  const handleAcceptDisclaimer = () => {
+    setDisclaimerAccepted(true);
+    setShowDisclaimer(false);
+  };
 
-  // Form validation
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.issue_category) {
-      newErrors.issue_category = "Issue category is required";
-    }
-    
-    if (!formData.priority_level) {
-      newErrors.priority_level = "Priority level is required";
-    }
-    
-    if (!formData.issue_title?.trim()) {
-      newErrors.issue_title = "Issue title is required";
-    } else if (formData.issue_title.length < 5) {
-      newErrors.issue_title = "Issue title must be at least 5 characters";
-    }
-    
-    if (!formData.description?.trim()) {
-      newErrors.description = "Description is required";
-    } else if (formData.description.length < 10) {
-      newErrors.description = "Please provide a more detailed description (at least 10 characters)";
-    }
-    
-    if (!formData.unit) {
-      newErrors.unit = "Unit information is missing";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const showToast = (message, type) => {
+    alert(message);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      showToast('Please fix the form errors before submitting.', 'error');
+    if (!disclaimerAccepted) {
+      showToast('Please accept the terms and conditions first.', 'error');
+      setShowDisclaimer(true);
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
-
+    
+    const whatsappMessage = `*New Maintenance Request*\n\nTenant: John Doe\nRoom: A101\nCategory: ${formData.category}\nPriority: ${formData.priority}\nTitle: ${formData.title}\nDescription: ${formData.description}`;
+    
+    const adminPhoneNumber = '+254712345678';
+    const whatsappUrl = `https://wa.me/${adminPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    
+    const payload = {
+      tenant_id: 1,
+      category: formData.category,
+      priority: formData.priority,
+      title: formData.title,
+      description: formData.description
+    };
+    
     try {
-      // Prepare report payload for API - matching backend Report model
-      const payload = {
-        unit: formData.unit, // Unit ID from tenant's assigned unit
-        issue_category: formData.issue_category,
-        priority_level: formData.priority_level,
-        issue_title: formData.issue_title,
-        description: formData.description
-        // tenant field is automatically set by backend from authenticated user
-      };
-
-      // Submit report to backend API
-      const response = await reportAPI.createReport(payload);
-
-      console.log('Report submitted successfully:', response);
-
-      // Show success toast
-      showToast('Report submitted successfully! The landlord has been notified.', 'success');
-
-      // Reset form
-      setFormData(prev => ({
-        ...prev,
-        issue_category: '',
-        priority_level: '',
-        issue_title: '',
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('Report payload ready for backend:', payload);
+      
+      showToast('Report submitted successfully! Admin has been notified.', 'success');
+      
+      window.open(whatsappUrl, '_blank');
+      
+      setFormData({
+        category: '',
+        priority: '',
+        title: '',
         description: ''
-      }));
-
-      // Navigate back to dashboard after 2 seconds
+      });
+      
       setTimeout(() => {
         navigate('/tenant');
       }, 2000);
-
+      
     } catch (error) {
       console.error('Error submitting report:', error);
-      
-      // Handle specific error cases
-      if (error.message.includes('unit is not assigned')) {
-        showToast('You are not assigned to any unit. Please contact the landlord.', 'error');
-      } else if (error.message.includes('permission')) {
-        showToast('You do not have permission to submit reports for this unit.', 'error');
-      } else {
-        showToast(error.message || 'Error submitting report. Please try again.', 'error');
-      }
+      showToast('Error submitting report. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  // Category options with icons
-  const categoryOptions = [
-    { value: 'electrical', label: 'Electrical', icon: Zap, description: 'Power outages, wiring issues, sockets' },
-    { value: 'plumbing', label: 'Plumbing', icon: Droplets, description: 'Leaks, clogged drains, water pressure' },
-    { value: 'noise', label: 'Noise', icon: Volume2, description: 'Loud neighbors, construction noise' },
-    { value: 'safety/violence', label: 'Safety/Violence', icon: Shield, description: 'Security concerns, emergencies' },
-    { value: 'wifi', label: 'WiFi', icon: Wifi, description: 'Internet connectivity, network issues' },
-    { value: 'maintenance', label: 'Maintenance', icon: Wrench, description: 'General repairs, cleaning, upkeep' }
+  const reportableCategories = [
+    { value: 'structural', label: 'Structural Issues (Roof, Walls, Foundation)' },
+    { value: 'plumbing_major', label: 'Major Plumbing (Water Supply, Sewage, Burst Pipes)' },
+    { value: 'electrical_major', label: 'Major Electrical (Power Failure, Exposed Wires)' },
+    { value: 'security', label: 'Security & Safety (Locks, Gates, Fire Hazards)' },
+    { value: 'common_areas', label: 'Common Areas (Stairs, Lifts, Walkways)' },
+    { value: 'building_pest', label: 'Building-wide Pest Infestation' },
+    { value: 'water_system', label: 'Building Water System (Tank, Pump)' },
+    { value: 'other', label: 'Others' }
   ];
-
-  // Priority options with colors
-  const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'text-green-600 bg-green-100', description: 'Minor issue, not urgent' },
-    { value: 'medium', label: 'Medium', color: 'text-yellow-600 bg-yellow-100', description: 'Should be addressed soon' },
-    { value: 'high', label: 'High', color: 'text-orange-600 bg-orange-100', description: 'Needs attention within 24 hours' },
-    { value: 'urgent', label: 'Urgent', color: 'text-red-600 bg-red-100', description: 'Emergency - requires immediate attention' }
-  ];
-
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-medium text-gray-900">Loading report form...</h2>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center mb-4">
-          <div className="p-3 bg-red-100 rounded-full">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+    <div className="max-w-2xl mx-auto">
+      {showDisclaimer && (
+        <div className="fixed inset-0 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
+          <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-2xl font-bold text-red-600 flex items-center">
+                  <AlertTriangle className="w-7 h-7 mr-2" />
+                  Terms & Conditions
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">Please read carefully before reporting</p>
+              </div>
+              {!disclaimerAccepted && (
+                <button
+                  onClick={() => setShowDisclaimer(false)}
+                  className="text-gray-400 hover:text-gray-600 p-2"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              )}
+            </div>
+            
+            <div 
+              ref={disclaimerRef}
+              onScroll={handleDisclaimerScroll}
+              className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 space-y-4"
+            >
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <p className="font-semibold text-yellow-800">IMPORTANT: Read All Terms Before Proceeding</p>
+                <p className="text-yellow-700 mt-1">Scroll to the bottom to accept and continue.</p>
+              </div>
+
+              <h3 className="font-bold text-lg text-gray-900">1. PURPOSE OF THIS REPORTING SYSTEM</h3>
+              <p>This reporting system is intended ONLY for maintenance issues and emergencies that are the landlord's responsibility under Kenyan law. The landlord reserves the right to reject reports that do not meet the criteria outlined below.</p>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">2. LANDLORD'S RESPONSIBILITIES (Reportable Issues)</h3>
+              <p className="font-semibold text-green-700">You MAY report the following issues:</p>
+              
+              <div className="pl-4 space-y-3">
+                <div>
+                  <p className="font-semibold text-gray-800">STRUCTURAL & BUILDING INTEGRITY:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Roof leaks or damage causing water ingress</li>
+                    <li>Cracked or damaged walls affecting structural integrity</li>
+                    <li>Foundation issues or major structural defects</li>
+                    <li>Damaged or broken windows (not caused by tenant)</li>
+                    <li>External door locks malfunction (security issue)</li>
+                    <li>Ceiling collapse or severe damage</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">PLUMBING (Building Infrastructure):</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Main water supply failure to the building</li>
+                    <li>Sewage backup or drainage system failure</li>
+                    <li>Burst pipes within the building structure</li>
+                    <li>Water heater failure (landlord-provided equipment)</li>
+                    <li>Major leaks from building plumbing</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">ELECTRICAL (Building Infrastructure):</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Complete power failure in the unit (not due to KPLC)</li>
+                    <li>Dangerous electrical hazards (exposed wiring, sparking)</li>
+                    <li>Main circuit breaker failures</li>
+                    <li>Non-functioning electrical fixtures installed by landlord</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">COMMON AREAS & SHARED FACILITIES:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Broken stairway lighting</li>
+                    <li>Security gate malfunction</li>
+                    <li>Water tank or pump failure affecting multiple units</li>
+                    <li>Damaged or unsafe common walkways/corridors</li>
+                    <li>Lift/elevator malfunction (if applicable)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">SAFETY & SECURITY EMERGENCIES:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Broken external locks or doors compromising security</li>
+                    <li>Fire safety equipment failure (if provided)</li>
+                    <li>Gas leaks or suspected gas issues</li>
+                    <li>Flooding from building systems</li>
+                    <li>Violence, theft, or security breaches in common areas</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">PEST INFESTATIONS (Building-wide):</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Rat, cockroach, or termite infestations affecting the building structure</li>
+                    <li>Bedbugs in a newly moved-in unit</li>
+                  </ul>
+                </div>
+              </div>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">3. TENANT'S RESPONSIBILITIES (NON-Reportable Issues)</h3>
+              <p className="font-semibold text-red-700">You are responsible for and should NOT report:</p>
+              
+              <div className="pl-4 space-y-3">
+                <div>
+                  <p className="font-semibold text-gray-800">TENANT-CAUSED DAMAGE:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Broken items due to misuse or negligence</li>
+                    <li>Damage from parties, fights, or rough handling</li>
+                    <li>Stained walls, floors, or fixtures due to tenant activities</li>
+                    <li>Broken furniture (unless landlord-provided)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">MINOR REPAIRS & MAINTENANCE:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Light bulb replacements</li>
+                    <li>Replacing worn-out door handles or cabinet knobs</li>
+                    <li>Toilet seat replacement</li>
+                    <li>Unclogging sinks or toilets (unless building-wide issue)</li>
+                    <li>Torn mosquito nets or curtains</li>
+                    <li>Minor wall nail holes or marks</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">TENANT EQUIPMENT & APPLIANCES:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Personal electrical appliances (TVs, fridges, microwaves)</li>
+                    <li>Internet router issues (contact your ISP)</li>
+                    <li>Personal furniture repairs</li>
+                    <li>Tenant-installed fixtures or modifications</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">UTILITIES & SERVICE PROVIDERS:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>KPLC power outages (contact Kenya Power directly)</li>
+                    <li>Nairobi Water supply interruptions (contact Nairobi City Water)</li>
+                    <li>Internet/WiFi issues (contact your service provider: Safaricom, Zuku, etc.)</li>
+                    <li>TV signal problems</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">NEIGHBOR DISPUTES:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Noise complaints (address with neighbor first)</li>
+                    <li>Parking disputes</li>
+                    <li>Personal disagreements</li>
+                  </ul>
+                </div>
+              </div>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">4. PRIORITY GUIDELINES</h3>
+              <div className="space-y-2 pl-4">
+                <p><span className="font-semibold text-red-600">URGENT:</span> Life-threatening situations (gas leaks, major flooding, fire hazards, violent incidents)</p>
+                <p><span className="font-semibold text-orange-600">HIGH:</span> Issues causing significant property damage or major inconvenience (roof leaks, sewage backup)</p>
+                <p><span className="font-semibold text-yellow-600">MEDIUM:</span> Important but not immediately threatening (broken windows, malfunctioning locks)</p>
+                <p><span className="font-semibold text-blue-600">LOW:</span> Minor issues that need attention but are not urgent (flickering lights, slow drains)</p>
+              </div>
+              <p className="font-semibold text-red-600">MISUSE OF PRIORITY LEVELS MAY RESULT IN REPORT REJECTION.</p>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">5. RESPONSE TIME EXPECTATIONS</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Urgent issues: Within 24 hours</li>
+                <li>High priority: Within 3-5 business days</li>
+                <li>Medium priority: Within 1-2 weeks</li>
+                <li>Low priority: Within 3-4 weeks</li>
+              </ul>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">6. FALSE OR FRIVOLOUS REPORTS</h3>
+              <p>Submitting false, exaggerated, or frivolous reports may result in:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Report rejection</li>
+                <li>Charges for unnecessary call-out fees</li>
+                <li>Warning notices</li>
+                <li>In repeated cases, lease termination</li>
+              </ul>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">7. TENANT'S DUTY TO REPORT</h3>
+              <p>Under Kenyan law, tenants must promptly report damages or necessary repairs to prevent further deterioration. Failure to report genuine landlord-responsibility issues may result in tenant liability for worsening damage.</p>
+
+              <h3 className="font-bold text-lg text-gray-900 mt-6">8. LEGAL FRAMEWORK</h3>
+              <p>This reporting system operates within the framework of:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>The Landlord and Tenant Act (Kenya)</li>
+                <li>The Rent Restriction Act</li>
+                <li>The Constitution of Kenya (2010)</li>
+                <li>Your signed Tenancy Agreement</li>
+              </ul>
+
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mt-6">
+                <h3 className="font-bold text-lg text-gray-900">9. CONSENT AND AGREEMENT</h3>
+                <p className="mt-2">By clicking "I Accept and Proceed" below, you confirm that:</p>
+                <ul className="list-disc pl-5 space-y-1 mt-2">
+                  <li>You have read and understood these terms and conditions</li>
+                  <li>You will only report issues that are the landlord's responsibility</li>
+                  <li>You understand that misuse of this system may have consequences</li>
+                  <li>You agree to provide accurate and truthful information</li>
+                  <li>You understand the priority levels and will use them appropriately</li>
+                </ul>
+              </div>
+
+              <p className="text-center font-semibold text-gray-700 mt-6 pb-4">
+                Thank you for your cooperation in maintaining a safe and well-maintained living environment.
+              </p>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              {!hasScrolledToBottom ? (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-3 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 mr-2 text-yellow-600" />
+                    Please scroll to the bottom to accept
+                  </p>
+                  <button
+                    disabled
+                    className="w-full bg-gray-300 text-gray-500 py-3 rounded-lg cursor-not-allowed"
+                  >
+                    Scroll to Enable
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleAcceptDisclaimer}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 flex items-center justify-center font-semibold"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  I Accept and Proceed to Report
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Report an Issue</h1>
-        <p className="text-gray-600 text-lg">Submit a maintenance request or report a problem with your unit</p>
+      )}
+
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-red-600 flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8 mr-2" />
+          Report an Issue
+        </h1>
+        <p className="text-gray-600 mt-2">Submit a maintenance request for landlord-responsibility issues</p>
+        {disclaimerAccepted && (
+          <button
+            onClick={() => setShowDisclaimer(true)}
+            className="text-sm text-blue-600 hover:underline mt-2"
+          >
+            View Terms & Conditions Again
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Form */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Issue Details</h2>
-              <p className="text-gray-600 mt-1">Please provide detailed information about the issue you're experiencing</p>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4">Issue Details</h2>
+        <p className="text-gray-600 mb-6">Report only issues that are the landlord's responsibility</p>
+
+        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-blue-600 font-medium">Tenant:</span>
+              <p className="text-blue-900">John Doe</p>
             </div>
-
-            {/* Tenant Information */}
-            <div className="p-6 bg-blue-50 border-b border-blue-100">
-              <div className="flex items-center mb-3">
-                <Home className="w-5 h-5 text-blue-600 mr-2" />
-                <h3 className="font-medium text-blue-900">Your Information</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-sm font-medium text-blue-700">Tenant Name:</span>
-                  <p className="text-blue-900 font-semibold">{currentTenant?.name || 'Not available'}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-blue-700">Unit Number:</span>
-                  <p className="text-blue-900 font-semibold">{currentTenant?.room || 'Not assigned'}</p>
-                </div>
-              </div>
+            <div>
+              <span className="text-blue-600 font-medium">Room:</span>
+              <p className="text-blue-900">A101</p>
             </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Issue Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Issue Category *
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {categoryOptions.map((category) => {
-                    const Icon = category.icon;
-                    return (
-                      <button
-                        key={category.value}
-                        type="button"
-                        onClick={() => handleInputChange('issue_category', category.value)}
-                        className={`p-4 border-2 rounded-lg text-left transition-all ${
-                          formData.issue_category === category.value
-                            ? 'border-red-500 bg-red-50 ring-2 ring-red-200'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Icon className={`w-5 h-5 mt-0.5 ${
-                            formData.issue_category === category.value ? 'text-red-600' : 'text-gray-500'
-                          }`} />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{category.label}</div>
-                            <div className="text-sm text-gray-500 mt-1">{category.description}</div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {errors.issue_category && (
-                  <p className="mt-2 text-sm text-red-600">{errors.issue_category}</p>
-                )}
-              </div>
-
-              {/* Priority Level */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Priority Level *
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {priorityOptions.map((priority) => (
-                    <button
-                      key={priority.value}
-                      type="button"
-                      onClick={() => handleInputChange('priority_level', priority.value)}
-                      className={`p-3 border-2 rounded-lg text-center transition-all ${
-                        formData.priority_level === priority.value
-                          ? 'border-red-500 bg-red-50 ring-2 ring-red-200'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className={`text-xs font-semibold px-2 py-1 rounded-full ${priority.color}`}>
-                        {priority.label}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">{priority.description}</div>
-                    </button>
-                  ))}
-                </div>
-                {errors.priority_level && (
-                  <p className="mt-2 text-sm text-red-600">{errors.priority_level}</p>
-                )}
-              </div>
-
-              {/* Issue Title */}
-              <div>
-                <label htmlFor="issue_title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Issue Title *
-                </label>
-                <input
-                  id="issue_title"
-                  type="text"
-                  value={formData.issue_title}
-                  onChange={(e) => handleInputChange('issue_title', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                    errors.issue_title ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Brief, descriptive title of the issue"
-                  maxLength={255}
-                />
-                {errors.issue_title && (
-                  <p className="mt-2 text-sm text-red-600">{errors.issue_title}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Detailed Description *
-                </label>
-                <textarea
-                  id="description"
-                  rows={6}
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                    errors.description ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Please provide as much detail as possible:
-• When did the issue start?
-• What have you tried so far?
-• How is it affecting your daily routine?
-• Any specific locations or times when it occurs?"
-                />
-                {errors.description && (
-                  <p className="mt-2 text-sm text-red-600">{errors.description}</p>
-                )}
-                <p className="mt-2 text-sm text-gray-500">
-                  The more details you provide, the faster we can help resolve your issue.
-                </p>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate('/tenant')}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5 mr-2" />
-                      Submit Report
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
 
-        {/* Sidebar - Help Information */}
-        <div className="space-y-6">
-          {/* Emergency Notice */}
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-red-600 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-red-900 text-sm">Emergency Situations</h3>
-                <p className="text-red-700 text-sm mt-1">
-                  For immediate safety threats, fire, or medical emergencies, call emergency services first.
-                </p>
-              </div>
-            </div>
+        {!disclaimerAccepted && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <p className="text-yellow-800 font-medium">
+              ⚠️ You must accept the Terms & Conditions before submitting a report
+            </p>
+            <button
+              onClick={() => setShowDisclaimer(true)}
+              className="text-yellow-700 underline text-sm mt-1"
+            >
+              Click here to read and accept
+            </button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Issue Category *</label>
+            <select
+              required
+              value={formData.category}
+              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              disabled={!disclaimerAccepted}
+            >
+              <option value="">Select issue category</option>
+              {reportableCategories.map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
+            </select>
           </div>
 
-          {/* What Happens Next */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <h3 className="font-semibold text-gray-900 text-sm mb-3">What Happens Next?</h3>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-2">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-red-600 text-xs font-bold">1</span>
-                </div>
-                <p className="text-gray-700 text-sm">You'll receive a confirmation email</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-red-600 text-xs font-bold">2</span>
-                </div>
-                <p className="text-gray-700 text-sm">Landlord reviews and prioritizes your report</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-red-600 text-xs font-bold">3</span>
-                </div>
-                <p className="text-gray-700 text-sm">You'll receive updates on the resolution progress</p>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Priority Level *</label>
+            <select
+              required
+              value={formData.priority}
+              onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              disabled={!disclaimerAccepted}
+            >
+              <option value="">Select priority level</option>
+              <option value="urgent">Urgent - Life-threatening/Emergency</option>
+              <option value="high">High - Significant damage/Major inconvenience</option>
+              <option value="medium">Medium - Important but not immediate</option>
+              <option value="low">Low - Minor issues</option>
+            </select>
           </div>
 
-          {/* Response Times */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <h3 className="font-semibold text-blue-900 text-sm mb-3">Expected Response Times</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-blue-700">Urgent:</span>
-                <span className="text-blue-900 font-medium">Within 2 hours</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">High:</span>
-                <span className="text-blue-900 font-medium">Within 24 hours</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Medium:</span>
-                <span className="text-blue-900 font-medium">2-3 business days</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Low:</span>
-                <span className="text-blue-900 font-medium">5-7 business days</span>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Issue Title *</label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              placeholder="Brief description of the issue"
+              disabled={!disclaimerAccepted}
+            />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Detailed Description *</label>
+            <textarea
+              required
+              rows={6}
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              placeholder="Please provide as much detail as possible about the issue, including when it started, what you've tried, and how it affects you."
+              disabled={!disclaimerAccepted}
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/tenant')}
+              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !disclaimerAccepted}
+              className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>Processing...</>
+              ) : (
+                <>
+                  <Send className="w-5 h-5 mr-2" />
+                  Submit Report
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm text-gray-600">
+            <span className="font-semibold text-gray-800">Remember: </span>
+            For tenant-caused damage, minor repairs, utilities (KPLC, water), internet issues, or neighbor disputes, 
+            please handle these directly or contact the appropriate service provider.
+          </p>
         </div>
       </div>
     </div>

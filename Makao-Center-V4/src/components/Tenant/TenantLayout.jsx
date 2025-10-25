@@ -8,8 +8,7 @@ import {
   AlertTriangle, 
   Settings,
   Menu,
-  X,
-  FileText
+  X
 } from "lucide-react";
 import { useState } from "react";
 
@@ -17,12 +16,11 @@ export default function TenantLayout() {
   const { logout, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // FIXED: Use correct paths that match your route configuration
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home, path: "/tenant-dashboard" },
-    { id: "payments", label: "Payments", icon: CreditCard, path: "/tenant-dashboard/payments" },
-    { id: "report", label: "Report", icon: AlertTriangle, path: "/tenant-dashboard/report" },
-    { id: "settings", label: "Settings", icon: Settings, path: "/tenant-dashboard/settings" },
+    { id: "dashboard", label: "Dashboard", icon: Home, path: "/tenant" },
+    { id: "payments", label: "Payments", icon: CreditCard, path: "/tenant/payments" },
+    { id: "report", label: "Report Issue", icon: AlertTriangle, path: "/tenant/report" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/tenant/settings" },
   ];
 
   return (
@@ -31,20 +29,20 @@ export default function TenantLayout() {
       <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-blue-600">Tenant Portal</h1>
-          <p className="text-sm text-gray-600 mt-1">Makau Rentals</p>
+          <p className="text-sm text-gray-600 mt-1">Property Management</p>
         </div>
 
         <div className="p-4 border-b border-gray-200 bg-blue-50">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-              {user?.full_name?.charAt(0) || user?.name?.charAt(0) || 'T'}
+              {user?.name?.charAt(0) || 'T'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.full_name || user?.name || 'Tenant User'}
+                {user?.name || 'John Doe'}
               </p>
               <p className="text-xs text-gray-600 truncate">
-                {user?.unit?.unit_number ? `Unit ${user.unit.unit_number}` : 'Tenant'}
+                Room {user?.room || 'A101'}
               </p>
             </div>
           </div>
@@ -57,7 +55,7 @@ export default function TenantLayout() {
               <NavLink
                 key={item.id}
                 to={item.path}
-                end={item.path === "/tenant-dashboard"} // FIXED: match the correct path
+                end={item.path === "/tenant"}
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
@@ -111,14 +109,14 @@ export default function TenantLayout() {
         <div className="p-4 border-b border-gray-200 bg-blue-50">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-              {user?.full_name?.charAt(0) || user?.name?.charAt(0) || 'T'}
+              {user?.name?.charAt(0) || 'T'}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">
-                {user?.full_name || user?.name || 'Tenant User'}
+                {user?.name || 'John Doe'}
               </p>
               <p className="text-xs text-gray-600">
-                {user?.unit?.unit_number ? `Unit ${user.unit.unit_number}` : 'Tenant'}
+                Room {user?.room || 'A101'}
               </p>
             </div>
           </div>
@@ -131,7 +129,7 @@ export default function TenantLayout() {
               <NavLink
                 key={item.id}
                 to={item.path}
-                end={item.path === "/tenant-dashboard"} // FIXED: match the correct path
+                end={item.path === "/tenant"}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
@@ -172,7 +170,7 @@ export default function TenantLayout() {
           <div className="w-10" />
         </div>
 
-        <div className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
         </div>
 

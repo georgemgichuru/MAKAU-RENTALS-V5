@@ -17,6 +17,7 @@ from .views import (
     UnitTypeListView,
     BulkRentUpdateView, UnitRentUpdateView,
     InitiateDepositPaymentView,
+    InitiateDepositPaymentRegistrationView,
     DepositPaymentStatusView,
     CleanupPendingPaymentsView,
     TestMpesaView,
@@ -60,6 +61,7 @@ urlpatterns = [
     # INITIATE DEPOSIT PAYMENT
     # ------------------------------
     path("initiate-deposit/", InitiateDepositPaymentView.as_view(), name="initiate-deposit"),
+    path("initiate-deposit-registration/", InitiateDepositPaymentRegistrationView.as_view(), name="initiate-deposit-registration"),
     path('deposit-status/<int:payment_id>/', DepositPaymentStatusView.as_view(), name='deposit-status'),
     # ------------------------------
     # CSV REPORTS

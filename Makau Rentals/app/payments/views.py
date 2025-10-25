@@ -411,7 +411,7 @@ def mpesa_rent_callback(request):
 @csrf_exempt
 def mpesa_deposit_callback(request):
     """
-    Enhanced deposit payment callback handler
+    Enhanced deposit payment callback handler with registration support
     """
     try:
         callback_data = json.loads(request.body)
@@ -427,7 +427,7 @@ def mpesa_deposit_callback(request):
         if result_code == 0:
             # Payment successful
             callback_metadata = stk_callback.get("CallbackMetadata", {}).get("Item", [])
-            
+
             # Extract payment details
             mpesa_receipt = None
             amount = None
@@ -441,34 +441,47 @@ def mpesa_deposit_callback(request):
                 elif item.get("Name") == "PhoneNumber":
                     phone_number = item.get("Value")
 
-            # Get cached payment data
-            cached_data = cache.get(f"stk_deposit_{checkout_request_id}") if checkout_request_id else None
-            
+            # Check both regular and registration cache keys
+            cached_data = cache.get(f"stk_deposit_{checkout_request_id}")
+            is_registration = False
+
+            if not cached_data:
+                cached_data = cache.get(f"stk_deposit_reg_{checkout_request_id}")
+                is_registration = True
+
             if cached_data:
                 try:
                     payment = Payment.objects.get(id=cached_data["payment_id"])
                     unit = payment.unit
-                    
+
                     # Update payment record
-                    payment.status = "Success"
+                    payment.status = "completed"
                     payment.mpesa_receipt = mpesa_receipt or f"DEP-{payment.id}-{uuid.uuid4().hex[:8].upper()}"
-                    
+
                     if amount:
                         payment.amount = Decimal(amount)
-                    
+
                     payment.save()
 
-                    # Mark unit as occupied and assign tenant
-                    unit.is_available = False
-                    unit.tenant = payment.tenant
-                    unit.assigned_date = timezone.now()
-                    unit.save()
+                    # For registration payments, reserve the unit
+                    # The tenant will be linked during registration completion
+                    if is_registration:
+                        unit.is_available = False  # Reserve the unit
+                        unit.save()
+                        logger.info(f"Unit {unit.unit_number} reserved via registration deposit payment")
+                    else:
+                        # Regular deposit payment - assign tenant if available
+                        if payment.tenant:
+                            unit.is_available = False
+                            unit.tenant = payment.tenant
+                            unit.assigned_date = timezone.now()
+                            unit.save()
 
                     logger.info(f"Deposit payment {payment.id} completed successfully for unit {unit.unit_number}")
-                    logger.info(f"Unit {unit.unit_number} assigned to tenant {payment.tenant.email}")
-                    
+
                     # Clear cache
-                    cache.delete(f"stk_deposit_{checkout_request_id}")
+                    cache_key = f"stk_deposit_reg_{checkout_request_id}" if is_registration else f"stk_deposit_{checkout_request_id}"
+                    cache.delete(cache_key)
 
                 except Payment.DoesNotExist:
                     logger.error(f"Deposit payment not found for ID: {cached_data['payment_id']}")
@@ -483,14 +496,14 @@ def mpesa_deposit_callback(request):
         else:
             # Payment failed
             logger.error(f"Deposit payment failed - ResultCode: {result_code}, Description: {result_desc}")
-            
+
             # Update payment status to failed
             if checkout_request_id:
-                cached_data = cache.get(f"stk_deposit_{checkout_request_id}")
+                cached_data = cache.get(f"stk_deposit_{checkout_request_id}") or cache.get(f"stk_deposit_reg_{checkout_request_id}")
                 if cached_data:
                     try:
                         payment = Payment.objects.get(id=cached_data["payment_id"])
-                        payment.status = "Failed"
+                        payment.status = "failed"
                         payment.failure_reason = result_desc
                         payment.save()
                         logger.info(f"Deposit payment {payment.id} marked as failed: {result_desc}")
@@ -618,7 +631,116 @@ def mpesa_subscription_callback(request):
         logger.error(f"Unexpected error in subscription callback: {str(e)}")
         return JsonResponse({"ResultCode": 1, "ResultDesc": "Internal error"})
 
-# Update the InitiateDepositPaymentView with the same fixes
+class InitiateDepositPaymentRegistrationView(APIView):
+    """
+    Initiate deposit payment during tenant registration (no auth required)
+    """
+    permission_classes = []  # No authentication required
+
+    def post(self, request):
+        try:
+            unit_id = request.data.get('unit_id')
+            phone_number = request.data.get('phone_number')
+            session_id = request.data.get('session_id')
+
+            if not unit_id or not phone_number:
+                return Response({"error": "Unit ID and phone number are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            unit = get_object_or_404(Unit, id=unit_id)
+
+            if not unit.is_available:
+                return Response({"error": "Unit is not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+            amount = unit.deposit
+
+            # Validate phone number
+            is_valid, validation_result = validate_mpesa_payment(phone_number, amount)
+            if not is_valid:
+                return Response({"error": validation_result}, status=status.HTTP_400_BAD_REQUEST)
+
+            phone_number = validation_result
+
+            # Generate access token
+            access_token = generate_access_token()
+            if not access_token:
+                return Response({"error": "Failed to generate M-Pesa access token"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Prepare STK push request
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            password_string = settings.MPESA_SHORTCODE + settings.MPESA_PASSKEY + timestamp
+            password = base64.b64encode(password_string.encode('utf-8')).decode('utf-8')
+
+            payload = {
+                "BusinessShortCode": settings.MPESA_SHORTCODE,
+                "Password": password,
+                "Timestamp": timestamp,
+                "TransactionType": "CustomerPayBillOnline",
+                "Amount": int(amount),
+                "PartyA": phone_number,
+                "PartyB": settings.MPESA_SHORTCODE,
+                "PhoneNumber": phone_number,
+                "CallBackURL": settings.MPESA_DEPOSIT_CALLBACK_URL,
+                "AccountReference": f"DEPOSIT-REG-{unit.unit_code}",
+                "TransactionDesc": f"Deposit payment for {unit.unit_number}"
+            }
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
+            # Use correct URL
+            if settings.MPESA_ENV == "sandbox":
+                url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+            else:
+                url = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response_data = response.json()
+
+            if response.status_code == 200 and response_data.get("ResponseCode") == "0":
+                # Create pending deposit payment record without tenant (will be linked later)
+                payment = Payment.objects.create(
+                    unit=unit,
+                    amount=amount,
+                    status="pending",
+                    payment_type="deposit",
+                    mpesa_checkout_request_id=response_data["CheckoutRequestID"]
+                )
+
+                # Cache checkout request ID for callback with registration data
+                cache_key = f"stk_deposit_reg_{response_data['CheckoutRequestID']}"
+                cache_data = {
+                    "payment_id": payment.id,
+                    "unit_id": unit.id,
+                    "amount": float(amount),
+                    "phone_number": phone_number,
+                    "session_id": session_id  # Link to registration session
+                }
+                cache.set(cache_key, cache_data, timeout=300)  # 5 minutes
+
+                logger.info(f"Registration deposit STK push initiated for payment {payment.id}, amount {amount}")
+
+                return Response({
+                    "success": True,
+                    "message": "Deposit STK push initiated successfully",
+                    "checkout_request_id": response_data["CheckoutRequestID"],
+                    "payment_id": payment.id
+                })
+
+            else:
+                error_message = response_data.get('errorMessage', response_data.get('ResponseDescription', 'Unknown error'))
+                logger.error(f"Registration deposit STK push failed: {error_message}")
+                return Response({
+                    "error": "Failed to initiate deposit STK push",
+                    "details": error_message
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            logger.error(f"Registration deposit payment error: {str(e)}", exc_info=True)
+            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class InitiateDepositPaymentView(APIView):
     """
     Initiate REAL deposit payment for unit
@@ -643,7 +765,7 @@ class InitiateDepositPaymentView(APIView):
         is_valid, validation_result = validate_mpesa_payment(phone_number, amount)
         if not is_valid:
             return Response({"error": validation_result}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         phone_number = validation_result
 
         # Generate access token
@@ -896,130 +1018,7 @@ class UnitTypeListView(generics.ListAPIView):
         return UnitType.objects.filter(landlord=self.request.user)
 
 
-class InitiateDepositPaymentView(APIView):
-    """
-    Initiate REAL deposit payment for unit
-    """
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        unit_id = request.data.get('unit_id')
-        unit = get_object_or_404(Unit, id=unit_id)
-
-        if not unit.is_available:
-            return Response({"error": "Unit is not available"}, status=status.HTTP_400_BAD_REQUEST)
-
-        tenant = request.user
-        amount = unit.deposit
-        phone_number = tenant.phone_number
-
-        if not phone_number:
-            return Response({"error": "Phone number is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Validate phone number format
-        if not phone_number.startswith('254'):
-            return Response({"error": "Phone number must be in format 254XXXXXXXXX"}, status=status.HTTP_400_BAD_REQUEST)
-        # ✅ ADD VALIDATION HERE
-        is_valid, validation_message = validate_mpesa_payment(phone_number, amount)
-        if not is_valid:
-            return Response({"error": validation_message}, status=status.HTTP_400_BAD_REQUEST)
-        # Generate access token
-        access_token = generate_access_token()
-        if not access_token:
-            return Response({"error": "Failed to generate M-Pesa access token"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Prepare STK push request for PRODUCTION
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        password = base64.b64encode(
-            (settings.MPESA_SHORTCODE + settings.MPESA_PASSKEY + timestamp).encode('utf-8')
-        ).decode('utf-8')
-
-        payload = {
-            "BusinessShortCode": settings.MPESA_SHORTCODE,
-            "Password": password,
-            "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
-            "Amount": int(amount),
-            "PartyA": phone_number,
-            "PartyB": settings.MPESA_SHORTCODE,
-            "PhoneNumber": phone_number,
-            "CallBackURL": settings.MPESA_DEPOSIT_CALLBACK_URL,
-            "AccountReference": f"DEPOSIT-{unit.unit_code}",
-            "TransactionDesc": f"Deposit payment for {unit.unit_number}"
-        }
-
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-
-        # Use production URL
-        if settings.MPESA_ENV == "sandbox":
-            url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-        else:
-            url = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response_data = response.json()
-
-        if response.status_code == 200 and response_data.get("ResponseCode") == "0":
-            # Create pending deposit payment record
-            payment = Payment.objects.create(
-                tenant=tenant,
-                unit=unit,
-                amount=amount,
-                status="Pending",
-                payment_type="deposit",
-                mpesa_checkout_request_id=response_data["CheckoutRequestID"]
-            )
-
-            # Cache checkout request ID for callback
-            cache.set(f"stk_deposit_{response_data['CheckoutRequestID']}", {
-                "payment_id": payment.id,
-                "unit_id": unit.id,
-                "amount": float(amount),
-                "tenant_id": tenant.id
-            }, timeout=300)  # 5 minutes
-
-            logger.info(f"Deposit STK push initiated for payment {payment.id}, amount {amount}")
-
-            return Response({
-                "success": True,
-                "message": "Deposit STK push initiated successfully",
-                "checkout_request_id": response_data["CheckoutRequestID"],
-                "payment_id": payment.id
-            })
-
-        else:
-            logger.error(f"Deposit STK push failed: {response_data}")
-            return Response({
-                "error": "Failed to initiate deposit STK push",
-                "details": response_data.get('errorMessage', 'Unknown error')
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-class DepositPaymentStatusView(APIView):
-    """
-    Check deposit payment status
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, payment_id):
-        payment = get_object_or_404(Payment, id=payment_id)
-
-        # Check if user has permission to view this payment
-        if request.user.user_type == 'tenant' and payment.tenant != request.user:
-            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-
-        if request.user.user_type == 'landlord' and payment.unit.property_obj.landlord != request.user:
-            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-
-        return Response({
-            "payment_id": payment.id,
-            "status": payment.status,
-            "amount": payment.amount,
-            "mpesa_receipt": payment.mpesa_receipt
-        })
 
 
 class CleanupPendingPaymentsView(APIView):

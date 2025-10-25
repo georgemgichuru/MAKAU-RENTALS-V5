@@ -14,31 +14,45 @@ from django.contrib.auth import authenticate
 from .models import CustomUser
 import uuid
 
+# accounts/serializers.py
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
-
-    user_type = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
         email = attrs.get("email")
         password = attrs.get("password")
-        user_type = attrs.get("user_type")
+        requested_user_type = attrs.get("user_type")  # User type from frontend
 
-        if email and password and user_type:
-            user = authenticate(self.context['request'], email=email, password=password)
-            if not user:
-                raise serializers.ValidationError("Invalid email or password")
-            if user.user_type not in ['tenant', 'landlord']:
-                raise serializers.ValidationError("Invalid user type")
-            if user.user_type != user_type:
-                raise serializers.ValidationError("User type does not match")
-            if not user.is_active:
-                raise serializers.ValidationError("User account is disabled")
-        else:
-            raise serializers.ValidationError("Must include 'email', 'password', and 'user_type'")
+        if not email or not password:
+            raise serializers.ValidationError("Must include 'email' and 'password'")
 
+        # Authenticate user
+        user = authenticate(self.context['request'], email=email, password=password)
+        
+        if not user:
+            raise serializers.ValidationError("Invalid email or password")
+        
+        if not user.is_active:
+            raise serializers.ValidationError("User account is disabled")
+        
+        # If user_type is provided, validate it matches
+        if requested_user_type and user.user_type != requested_user_type:
+            raise serializers.ValidationError(
+                f"Invalid account type. This account is registered as a {user.user_type}, not a {requested_user_type}."
+            )
+        
+        # Use the actual user type from the database
+        actual_user_type = user.user_type
+        
+        # Add user_type to validated data
+        attrs['user_type'] = actual_user_type
+        
         data = super().validate(attrs)
-        data['user_type'] = user_type
+        data['user_type'] = actual_user_type
+        data['user_id'] = user.id
+        data['email'] = user.email
+        data['full_name'] = user.full_name
+        
         return data
 
 
@@ -50,7 +64,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'email',
             'full_name',
-            'government_id',
+            'national_id',
             'id_document',
             'landlord_code',
             'date_joined',
@@ -261,7 +275,7 @@ class TenantWithUnitSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'email', 'full_name', 'phone_number', 'emergency_contact',
-            'government_id', 'date_joined', 'current_unit', 'unit_data', 'rent_status'
+            'national_id', 'date_joined', 'current_unit', 'unit_data', 'rent_status'
         ]
     
     def get_current_unit(self, obj):
@@ -322,7 +336,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'email', 'full_name', 'user_type', 'user_type_display',
-            'government_id', 'landlord_code', 'date_joined', 'phone_number',
+            'national_id', 'landlord_code', 'date_joined', 'phone_number',
             'emergency_contact', 'mpesa_till_number', 'reminder_mode', 'reminder_value'
         ]
         read_only_fields = ['date_joined', 'landlord_code']

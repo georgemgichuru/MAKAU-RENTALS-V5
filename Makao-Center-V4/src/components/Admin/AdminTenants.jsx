@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { useToast } from '../../context/ToastContext';
-import EmailFormModal from './EmailFormModal';
-import AssignUnitModal from './AssignUnitModal';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import EmailFormModal from './Modals/EmailFormModal';
+import WhatsAppFormModal from './Modals/WhatsAppFormModal';
+import InvoiceModal from './Modals/InvoiceModal';
+import CustomMessageModal from './Modals/CustomMessageModal';
+import ShiftTenantModal from './Modals/ShiftTenantModal';
 import { 
   Users, 
-  AlertTriangle, 
+  User,
   X, 
-  Plus, 
-  Search, 
   Eye,
-  Edit,
+  AlertTriangle,
   Trash2,
-  Mail,
   Phone,
-  DollarSign,
-  Clock,
   CheckCircle,
   AlertCircle,
   Download,
@@ -23,387 +20,414 @@ import {
   FileImage,
   Archive,
   Timer,
+  FileDown,
+  MessageSquare,
+  Receipt,
+  ArrowRightLeft,
+  Mail,
+  Plus,
   ExternalLink,
-  Home,
-  Calendar,
-  UserCheck,
-  Ban
+  Search,
+  Clock,
+  Bed,
+  Key,
+  DollarSign
 } from 'lucide-react';
+import { AppContext } from '../../context/AppContext';
 
 const AdminTenants = () => {
-  const { 
-    tenants, 
-    tenantsLoading,
-    pendingApplications,
-    units,
-    refreshData
-  } = useAppContext();
-  
-  const { showToast } = useToast();
-
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
   const [documentPreview, setDocumentPreview] = useState(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [isAssignUnitModalOpen, setIsAssignUnitModalOpen] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isCustomMessageModalOpen, setIsCustomMessageModalOpen] = useState(false);
+  const [isShiftTenantModalOpen, setIsShiftTenantModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState(null);
-  const [rejectingTenant, setRejectingTenant] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
 
-  const [removingTenant, setRemovingTenant] = useState(null); // Add this line
+  // safe defaults from context to avoid undefined errors
+  const {
+    mockTenants = [],
+    mockPendingApplications = [],
+    mockEvictedTenants = [],
+    propertyUnits = [],
+    transactions = []
+  } = useContext(AppContext);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 AdminTenants Debug:', {
-      tenantsCount: tenants?.length,
-      tenants: tenants,
-      pendingApplicationsCount: pendingApplications?.length,
-      unitsCount: units?.length,
-      activeTab,
-      searchTerm
-    });
-  }, [tenants, pendingApplications, units, activeTab, searchTerm]);
+  // Toggle dropdown for specific tenant
+  const toggleDropdown = (tenantId) => {
+    setDropdownOpen(dropdownOpen === tenantId ? null : tenantId);
+  };
 
-  // FIXED: Enhanced filtering with better fallbacks
-  const filteredTenants = (tenants || []).filter(tenant => {
-    if (!tenant) return false;
-    
-    const matchesSearch = searchTerm === '' || 
-      (tenant.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (tenant.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (tenant.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (tenant.phone_number || '').includes(searchTerm) ||
-      (tenant.unit?.unit_number?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+  // Handle viewing tenant transactions
+  const handleViewTransactions = (tenant) => {
+    navigate(`/admin/tenants/${tenant.id}/transactions`);
+  };
 
-    if (activeTab === 'active') {
-      return matchesSearch && tenant.unit; // Has a unit assigned
-    } else if (activeTab === 'all') {
-      return matchesSearch;
+  // Handle add invoice
+  const handleAddInvoice = (tenant) => {
+    setSelectedTenant(tenant);
+    setIsInvoiceModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  // Handle send custom message
+  const handleSendCustomMessage = (tenant) => {
+    setSelectedTenant(tenant);
+    setIsCustomMessageModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  // Handle download tenant statement (CSV) - now uses context transactions
+  const handleDownloadStatement = (tenant) => {
+    const tenantTxns = (transactions || []).filter(t => String(t.tenantId) === String(tenant.id));
+    const headers = ['Date', 'Description', 'Amount (KSh)', 'Type', 'Reference', 'Method', 'Status'];
+    const csvRows = [
+      headers.join(','),
+      ...tenantTxns.map(t =>
+        `${t.date},"${t.description}",${t.amount},${t.type},${t.reference || ''},${t.paymentMethod || ''},${t.status}`
+      )
+    ];
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tenant.name.replace(/\s+/g, '_')}_statement.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    setDropdownOpen(null);
+    alert(`Statement downloaded for ${tenant.name}`);
+  };
+
+  // Handle shift tenant
+  const handleShiftTenant = (tenant) => {
+    setSelectedTenant(tenant);
+    setIsShiftTenantModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  // Handle delete tenant
+  const handleDeleteTenant = (tenant) => {
+    if (window.confirm(`Are you sure you want to delete ${tenant.name}? This action cannot be undone.`)) {
+      console.log('Deleting tenant:', tenant.id);
+      alert(`Tenant ${tenant.name} has been deleted.`);
+      setDropdownOpen(null);
     }
-    return matchesSearch;
-  });
-
-  // FIXED: Enhanced pending applications filtering
-  const filteredApplications = (pendingApplications || []).filter(app => {
-    if (!app) return false;
-    
-    return searchTerm === '' || 
-      (app.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (app.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (app.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-  });
-
-  // FIXED: Enhanced statistics calculation
-  const stats = {
-    activeTenants: (tenants || []).filter(t => t?.unit).length,
-    totalTenants: (tenants || []).length,
-    pendingApplications: (pendingApplications || []).length,
-    overdueRent: (tenants || []).filter(t => 
-      t?.unit && parseFloat(t.unit.rent_remaining || 0) > 0
-    ).length
   };
 
   // Function to handle the tenant signup link
   const handleTenantSignup = () => {
-    const signupUrl = `${window.location.origin}/signup?user_type=tenant`;
+    const signupUrl = `${window.location.origin}/tenant/signup`;
     window.open(signupUrl, '_blank');
   };
 
   // Function to copy the signup link to clipboard
   const copySignupLink = async () => {
-    const signupUrl = `${window.location.origin}/signup?user_type=tenant`;
+    const signupUrl = `${window.location.origin}/tenant/signup`;
     try {
       await navigator.clipboard.writeText(signupUrl);
-      showToast('Signup link copied to clipboard!', 'success');
+      alert('Signup link copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy: ', err);
-      showToast('Failed to copy link', 'error');
     }
   };
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0,
-    }).format(amount || 0);
+  const handleViewDocuments = (documents, applicantName) => {
+    setDocumentPreview({ documents, applicantName });
   };
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString('en-KE', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return 'Invalid Date';
-    }
+  const handleDownloadDocument = (document, applicantName) => {
+    console.log('Downloading document:', document.name, 'for', applicantName);
+    alert(`Downloading ${document.name} for ${applicantName}`);
   };
 
-  // Get rent status
-  const getRentStatus = (unit) => {
-    if (!unit) return { status: 'unknown', color: 'gray', text: 'No unit' };
-    
-    const rentRemaining = parseFloat(unit.rent_remaining || 0);
-    const rent = parseFloat(unit.rent || 0);
-    
-    if (rentRemaining === 0) {
-      return { status: 'paid', color: 'green', text: 'Paid' };
-    } else if (rentRemaining === rent) {
-      return { status: 'due', color: 'yellow', text: 'Due' };
-    } else if (rentRemaining > 0) {
-      return { status: 'overdue', color: 'red', text: 'Overdue' };
-    } else {
-      return { status: 'unknown', color: 'gray', text: 'Unknown' };
-    }
-  };
-
-  // Enhanced handle assign unit function
-  const handleAssignUnit = (tenant) => {
-    setSelectedTenant(tenant);
-    setIsAssignUnitModalOpen(true);
-  };
-
-  // Handle remove tenant from unit
-// Handle remove tenant from unit
-const handleRemoveTenant = async (tenantId) => {
-  setRemovingTenant(tenantId); // Add this line
-  if (!tenantId) {
-    showToast('Invalid tenant ID', 'error');
-    return;
-  }
-
-  // Find the tenant to get their name for the confirmation message
-  const tenant = tenants.find(t => t.id === tenantId);
-  if (!tenant) {
-    showToast('Tenant not found', 'error');
-    return;
-  }
-
-  const tenantName = tenant.full_name || tenant.name || 'this tenant';
-  
-  if (!confirm(`Are you sure you want to remove ${tenantName} from their unit? This will make the unit available for new tenants.`)) {
-    return;
-  }
-
-  try {
-    showToast(`Removing ${tenantName} from unit...`, 'info');
-
-    // Find the unit assigned to this tenant
-    const assignedUnit = units.find(unit => 
-      unit.tenant && unit.tenant.id === tenantId
-    );
-
-    if (!assignedUnit) {
-      showToast('No unit assigned to this tenant', 'error');
-      return;
-    }
-
-    // Call API to remove tenant from unit
-    const response = await fetch(`http://127.0.0.1:8000/api/accounts/units/${assignedUnit.id}/remove-tenant/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({
-        tenant_id: tenantId
-      }),
-    });
-
-    if (response.ok) {
-      showToast(`${tenantName} has been successfully removed from the unit`, 'success');
-      
-      // Refresh the data to reflect the changes
-      await refreshData();
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || errorData.detail || 'Failed to remove tenant from unit');
-    }
-  } catch (error) {
-    console.error('Error removing tenant:', error);
-    
-    // If the API endpoint doesn't exist, try alternative approach
-    if (error.message.includes('Failed to fetch') || error.message.includes('404')) {
-      await handleRemoveTenantFallback(tenantId, tenantName);
-    } else {
-      showToast(error.message || 'Failed to remove tenant from unit', 'error');
-    }
-  }finally {
-    setRemovingTenant(null); // Add this line
-  }
-};
-
-// Fallback method if the main API endpoint doesn't work
-const handleRemoveTenantFallback = async (tenantId, tenantName) => {
-  try {
-    showToast('Trying alternative method to remove tenant...', 'info');
-
-    // Alternative 1: Update the unit to remove tenant assignment
-    const assignedUnit = units.find(unit => 
-      unit.tenant && unit.tenant.id === tenantId
-    );
-
-    if (assignedUnit) {
-      // Update unit to remove tenant
-      const updateResponse = await fetch(`http://127.0.0.1:8000/api/accounts/units/${assignedUnit.id}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-        body: JSON.stringify({
-          tenant: null,
-          is_available: true
-        }),
-      });
-
-      if (updateResponse.ok) {
-        showToast(`${tenantName} has been removed from the unit`, 'success');
-        await refreshData();
-        return;
-      }
-    }
-
-    // Alternative 2: Use the update unit endpoint with PUT
-    if (assignedUnit) {
-      const putResponse = await fetch(`http://127.0.0.1:8000/api/accounts/units/${assignedUnit.id}/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-        body: JSON.stringify({
-          ...assignedUnit,
-          tenant: null,
-          is_available: true
-        }),
-      });
-
-      if (putResponse.ok) {
-        showToast(`${tenantName} has been removed from the unit`, 'success');
-        await refreshData();
-        return;
-      }
-    }
-
-    throw new Error('All removal methods failed');
-
-  } catch (fallbackError) {
-    console.error('Fallback removal failed:', fallbackError);
-    showToast('Unable to remove tenant. Please check if the unit assignment API is working.', 'error');
-  }
-};
-
-  // Handle reject tenant application
-  const handleRejectTenant = async (tenant) => {
-    if (!tenant || !tenant.id) {
-      showToast('Invalid tenant data', 'error');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to reject ${tenant.full_name}'s application? This action cannot be undone.`)) {
-      return;
-    }
-
-    setRejectingTenant(tenant.id);
-    
-    try {
-      // Call API to reject/delete the tenant application
-      const response = await fetch(`http://127.0.0.1:8000/api/accounts/users/${tenant.id}/delete/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
-
-      if (response.ok) {
-        showToast(`Application for ${tenant.full_name} has been rejected`, 'success');
-        await refreshData();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reject application');
-      }
-    } catch (error) {
-      console.error('Error rejecting tenant:', error);
-      showToast(error.message || 'Failed to reject application', 'error');
-    } finally {
-      setRejectingTenant(null);
-    }
-  };
-
-  // Handle assign unit success
-  const handleAssignSuccess = () => {
-    showToast('Tenant successfully assigned to unit!', 'success');
-    refreshData();
-  };
-
-  // FIXED: Enhanced loading state
-  if (tenantsLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-gray-200 p-4 rounded-lg animate-pulse">
-              <div className="h-6 bg-gray-300 rounded mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded"></div>
+  const handlePreviewDocument = (document) => {
+    if (document.type === 'application/pdf') {
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(`
+        <html>
+          <head><title>${document.name}</title></head>
+          <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f5f5f5;">
+            <div style="text-align:center; padding:40px;">
+              <h2>PDF Preview: ${document.name}</h2>
+              <p>File Size: ${formatFileSize(document.size)}</p>
+              <p style="color:#666;">In a real application, the PDF content would be displayed here.</p>
+              <button onclick="window.close()" style="margin-top:20px; padding:10px 20px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Close</button>
             </div>
-          ))}
-        </div>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white p-6 rounded-lg shadow animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </body>
+        </html>
+      `);
+    } else if (document.type?.startsWith('image/')) {
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(`
+        <html>
+          <head><title>${document.name}</title></head>
+          <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000;">
+            <div style="text-align:center;">
+              <h3 style="color:white; margin-bottom:20px;">${document.name}</h3>
+              <div style="color:#ccc; margin-bottom:20px;">Image Preview - File Size: ${formatFileSize(document.size)}</div>
+              <div style="color:#999;">In a real application, the image would be displayed here.</div>
+              <button onclick="window.close()" style="margin-top:20px; padding:10px 20px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Close</button>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (fileType) => {
+    if (fileType === 'application/pdf') {
+      return <FileText className="w-5 h-5 text-red-500" />;
+    }
+    if (fileType?.startsWith('image/')) {
+      return <FileImage className="w-5 h-5 text-blue-500" />;
+    }
+    return <FileText className="w-5 h-5 text-gray-500" />;
+  };
+
+  // Document Preview Modal
+  const DocumentPreviewModal = () => {
+    if (!documentPreview) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h3 className="text-lg font-semibold">
+              Documents for {documentPreview.applicantName}
+            </h3>
+            <button
+              onClick={() => setDocumentPreview(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-        ))}
+          
+          <div className="p-6 max-h-[70vh] overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(documentPreview.documents || []).map((doc, index) => (
+                <div key={index} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      {getFileIcon(doc.type)}
+                      <div>
+                        <p className="font-medium text-sm">{doc.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(doc.size)} • {doc.uploadedAt ? formatDate(doc.uploadedAt) : 'Recently uploaded'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handlePreviewDocument(doc)}
+                      className="flex-1 flex items-center justify-center px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => handleDownloadDocument(doc, documentPreview.applicantName)}
+                      className="flex-1 flex items-center justify-center px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100"
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
+            <button
+              onClick={() => setDocumentPreview(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                alert('Downloading all documents as ZIP file...');
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download All
+            </button>
+          </div>
+        </div>
       </div>
     );
-  }
+  };
+
+  const invoiceTemplate = (tenant) => 
+  `Dear ${tenant.name},\n\nThis is a rent reminder for Room ${tenant.room}.\nYour rent amount is KSh ${Number(tenant.rentAmount || 0).toLocaleString()}.\nPlease make payment by the due date to avoid penalties.\n\nThank you,\nMakao Center Admin`;
+
+  const predefinedMessages = [
+    tenant => `Dear ${tenant.name}, your rent for Room ${tenant.room} is due. Please pay KSh ${Number(tenant.rentAmount || 0).toLocaleString()} as soon as possible.`,
+    tenant => `Reminder: Rent for Room ${tenant.room} is overdue. Kindly clear your balance to avoid eviction.`,
+    tenant => `Makao Center wishes you a great month! Remember, your rent for Room ${tenant.room} is KSh ${Number(tenant.rentAmount || 0).toLocaleString()}.`
+  ];
+
+  // Tenant Actions Dropdown Component
+  const TenantActionsDropdown = ({ tenant, isOpen, onToggle }) => {
+    return (
+      <div className="relative">
+        <button
+          onClick={() => onToggle(tenant.id)}
+          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+        >
+          Actions ▼
+        </button>
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <div className="py-2">
+              <button
+                onClick={() => {
+                  setSelectedTenant(tenant);
+                  setDropdownOpen(null);
+                  navigate(`/admin/tenants/${tenant.id}/details`);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <User className="w-4 h-4 mr-2" />
+                View Tenant Details
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedTenant(tenant);
+                  setDropdownOpen(null);
+                  navigate(`/admin/tenants/${tenant.id}/transactions`);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Tenant Transactions
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedTenant(tenant);
+                  setDropdownOpen(null);
+                  // Open WhatsApp or Email modal with invoice template
+                  if (window.confirm('Send invoice via WhatsApp? Click Cancel to send via Email.')) {
+                    setIsWhatsAppModalOpen(true);
+                  } else {
+                    setIsEmailModalOpen(true);
+                  }
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <Receipt className="w-4 h-4 mr-2" />
+                Add Invoice
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedTenant(tenant);
+                  setDropdownOpen(null);
+                  setIsCustomMessageModalOpen(true);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Send Custom Message
+              </button>
+
+              <button
+                onClick={() => {
+                  handleDownloadStatement(tenant);
+                  setDropdownOpen(null);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Download Tenant Statement
+              </button>
+
+              <button
+                onClick={() => {
+                  handleShiftTenant(tenant);
+                  setDropdownOpen(null);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              >
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Shift Tenant
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="flex justify-between items-center flex-col text-center gap-7 sm:flex-row sm:gap-1">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Tenant Management</h1>
-          <p className="text-gray-600 mt-1">Manage current tenants and applications</p>
+          <p className="text-gray-600">Manage current tenants and view recent applications</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div className="flex gap-3 flex-col sm:flex-row">
           <button
             onClick={() => setIsEmailModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center transition-colors"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
           >
             <Mail className="w-5 h-5 mr-2" />
             Send Email
           </button>
-          {/* Dropdown for tenant signup options */}
+      
+          <button
+            onClick={() => setIsWhatsAppModalOpen(true)}
+            className="bg-green-400 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+          >
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Send WhatsApp
+          </button>
+   
           <div className="relative group">
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center transition-colors w-full sm:w-auto">
-              <Plus className="w-5 h-5 mr-2" />
-              Add New Tenant
-            </button>
-            
-            {/* Dropdown menu */}
             <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
               <div className="py-2">
                 <button
                   onClick={handleTenantSignup}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Open Signup Form
                 </button>
                 <button
                   onClick={copySignupLink}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Copy Signup Link
@@ -415,63 +439,39 @@ const handleRemoveTenantFallback = async (tenantId, tenantName) => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="bg-blue-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-600 text-sm font-medium">Active Tenants</p>
-              <p className="text-2xl font-bold text-blue-900">{stats.activeTenants}</p>
+              <p className="text-2xl font-bold text-blue-900">{(mockTenants || []).filter(t => t.status === 'active').length}</p>
             </div>
             <Users className="w-8 h-8 text-blue-600" />
           </div>
         </div>
         
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-yellow-600 text-sm font-medium">Pending Applications</p>
-              <p className="text-2xl font-bold text-yellow-900">{stats.pendingApplications}</p>
-            </div>
-            <Clock className="w-8 h-8 text-yellow-600" />
-          </div>
-        </div>
-        
-        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+        <div className="bg-red-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-600 text-sm font-medium">Overdue Rent</p>
-              <p className="text-2xl font-bold text-red-900">{stats.overdueRent}</p>
+              <p className="text-2xl font-bold text-red-900">{(mockTenants || []).filter(t => t.rentStatus === 'overdue').length}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-600 text-sm font-medium">Total Tenants</p>
-              <p className="text-2xl font-bold text-green-900">{stats.totalTenants}</p>
-            </div>
-            <UserCheck className="w-8 h-8 text-green-600" />
           </div>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search tenants by name, email, phone, or unit number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search tenants or applications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       </div>
 
@@ -486,17 +486,17 @@ const handleRemoveTenantFallback = async (tenantId, tenantName) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Active Tenants ({stats.activeTenants})
+            Active Tenants ({(mockTenants || []).filter(t => t.status === 'active').length})
           </button>
           <button
-            onClick={() => setActiveTab('applications')}
+            onClick={() => setActiveTab('recent')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'applications'
+              activeTab === 'recent'
                 ? 'border-yellow-500 text-yellow-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Pending Applications ({stats.pendingApplications})
+            Recently Joined Tenants ({(mockPendingApplications || []).length})
           </button>
           <button
             onClick={() => setActiveTab('all')}
@@ -506,161 +506,98 @@ const handleRemoveTenantFallback = async (tenantId, tenantName) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            All Tenants ({stats.totalTenants})
+            All Tenants ({(mockTenants || []).length})
           </button>
         </nav>
       </div>
 
       {/* Active Tenants Tab */}
       {activeTab === 'active' && (
-        <div className="bg-white rounded-lg shadow border border-gray-200">
+        <div className="bg-white rounded-lg shadow">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Users className="mr-2 text-blue-600" />
               Active Tenants
             </h3>
-            
-            {filteredTenants.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Tenants</h3>
-                <p className="text-gray-500">
-                  {searchTerm ? 'No tenants match your search criteria' : 'No tenants are currently assigned to units'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Tenant</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Unit</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Contact</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Rent Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Move-in Date</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b"><th className="text-left py-3 px-4">Tenant</th><th className="text-left py-3 px-4">Room</th><th className="text-left py-3 px-4">Contact</th><th className="text-left py-3 px-4">Rent Status</th><th className="text-left py-3 px-4">Actions</th></tr>
+                </thead>
+                <tbody>
+                  {(mockTenants || []).filter(t => t.status === 'active').map(tenant => (
+                    <tr key={tenant.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">{tenant.name}</p>
+                          <p className="text-sm text-gray-600">{tenant.email}</p>
+                          <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">{tenant.room}</p>
+                          <p className="text-sm text-gray-600">Since {new Date(tenant.joinDate || '2024-01-01').toLocaleDateString()}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="flex items-center text-sm">
+                            <Phone className="w-4 h-4 mr-1" /> {tenant.phone || '-'}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">KSh {Number(tenant.rentAmount || 0).toLocaleString()}</p>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            tenant.rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                            tenant.rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {tenant.rentStatus === 'paid' ? 'Paid' : 
+                             tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <TenantActionsDropdown 
+                          tenant={tenant}
+                          isOpen={dropdownOpen === tenant.id}
+                          onToggle={toggleDropdown}
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTenants.map(tenant => {
-                      const rentStatus = getRentStatus(tenant.unit);
-                      
-                      return (
-                        <tr key={tenant.id} className="border-b hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium text-gray-900">{tenant.full_name || tenant.name}</p>
-                              <p className="text-sm text-gray-600">{tenant.email}</p>
-                              <p className="text-xs text-gray-500">ID: {tenant.id}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            {tenant.unit ? (
-                              <div>
-                                <p className="font-medium text-gray-900">{tenant.unit.unit_number}</p>
-                                <p className="text-sm text-gray-600">
-                                  {formatCurrency(tenant.unit.rent)}/month
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">No unit assigned</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="space-y-1">
-                              <p className="flex items-center text-sm text-gray-600">
-                                <Phone className="w-4 h-4 mr-1" /> 
-                                {tenant.phone_number || 'N/A'}
-                              </p>
-                              {tenant.emergency_contact && (
-                                <p className="text-xs text-gray-500">
-                                  Emergency: {tenant.emergency_contact}
-                                </p>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {tenant.unit ? formatCurrency(tenant.unit.rent_remaining) : 'N/A'}
-                              </p>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                rentStatus.color === 'green' ? 'bg-green-100 text-green-800' :
-                                rentStatus.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-                                rentStatus.color === 'red' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {rentStatus.text}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-600">
-                            {tenant.unit?.assigned_date ? formatDate(tenant.unit.assigned_date) : 'N/A'}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex space-x-2">
-                              <button 
-                                className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button 
-                                className="text-green-600 hover:text-green-800 p-1 rounded transition-colors"
-                                title="Send Email"
-                                onClick={() => setIsEmailModalOpen(true)}
-                              >
-                                <Mail className="w-4 h-4" />
-                              </button>
-                              <button 
-                                className="text-red-600 hover:text-red-800 p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Remove from Unit"
-                                onClick={() => handleRemoveTenant(tenant.id)}
-                                disabled={rejectingTenant === tenant.id}
-                              >
-                                {rejectingTenant === tenant.id ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                                </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Pending Applications Tab */}
-      {activeTab === 'applications' && (
-        <div className="bg-white rounded-lg shadow border border-gray-200">
+      {/* Recent Tenants Tab */}
+      {activeTab === 'recent' && (
+        <div className="bg-white rounded-lg shadow">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Clock className="mr-2 text-yellow-600" />
-              Pending Applications
-              {filteredApplications.length > 0 && (
+              Recent Tenants
+              {(mockPendingApplications || []).length > 0 && (
                 <span className="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                  {filteredApplications.length} new
+                  {(mockPendingApplications || []).length} new
                 </span>
               )}
             </h3>
             
-            {filteredApplications.length === 0 ? (
+            {(mockPendingApplications || []).length === 0 ? (
               <div className="text-center py-12">
                 <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Applications</h3>
-                <p className="text-gray-500 mb-4">
-                  {searchTerm ? 'No applications match your search' : 'New tenant applications will appear here'}
-                </p>
+                <p className="text-gray-500 mb-4">New tenant applications will appear here</p>
                 <button
                   onClick={copySignupLink}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center mx-auto transition-colors"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center mx-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Share Signup Link
@@ -668,98 +605,89 @@ const handleRemoveTenantFallback = async (tenantId, tenantName) => {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredApplications.map(application => (
-                  <div key={application.id} className="border border-yellow-200 rounded-lg p-6 hover:bg-yellow-50 transition-colors">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
+                {(mockPendingApplications || []).map(application => (
+                  <div key={application.id} className="border rounded-lg p-6 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-gray-900">{application.full_name || application.name}</h4>
-                        <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-gray-600">
-                          <span className="flex items-center">
-                            <Mail className="w-4 h-4 mr-1" />
-                            {application.email}
-                          </span>
-                          <span className="flex items-center">
-                            <Phone className="w-4 h-4 mr-1" />
-                            {application.phone_number || 'N/A'}
-                          </span>
-                          <span className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            Applied: {formatDate(application.date_joined)}
-                          </span>
-                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900">{application.name}</h4>
+                        <p className="text-sm text-gray-600">Application ID: {application.id}</p>
+                        <p className="text-sm text-gray-500">Submitted: {formatDate(application.submittedAt)}</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full font-medium">
-                          Awaiting Assignment
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Payment Completed
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <h5 className="font-medium text-gray-900 mb-2">Contact Information</h5>
-                        <div className="space-y-1">
-                          <p><strong>Email:</strong> {application.email}</p>
-                          <p><strong>Phone:</strong> {application.phone_number || 'Not provided'}</p>
-                          {application.emergency_contact && (
-                            <p><strong>Emergency Contact:</strong> {application.emergency_contact}</p>
-                          )}
-                          {application.government_id && (
-                            <p><strong>Government ID:</strong> {application.government_id}</p>
-                          )}
+                        <div className="space-y-1 text-sm">
+                          <p className="flex items-center">
+                            <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                            {application.email}
+                          </p>
+                          <p className="flex items-center">
+                            <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                            {application.phone}
+                          </p>
+                          <p className="flex items-center">
+                            <FileText className="w-4 h-4 mr-2 text-gray-400" />
+                            ID: {application.governmentId}
+                          </p>
+                          <p className="flex items-center">
+                            <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                            Emergency: {application.emergencyContact}
+                          </p>
                         </div>
                       </div>
+
                       <div>
-                        <h5 className="font-medium text-gray-900 mb-2">Preferences</h5>
-                        <div className="space-y-1">
-                          <p><strong>Reminder Mode:</strong> {application.reminder_mode || 'Not set'}</p>
-                          <p><strong>Reminder Value:</strong> {application.reminder_value || 'Not set'}</p>
+                        <h5 className="font-medium text-gray-900 mb-2">Room & Documents</h5>
+                        <div className="space-y-1 text-sm">
+                          <p className="font-medium">{application.roomTypeLabel}</p>
+                          <p className="text-gray-600">Type: {application.roomType}</p>
+                          <p className="flex items-center text-blue-600">
+                            <FileText className="w-4 h-4 mr-1" />
+                            {application.documents.length} document{application.documents.length > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-2">Payment Details</h5>
+                        <div className="space-y-1 text-sm">
+                          <p className="font-medium text-green-600">
+                            KSh {Number(application.paymentAmount || 0).toLocaleString()}
+                          </p>
+                          <p className="text-gray-600">Transaction: {application.transactionId}</p>
+                          <p className="flex items-center text-green-600">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Verified
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 mt-4 border-t border-yellow-200">
+                    <div className="flex justify-between items-center pt-4 border-t">
                       <div className="flex space-x-3">
                         <button
-                          onClick={() => showToast('Document viewing coming soon', 'info')}
-                          className="flex items-center text-blue-600 hover:text-blue-800 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                          onClick={() => handleViewDocuments(application.documents, application.name)}
+                          className="flex items-center text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-200 rounded hover:bg-blue-50"
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          View Documents
+                          View Documents ({application.documents.length})
                         </button>
                         <button
-                          onClick={() => showToast('Download functionality coming soon', 'info')}
-                          className="flex items-center text-green-600 hover:text-green-800 px-3 py-2 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+                          onClick={() => {
+                            alert(`Downloading all documents for ${application.name}...`);
+                          }}
+                          className="flex items-center text-green-600 hover:text-green-800 px-3 py-1 border border-green-200 rounded hover:bg-green-50"
                         >
                           <Download className="w-4 h-4 mr-1" />
                           Download All
-                        </button>
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleAssignUnit(application)}
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center transition-colors"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Assign Unit
-                        </button>
-                        <button
-                          onClick={() => handleRejectTenant(application)}
-                          disabled={rejectingTenant === application.id}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center transition-colors disabled:opacity-50"
-                        >
-                          {rejectingTenant === application.id ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1"></div>
-                              Rejecting...
-                            </>
-                          ) : (
-                            <>
-                              <Ban className="w-4 h-4 mr-1" />
-                              Reject
-                            </>
-                          )}
                         </button>
                       </div>
                     </div>
@@ -773,154 +701,107 @@ const handleRemoveTenantFallback = async (tenantId, tenantName) => {
 
       {/* All Tenants Tab */}
       {activeTab === 'all' && (
-        <div className="bg-white rounded-lg shadow border border-gray-200">
+        <div className="bg-white rounded-lg shadow">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Users className="mr-2 text-gray-600" />
-              All Tenants ({filteredTenants.length})
+              All Tenants
             </h3>
-            
-            {filteredTenants.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Tenants Found</h3>
-                <p className="text-gray-500">
-                  {searchTerm ? 'No tenants match your search criteria' : 'No tenants in the system'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Tenant</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Unit</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Contact</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Rent Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b"><th className="text-left py-3 px-4">Tenant</th><th className="text-left py-3 px-4">Room</th><th className="text-left py-3 px-4">Contact</th><th className="text-left py-3 px-4">Rent Status</th><th className="text-left py-3 px-4">Status</th><th className="text-left py-3 px-4">Actions</th></tr>
+                </thead>
+                <tbody>
+                  {(mockTenants || []).map(tenant => (
+                    <tr key={tenant.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">{tenant.name}</p>
+                          <p className="text-sm text-gray-600">{tenant.email}</p>
+                          <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">{tenant.room}</p>
+                          <p className="text-sm text-gray-600">Since {new Date(tenant.joinDate || '2024-01-01').toLocaleDateString()}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="flex items-center text-sm">
+                            <Phone className="w-4 h-4 mr-1" /> {tenant.phone || '-'}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">KSh {Number(tenant.rentAmount || 0).toLocaleString()}</p>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            tenant.rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                            tenant.rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {tenant.rentStatus === 'paid' ? 'Paid' : 
+                             tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          tenant.status === 'active' ? 'bg-green-100 text-green-800' :
+                          tenant.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {tenant.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <TenantActionsDropdown 
+                          tenant={tenant}
+                          isOpen={dropdownOpen === tenant.id}
+                          onToggle={toggleDropdown}
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTenants.map(tenant => {
-                      const rentStatus = getRentStatus(tenant.unit);
-                      const isActive = tenant.unit;
-                      
-                      return (
-                        <tr key={tenant.id} className="border-b hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium text-gray-900">{tenant.full_name || tenant.name}</p>
-                              <p className="text-sm text-gray-600">{tenant.email}</p>
-                              <p className="text-xs text-gray-500">ID: {tenant.id}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            {tenant.unit ? (
-                              <div>
-                                <p className="font-medium text-gray-900">{tenant.unit.unit_number}</p>
-                                <p className="text-sm text-gray-600">
-                                  {formatCurrency(tenant.unit.rent)}/month
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">No unit assigned</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="space-y-1">
-                              <p className="flex items-center text-sm text-gray-600">
-                                <Phone className="w-4 h-4 mr-1" /> 
-                                {tenant.phone_number || 'N/A'}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {tenant.unit ? formatCurrency(tenant.unit.rent_remaining) : 'N/A'}
-                              </p>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                rentStatus.color === 'green' ? 'bg-green-100 text-green-800' :
-                                rentStatus.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-                                rentStatus.color === 'red' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {rentStatus.text}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              isActive 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {isActive ? 'Active' : 'No Unit'}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex space-x-2">
-                              <button 
-                                className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button 
-                                className="text-green-600 hover:text-green-800 p-1 rounded transition-colors"
-                                title="Send Email"
-                                onClick={() => setIsEmailModalOpen(true)}
-                              >
-                                <Mail className="w-4 h-4" />
-                              </button>
-                              {!isActive && (
-                                <button 
-                                  className="text-green-600 hover:text-green-800 p-1 rounded transition-colors"
-                                  title="Assign Unit"
-                                  onClick={() => handleAssignUnit(tenant)}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </button>
-                              )}
-                              {isActive && (
-                                <button 
-                                  className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
-                                  title="Remove from Unit"
-                                  onClick={() => handleRemoveTenant(tenant.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Modals */}
+      {/* Document Preview Modal */}
+      <DocumentPreviewModal />
+      
+      {/* All Modals */}
       <EmailFormModal 
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
-        tenants={tenants}
+        tenants={mockTenants}
       />
-      
-      {/* Add Assign Unit Modal */}
-      <AssignUnitModal
-        isOpen={isAssignUnitModalOpen}
-        onClose={() => {
-          setIsAssignUnitModalOpen(false);
-          setSelectedTenant(null);
-        }}
+      <WhatsAppFormModal
+        isOpen={isWhatsAppModalOpen}
+        onClose={() => setWhatsAppModalOpen(false)}
+        tenants={mockTenants}
+      />
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
         tenant={selectedTenant}
-        onAssignSuccess={handleAssignSuccess}
+      />
+      <CustomMessageModal
+        isOpen={isCustomMessageModalOpen}
+        onClose={() => setIsCustomMessageModalOpen(false)}
+        tenant={selectedTenant}
+      />
+      <ShiftTenantModal
+        isOpen={isShiftTenantModalOpen}
+        onClose={() => setIsShiftTenantModalOpen(false)}
+        tenant={selectedTenant}
+        availableUnits={(propertyUnits || []).filter(u => u.isAvailable)}
       />
     </div>
   );

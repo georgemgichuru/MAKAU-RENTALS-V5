@@ -61,7 +61,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=120, default='')
-    government_id = models.CharField(max_length=20, blank=True, null=True)
+    national_id = models.CharField(max_length=20, blank=True, null=True)
     id_document = models.ImageField(upload_to='id_documents/', null=True, blank=True)
     landlord_code = models.CharField(max_length=50, unique=True, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
