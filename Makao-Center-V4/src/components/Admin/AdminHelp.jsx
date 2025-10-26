@@ -83,12 +83,12 @@ const AdminHelp = () => {
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Mail className="w-8 h-8 mx-auto mb-2 text-blue-600" />
               <h3 className="font-medium">Email Support</h3>
-              <p className="text-sm text-gray-600">support@makaorentals.com</p>
+              <p className="text-sm text-gray-600">makaorentalmanagementsystem@gmail.com</p>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Phone className="w-8 h-8 mx-auto mb-2 text-green-600" />
               <h3 className="font-medium">Phone Support</h3>
-              <p className="text-sm text-gray-600">+254 712 345 678</p>
+              <p className="text-sm text-gray-600">+254 722 714 334</p>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <HelpCircle className="w-8 h-8 mx-auto mb-2 text-purple-600" />

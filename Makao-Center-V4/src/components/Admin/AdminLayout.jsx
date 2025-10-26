@@ -2,28 +2,31 @@ import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import { useAuth } from "../../context/AuthContext";
 import { LogOut, Menu, Bell, X, AlertTriangle, Clock, User, Eye } from "lucide-react";
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useNotifications } from "../../context/NotificationContext";
-import {AppContext} from "../../context/AppContext";
+import { AppContext } from "../../context/AppContext";
 import { NavLink } from "react-router-dom";
 
 export default function AdminLayout() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const { notifications, markReportsAsViewed } = useNotifications();
+  const { properties, selectedPropertyId } = useContext(AppContext);
   const dropdownRef = useRef(null);
-  const { landlords } = useContext(AppContext);
-  // Mock landlord and property data - replace with real data from your context
 
-  // Mock notification data - replace with real data from your context
+// Get selected property name - with proper null checks
+const selectedProperty = properties?.find(p => p.id?.toString() === selectedPropertyId);
+const propertyName = selectedProperty?.name || (properties?.length > 0 ? properties[0]?.name : 'Loading...');
+
+  // Mock notification data - you can replace this with real data from your backend
   const mockNotifications = [
     {
       id: 1,
       type: 'report',
       title: 'New Report: Power Outlet Not Working',
       message: 'John Doe reported an electrical issue in Room A101',
-      timestamp: new Date(Date.now() - 10 * 60000), // 10 minutes ago
+      timestamp: new Date(Date.now() - 10 * 60000),
       isRead: false,
       priority: 'high',
       tenant: 'John Doe',
@@ -34,34 +37,12 @@ export default function AdminLayout() {
       type: 'report',
       title: 'Report Update: Leaky Faucet',
       message: 'Maintenance team started working on the plumbing issue',
-      timestamp: new Date(Date.now() - 2 * 60 * 60000), // 2 hours ago
+      timestamp: new Date(Date.now() - 2 * 60 * 60000),
       isRead: false,
       priority: 'medium',
       tenant: 'Jane Smith',
       room: 'B205'
     },
-    {
-      id: 3,
-      type: 'payment',
-      title: 'Payment Overdue',
-      message: 'Mike Johnson has an overdue payment of KSh 35,000',
-      timestamp: new Date(Date.now() - 24 * 60 * 60000), // 1 day ago
-      isRead: true,
-      priority: 'high',
-      tenant: 'Mike Johnson',
-      room: 'C301'
-    },
-    {
-      id: 4,
-      type: 'tenant',
-      title: 'New Tenant Application',
-      message: 'Sarah Wilson submitted an application for Room A102',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60000), // 3 days ago
-      isRead: true,
-      priority: 'low',
-      tenant: 'Sarah Wilson',
-      room: 'A102'
-    }
   ];
 
   // Close dropdown when clicking outside
@@ -90,7 +71,6 @@ export default function AdminLayout() {
   const handleNotificationClick = () => {
     setNotificationDropdownOpen(!notificationDropdownOpen);
     if (!notificationDropdownOpen) {
-      // Mark notifications as viewed when opening dropdown
       markReportsAsViewed();
     }
   };
@@ -128,7 +108,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main content (shifts right only on md+) */}
+      {/* Main content */}
       <div className="flex-1 overflow-auto">
         {/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex items-center justify-between">
@@ -146,7 +126,8 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center space-x-4">
-          <div className='italic'>{landlords[0].properties[0].name}</div>
+            <div className='italic text-gray-600'>{propertyName}</div>
+            
             {/* Notification Bell with Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -223,8 +204,7 @@ export default function AdminLayout() {
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Action buttons for reports */}
+
                             {notification.type === 'report' && (
                               <div className="mt-2 ml-7">
                                 <NavLink
@@ -264,7 +244,9 @@ export default function AdminLayout() {
               )}
             </div>
 
-            <span className="text-gray-600 hidden md:inline">Welcome, Admin</span>
+            <span className="text-gray-600 hidden md:inline">
+              Welcome, {user?.full_name || 'Admin'}
+            </span>
             <button
               onClick={logout}
               className="text-gray-600 hover:text-gray-800 flex items-center"

@@ -22,6 +22,21 @@ class CreateReportView(generics.CreateAPIView):
         from app.tasks import send_report_email_task
         send_report_email_task.delay(report.id)
 
+class ReportListView(generics.ListAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == 'tenant':
+            return Report.objects.filter(tenant=user)
+        elif user.user_type == 'landlord':
+            # Landlords see reports from their properties
+            from accounts.models import Property
+            landlord_properties = Property.objects.filter(landlord=user)
+            return Report.objects.filter(unit__property_obj__in=landlord_properties)
+        return Report.objects.none()
+    
 class OpenReportsView(generics.ListAPIView):
     serializer_class = ReportSerializer
     permission_classes = [permissions.IsAuthenticated]

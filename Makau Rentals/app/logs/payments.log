@@ -596,3 +596,315 @@ INFO 2025-10-24 19:49:12,288 autoreload 9824 20328 C:\Users\George Mwangi\Deskto
 INFO 2025-10-24 19:49:17,394 autoreload 9356 14860 Watching for file changes with StatReloader
 ERROR 2025-10-24 20:29:20,365 views 9356 2356 Registration deposit STK push failed: Bad Request - Invalid CallBackURL
 WARNING 2025-10-24 20:29:20,405 log 9356 2356 Bad Request: /api/payments/initiate-deposit-registration/
+INFO 2025-10-25 05:02:08,609 autoreload 8104 16888 Watching for file changes with StatReloader
+ERROR 2025-10-25 05:02:51,042 views 8104 19168 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 05:02:51,044 log 8104 19168 Bad Request: /api/payments/initiate-deposit-registration/
+ERROR 2025-10-25 05:07:13,446 views 8104 19168 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 05:07:13,449 log 8104 19168 Bad Request: /api/payments/initiate-deposit-registration/
+WARNING 2025-10-25 05:45:40,449 log 8104 18464 Not Found: /
+WARNING 2025-10-25 05:45:40,851 log 8104 18464 Not Found: /favicon.ico
+ERROR 2025-10-25 05:47:26,996 views 8104 9564 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 05:47:26,999 log 8104 9564 Bad Request: /api/payments/initiate-deposit-registration/
+WARNING 2025-10-25 05:51:43,910 log 8104 12044 Method Not Allowed: /api/payments/initiate-deposit-registration/
+ERROR 2025-10-25 05:52:14,565 views 8104 12044 Registration deposit payment error: JSON parse error - Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\parsers.py", line 64, in parse
+    return json.load(decoded_stream, parse_constant=parse_constant)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\utils\json.py", line 31, in load
+    return json.load(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py", line 642, in post
+    unit_id = request.data.get('unit_id')
+              ^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\request.py", line 216, in data
+    self._load_data_and_files()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\request.py", line 279, in _load_data_and_files
+    self._data, self._files = self._parse()
+                              ^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\request.py", line 354, in _parse
+    parsed = parser.parse(stream, media_type, self.parser_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\parsers.py", line 66, in parse
+    raise ParseError('JSON parse error - %s' % str(exc))
+rest_framework.exceptions.ParseError: JSON parse error - Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+ERROR 2025-10-25 05:52:14,649 log 8104 12044 Internal Server Error: /api/payments/initiate-deposit-registration/
+ERROR 2025-10-25 05:53:25,445 views 8104 21260 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 05:53:25,448 log 8104 21260 Bad Request: /api/payments/initiate-deposit-registration/
+ERROR 2025-10-25 05:53:39,919 views 8104 21260 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 05:53:39,922 log 8104 21260 Bad Request: /api/payments/initiate-deposit-registration/
+INFO 2025-10-25 06:09:42,898 autoreload 8104 16888 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 06:09:47,874 autoreload 16760 4240 Watching for file changes with StatReloader
+ERROR 2025-10-25 06:14:35,136 views 16760 12896 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 06:14:35,139 log 16760 12896 Bad Request: /api/payments/initiate-deposit-registration/
+WARNING 2025-10-25 06:40:01,596 log 16760 19660 Not Found: /
+WARNING 2025-10-25 06:40:41,269 log 16760 11012 Unauthorized: /api/payments/initiate-deposit/
+ERROR 2025-10-25 06:47:22,949 views 16760 10024 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 06:47:22,952 log 16760 10024 Bad Request: /api/payments/initiate-deposit-registration/
+WARNING 2025-10-25 07:00:41,204 log 16760 12208 Not Found: /payments/mpesa/deposit-callback/
+WARNING 2025-10-25 07:00:55,089 log 16760 11664 Not Found: /payments/mpesa/deposit-callback/
+WARNING 2025-10-25 07:01:44,734 log 16760 20032 Not Found: /api/payments
+WARNING 2025-10-25 07:01:47,838 log 16760 20032 Not Found: /api/payments/
+INFO 2025-10-25 07:09:35,327 autoreload 16760 4240 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 07:09:38,955 autoreload 14388 15156 Watching for file changes with StatReloader
+INFO 2025-10-25 07:10:42,475 autoreload 14388 15156 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 07:10:45,768 autoreload 13336 8588 Watching for file changes with StatReloader
+INFO 2025-10-25 07:11:14,094 autoreload 13336 8588 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 07:11:17,660 autoreload 17640 12956 Watching for file changes with StatReloader
+ERROR 2025-10-25 07:13:17,335 views 17640 20572 Registration deposit STK push failed: Wrong credentials
+WARNING 2025-10-25 07:13:17,338 log 17640 20572 Bad Request: /api/payments/initiate-deposit-registration/
+INFO 2025-10-25 07:23:26,485 autoreload 17640 12956 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 07:23:32,898 autoreload 2656 11432 Watching for file changes with StatReloader
+WARNING 2025-10-25 07:27:16,644 log 2656 8580 Not Found: /payments/mpesa/callback/deposit
+INFO 2025-10-25 07:27:54,333 autoreload 2656 11432 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 07:27:59,548 autoreload 14012 5272 Watching for file changes with StatReloader
+INFO 2025-10-25 07:29:15,939 views 14012 21472 Registration deposit STK push request: unit_id=4, phone=+254722714334, amount=5000
+INFO 2025-10-25 07:29:15,958 views 14012 21472 Processing deposit payment: amount=5000.0, unit=2
+INFO 2025-10-25 07:29:17,726 views 14012 21472 Access token generated successfully: 79SySRQLgTKO0mvdRCip...
+INFO 2025-10-25 07:29:17,727 views 14012 21472 Sending STK push request to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-25 07:29:17,727 views 14012 21472 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5eW91ci1tcGVzYS1wYXNza2V5MjAyNTEwMjUwNzI5MTc=', 'Timestamp': '20251025072917', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 5000, 'PartyA': '254722714334', 'PartyB': '174379', 'PhoneNumber': '254722714334', 'CallBackURL': 'https://makau-rentals-backend.onrender.com/payments/mpesa/deposit-callback/', 'AccountReference': 'DEPOSIT-REG-U-2-2-095bf7b8', 'TransactionDesc': 'Deposit payment for 2'}
+INFO 2025-10-25 07:29:19,325 views 14012 21472 M-Pesa response: Status=500, Data={'requestId': '25a4-4cec-8aad-7f446ee0cced3930', 'errorCode': '500.001.1001', 'errorMessage': 'Wrong credentials'}
+ERROR 2025-10-25 07:29:19,488 views 14012 21472 Full response: {'requestId': '25a4-4cec-8aad-7f446ee0cced3930', 'errorCode': '500.001.1001', 'errorMessage': 'Wrong credentials'}
+WARNING 2025-10-25 07:29:19,490 log 14012 21472 Bad Request: /api/payments/initiate-deposit-registration/
+INFO 2025-10-25 07:33:28,267 autoreload 14012 5272 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 07:33:33,566 autoreload 13092 14020 Watching for file changes with StatReloader
+INFO 2025-10-25 07:45:58,237 autoreload 8668 18596 Watching for file changes with StatReloader
+WARNING 2025-10-25 09:01:43,447 log 8668 7696 Not Found: /
+INFO 2025-10-25 09:01:56,391 views 8668 33424 Registration deposit STK push request: unit_id=4, phone=+254722714334, amount=5000
+INFO 2025-10-25 09:01:56,450 views 8668 33424 Processing deposit payment: amount=5000.0, unit=2
+INFO 2025-10-25 09:01:58,353 views 8668 33424 Access token generated successfully: qd07Am13lwawjOJgfL3b...
+INFO 2025-10-25 09:01:58,354 views 8668 33424 Sending STK push request to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-25 09:01:58,354 views 8668 33424 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI1MDkwMTU4', 'Timestamp': '20251025090158', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 5000, 'PartyA': '254722714334', 'PartyB': '174379', 'PhoneNumber': '254722714334', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/payments/callback/deposit', 'AccountReference': 'DEPOSIT-REG-U-2-2-095bf7b8', 'TransactionDesc': 'Deposit payment for 2'}
+INFO 2025-10-25 09:01:59,687 views 8668 33424 M-Pesa response: Status=200, Data={'MerchantRequestID': '13c7-48d4-9578-55af6c2a47b813121', 'CheckoutRequestID': 'ws_CO_25102025090158882722714334', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+ERROR 2025-10-25 09:02:00,683 log 8668 33424 Internal Server Error: /api/payments/initiate-deposit-registration/
+WARNING 2025-10-25 09:02:13,617 log 8668 37776 Not Found: /payments/callback/deposit
+INFO 2025-10-25 09:08:42,277 autoreload 8668 18596 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\models.py changed, reloading.
+INFO 2025-10-25 09:08:54,335 autoreload 29852 40860 Watching for file changes with StatReloader
+INFO 2025-10-25 09:10:50,188 autoreload 29852 40860 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 09:10:56,731 autoreload 43032 16700 Watching for file changes with StatReloader
+INFO 2025-10-25 09:11:44,329 autoreload 43032 16700 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-25 09:11:50,661 autoreload 44276 21380 Watching for file changes with StatReloader
+INFO 2025-10-25 09:15:33,123 views 44276 36164 Registration deposit STK push request: unit_id=4, phone=+254722714334, amount=5000
+INFO 2025-10-25 09:15:33,130 views 44276 36164 Processing deposit payment: amount=5000.0, unit=2
+INFO 2025-10-25 09:15:35,257 views 44276 36164 Access token generated successfully: qdpSqqUnR0lwaX3GC1Cu...
+INFO 2025-10-25 09:15:35,259 views 44276 36164 Sending STK push request to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-25 09:15:35,260 views 44276 36164 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI1MDkxNTM1', 'Timestamp': '20251025091535', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 5000, 'PartyA': '254722714334', 'PartyB': '174379', 'PhoneNumber': '254722714334', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/payments/callback/deposit', 'AccountReference': 'DEPOSIT-REG-U-2-2-095bf7b8', 'TransactionDesc': 'Deposit payment for 2'}
+INFO 2025-10-25 09:15:37,347 views 44276 36164 M-Pesa response: Status=200, Data={'MerchantRequestID': '1f5d-424c-bb1f-e6a14457d7433126', 'CheckoutRequestID': 'ws_CO_25102025091536587722714334', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+WARNING 2025-10-25 09:15:47,085 log 44276 39612 Not Found: /payments/callback/deposit
+WARNING 2025-10-25 09:16:29,919 log 44276 36164 Bad Request: /api/accounts/tenant/register/complete/
+WARNING 2025-10-25 09:17:07,602 log 44276 34512 Not Found: /payments/callback/deposit
+WARNING 2025-10-25 09:17:14,866 log 44276 34512 Not Found: /payments/callback/deposit/
+WARNING 2025-10-25 09:17:54,512 log 44276 34512 Not Found: /payments/callback/deposit/
+WARNING 2025-10-25 09:23:33,658 log 44276 36684 Bad Request: /api/accounts/tenant/register/complete/
+WARNING 2025-10-25 09:26:51,967 views 44276 22684 Unit with code 4 not found
+WARNING 2025-10-25 10:49:45,574 log 44276 32624 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 11:23:05,610 log 44276 45760 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:25:21,118 log 44276 8448 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:25:21,165 log 44276 8448 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:25:24,983 log 44276 8448 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:25:25,046 log 44276 8448 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:25:38,462 log 44276 8448 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:25:38,490 log 44276 45760 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:25:39,548 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:25:39,640 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:32:57,193 log 44276 45760 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:32:57,866 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:34:05,550 log 44276 45760 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:34:05,576 log 44276 45760 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:34:08,534 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:34:08,641 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:34:38,687 log 44276 25552 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:34:38,723 log 44276 44420 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 11:34:39,090 log 44276 44420 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:34:39,123 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:35:10,999 log 44276 45760 Not Found: /api/communication/reports/
+WARNING 2025-10-25 11:35:11,037 log 44276 44420 Not Found: /api/communication/reports/
+INFO 2025-10-25 12:10:35,638 autoreload 44276 21380 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-25 12:10:43,207 autoreload 46196 43768 Watching for file changes with StatReloader
+INFO 2025-10-25 12:11:05,863 autoreload 46196 43768 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\urls.py changed, reloading.
+INFO 2025-10-25 12:11:11,182 autoreload 25456 39772 Watching for file changes with StatReloader
+INFO 2025-10-25 12:12:10,168 autoreload 25456 39772 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-25 12:12:14,196 autoreload 21492 11084 Watching for file changes with StatReloader
+WARNING 2025-10-25 12:59:18,135 log 21492 39448 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 12:59:18,446 log 21492 39448 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 12:59:18,485 log 21492 32040 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 12:59:18,513 log 21492 39448 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 12:59:18,544 log 21492 39448 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 12:59:18,616 log 21492 32040 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 13:06:51,191 log 21492 33632 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:06:51,237 log 21492 33632 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:07:10,642 log 21492 36936 Not Found: /api/accounts/properties/P002/units/
+WARNING 2025-10-25 13:19:11,469 log 21492 14636 Not Found: /
+WARNING 2025-10-25 13:20:14,771 log 21492 26288 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:20:14,883 log 21492 26288 Not Found: /api/accounts/properties/P001/units/
+INFO 2025-10-25 13:26:14,899 autoreload 21492 11084 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 13:26:26,566 autoreload 29332 11632 Watching for file changes with StatReloader
+INFO 2025-10-25 13:26:36,941 autoreload 29332 11632 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 13:26:40,787 autoreload 39144 45076 Watching for file changes with StatReloader
+INFO 2025-10-25 13:27:00,121 autoreload 39144 45076 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-25 13:27:06,812 autoreload 3620 10320 Watching for file changes with StatReloader
+WARNING 2025-10-25 13:27:15,201 log 3620 8292 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 13:27:15,817 log 3620 8292 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 13:27:44,673 log 3620 8292 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 13:27:45,314 log 3620 8292 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 13:28:23,679 log 3620 8292 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 13:28:24,229 log 3620 8292 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 13:28:44,231 log 3620 8292 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 13:28:44,728 log 3620 8292 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 13:29:42,211 log 3620 8292 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:29:42,603 log 3620 8292 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:29:58,355 log 3620 35808 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 13:29:58,761 log 3620 8292 Not Found: /api/accounts/properties/P001/units/
+WARNING 2025-10-25 14:30:23,695 log 3620 3412 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 15:31:23,849 log 3620 25608 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 15:45:25,373 log 3620 38464 Not Found: /api/api/accounts/tenants/
+WARNING 2025-10-25 15:45:26,591 log 3620 46844 Not Found: /api/api/accounts/tenants/
+WARNING 2025-10-25 15:45:27,794 log 3620 38464 Not Found: /api/api/accounts/tenants/
+WARNING 2025-10-25 17:15:02,402 log 3620 22524 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 17:15:02,518 log 3620 28752 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 17:15:02,527 log 3620 22868 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 17:15:02,535 log 3620 15312 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 17:15:02,545 log 3620 28696 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 17:15:02,557 log 3620 7364 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 17:15:02,946 log 3620 28752 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 17:15:03,014 log 3620 22524 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 17:15:03,162 log 3620 42456 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 17:15:03,251 log 3620 36860 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 17:15:03,312 log 3620 33160 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 17:15:03,317 log 3620 28752 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 17:15:03,367 log 3620 20584 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 17:15:04,105 log 3620 36860 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 17:15:04,197 log 3620 21156 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 17:15:05,049 log 3620 32716 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 17:15:30,320 log 3620 34452 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 18:24:42,310 log 3620 17704 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 18:24:42,317 log 3620 35584 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 18:24:44,054 log 3620 46032 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 18:24:44,058 log 3620 34928 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 18:24:44,062 log 3620 41804 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 18:24:44,068 log 3620 31708 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 18:24:44,072 log 3620 46216 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 18:24:44,075 log 3620 27604 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 18:24:44,079 log 3620 40916 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 18:24:44,588 log 3620 34928 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 18:24:44,590 log 3620 46032 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 18:24:44,746 log 3620 29576 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 18:24:44,872 log 3620 46032 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 18:24:44,881 log 3620 1796 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 18:24:45,004 log 3620 22996 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 18:24:45,072 log 3620 35652 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 18:24:45,154 log 3620 16896 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 18:24:45,953 log 3620 46032 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 19:25:25,632 log 3620 16864 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-25 19:26:38,807 autoreload 3620 10320 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-25 19:26:46,327 autoreload 40852 46524 Watching for file changes with StatReloader
+WARNING 2025-10-25 20:28:57,005 log 40852 36332 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-25 20:54:10,176 autoreload 40852 46524 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-25 20:54:18,844 autoreload 39180 23608 Watching for file changes with StatReloader
+INFO 2025-10-25 20:54:25,478 autoreload 39180 23608 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-25 20:54:29,489 autoreload 35852 25152 Watching for file changes with StatReloader
+INFO 2025-10-25 20:56:05,489 autoreload 35852 25152 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-25 20:56:10,030 autoreload 38408 25824 Watching for file changes with StatReloader
+INFO 2025-10-25 20:57:22,226 autoreload 38408 25824 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-25 20:57:25,258 autoreload 16908 39628 Watching for file changes with StatReloader
+INFO 2025-10-25 20:58:33,739 autoreload 16908 39628 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-25 20:58:36,953 autoreload 30436 25040 Watching for file changes with StatReloader
+INFO 2025-10-25 20:59:15,367 autoreload 30436 25040 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-25 20:59:19,748 autoreload 17764 46300 Watching for file changes with StatReloader
+INFO 2025-10-25 21:02:05,331 autoreload 17764 46300 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-25 21:02:09,853 autoreload 30112 38632 Watching for file changes with StatReloader
+INFO 2025-10-25 21:04:18,644 autoreload 30112 38632 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-25 21:04:21,951 autoreload 21268 12576 Watching for file changes with StatReloader
+WARNING 2025-10-25 21:31:49,077 log 21268 29892 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 21:31:49,079 log 21268 34020 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 21:31:49,087 log 21268 42552 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 21:31:49,094 log 21268 31140 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 21:31:49,195 log 21268 33944 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 21:31:49,203 log 21268 17640 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 21:31:49,209 log 21268 33960 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 21:31:49,836 log 21268 29892 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-25 21:31:49,839 log 21268 34020 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 21:31:49,842 log 21268 31140 Unauthorized: /api/accounts/units/
+WARNING 2025-10-25 21:31:49,845 log 21268 17640 Unauthorized: /api/communication/reports/
+WARNING 2025-10-25 21:31:49,981 log 21268 1620 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-25 21:31:50,146 log 21268 44740 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-25 21:31:50,408 log 21268 29892 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-25 21:31:50,883 log 21268 45580 Unauthorized: /api/accounts/me/
+WARNING 2025-10-25 21:31:51,445 log 21268 19592 Unauthorized: /api/accounts/me/
+INFO 2025-10-25 21:49:26,030 autoreload 32752 14912 Watching for file changes with StatReloader
+INFO 2025-10-26 09:05:08,985 autoreload 32752 14912 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-26 09:05:18,300 autoreload 34396 39388 Watching for file changes with StatReloader
+INFO 2025-10-26 09:05:33,603 autoreload 34396 39388 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-26 09:05:44,095 autoreload 39368 29884 Watching for file changes with StatReloader
+INFO 2025-10-26 09:06:15,653 autoreload 39368 29884 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 09:06:23,996 autoreload 42720 46216 Watching for file changes with StatReloader
+INFO 2025-10-26 09:07:32,221 autoreload 42720 46216 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 09:07:39,745 autoreload 34076 18928 Watching for file changes with StatReloader
+INFO 2025-10-26 09:10:52,390 autoreload 34076 18928 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-26 09:11:00,987 autoreload 36964 38088 Watching for file changes with StatReloader
+INFO 2025-10-26 09:11:14,738 autoreload 36964 38088 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 09:11:25,893 autoreload 22036 30820 Watching for file changes with StatReloader
+INFO 2025-10-26 09:12:17,374 autoreload 24776 34132 Watching for file changes with StatReloader
+INFO 2025-10-26 09:16:53,434 autoreload 24776 34132 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\admin.py changed, reloading.
+INFO 2025-10-26 09:17:00,822 autoreload 20660 23664 Watching for file changes with StatReloader
+WARNING 2025-10-26 09:17:13,755 log 20660 21028 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 09:17:13,756 log 20660 37348 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 09:17:13,757 log 20660 41900 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 09:17:13,758 log 20660 16804 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 09:17:13,760 log 20660 26588 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 09:17:13,761 log 20660 29256 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 09:17:13,762 log 20660 42324 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 09:17:14,181 log 20660 23052 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 09:17:14,183 log 20660 3616 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 09:17:14,333 log 20660 23400 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 09:17:14,858 log 20660 25540 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 09:17:14,887 log 20660 11424 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 09:17:14,891 log 20660 23416 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 09:17:14,895 log 20660 19488 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 09:17:15,933 log 20660 23400 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 09:17:16,670 log 20660 18568 Unauthorized: /api/accounts/me/
+INFO 2025-10-26 09:20:23,143 autoreload 20660 23664 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 09:20:34,393 autoreload 37756 25152 Watching for file changes with StatReloader
+INFO 2025-10-26 09:21:00,217 autoreload 37756 25152 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 09:21:08,153 autoreload 46956 24608 Watching for file changes with StatReloader
+INFO 2025-10-26 09:22:07,453 autoreload 46956 24608 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 09:22:11,468 autoreload 25232 33012 Watching for file changes with StatReloader
+WARNING 2025-10-26 10:20:11,840 log 25232 14724 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 10:20:12,075 log 25232 46320 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 10:20:12,223 log 25232 45752 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 10:20:12,367 log 25232 26896 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 10:20:12,457 log 25232 25276 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 10:20:12,465 log 25232 14724 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 10:20:12,674 log 25232 46320 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 10:20:12,731 log 25232 34676 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 10:20:12,939 log 25232 33312 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 10:20:13,154 log 25232 14064 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 10:20:13,476 log 25232 45752 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 10:20:13,481 log 25232 26896 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 10:20:13,685 log 25232 29428 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 10:20:13,961 log 25232 37576 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 10:20:14,048 log 25232 45548 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 10:20:14,431 log 25232 27008 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 10:34:16,967 log 25232 35272 Not Found: /accounts/tenants
+WARNING 2025-10-26 10:34:20,289 log 25232 35272 Not Found: /accounts/tenants/
+WARNING 2025-10-26 10:34:28,050 log 25232 35272 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 11:25:35,778 log 25232 21672 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 12:27:17,362 log 25232 41504 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 12:27:17,465 log 25232 39004 Unauthorized: /api/communication/reports/open/

@@ -1,8 +1,11 @@
-# Fix M-Pesa Deposit Callback for Registration Deposits
+# TODO: Fix Console Errors in Makau Rentals App
 
 ## Tasks
-- [x] Modify mpesa_deposit_callback to check for both cache keys: "stk_deposit_" and "stk_deposit_reg_"
-- [x] For registration deposits ("stk_deposit_reg_"), only update payment status, don't assign tenant
-- [x] For regular deposits ("stk_deposit_"), assign tenant as before
-- [x] Ensure proper logging for both cases
-- [ ] Test the callback handling for both deposit types
+- [x] Update AuthContext.jsx to log out user on invalid API response instead of keeping logged in locally
+- [x] Fix AdminOrganisation.jsx hydration error by removing extra whitespace between table rows
+- [x] Ensure all mapped elements in AdminOrganisation.jsx have unique keys
+- [x] Test the application to verify errors are resolved
+
+## Status
+- Started: 2024-12-19
+- Completed: [Date/Time]

@@ -23,7 +23,9 @@ class Payment(models.Model):
         CustomUser,
         on_delete=models.CASCADE,
         limit_choices_to={'user_type': 'tenant'},
-        related_name='payments'
+        related_name='payments',
+        null=True,  # ✅ ADD THIS
+        blank=True  # ✅ ADD THIS
     )
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='payments')
     

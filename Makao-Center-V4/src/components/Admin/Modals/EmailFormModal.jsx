@@ -1,10 +1,15 @@
 import React from 'react'
-import {useState} from 'react'
+import {useState, useContext} from 'react'
 import { 
   X, 
   Send,
 } from 'lucide-react';
+import { communicationAPI } from "../../../services/api";
+
+import { AppContext } from '../../../context/AppContext';
+
 const EmailFormModal = ({ isOpen, onClose, tenants }) => {
+  const { selectedPropertyId, getTenantsByProperty } = useContext(AppContext);
   const [emailData, setEmailData] = useState({
     recipients: 'all',
     selectedTenants: [],
@@ -15,35 +20,39 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
   // NEW: message type and template handling
   const [messageType, setMessageType] = useState('custom'); // 'custom' or 'predefined'
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Get tenants for the selected property
+  const propertyTenants = selectedPropertyId ? getTenantsByProperty(selectedPropertyId) : tenants;
 
   // Predefined templates - generic when tenant is not provided, personalized when tenant object available
   const messageTemplates = {
     rent_reminder: {
       title: 'Rent Reminder',
-      subject: (tenant) => tenant ? `Rent Reminder - Room ${tenant.room}` : 'Rent Reminder',
+      subject: (tenant) => tenant ? `Rent Reminder - Unit ${tenant.current_unit?.unitNumber || ''}` : 'Rent Reminder',
       template: (tenant) => tenant
-        ? `Dear ${tenant.name},\n\nThis is a reminder that your rent for Room ${tenant.room} is due soon.\n\nAmount: KSh ${tenant.rentAmount?.toLocaleString() || '{amount}'}\n\nPlease pay by the due date to avoid penalties.\n\nThank you,\nMakao Center`
+        ? `Dear ${tenant.full_name},\n\nThis is a reminder that your rent for Unit ${tenant.current_unit?.unitNumber || ''} is due soon.\n\nPlease pay by the due date to avoid penalties.\n\nThank you,\nMakao Center`
         : `Dear tenant,\n\nThis is a reminder that your rent is due soon.\n\nPlease pay by the due date to avoid penalties.\n\nThank you,\nMakao Center`
     },
     maintenance_notice: {
       title: 'Maintenance Notice',
       subject: () => 'Maintenance Notice',
       template: (tenant) => tenant
-        ? `Dear ${tenant.name},\n\nPlease be informed that scheduled maintenance will be carried out in Room ${tenant.room}. We apologise for any inconvenience.\n\nRegards,\nMakao Center`
+        ? `Dear ${tenant.full_name},\n\nPlease be informed that scheduled maintenance will be carried out in Unit ${tenant.current_unit?.unitNumber || ''}. We apologise for any inconvenience.\n\nRegards,\nMakao Center`
         : `Dear tenant,\n\nPlease be informed that scheduled maintenance will be carried out at the property. We apologise for any inconvenience.\n\nRegards,\nMakao Center`
     },
     payment_confirmation: {
       title: 'Payment Confirmation',
-      subject: (tenant) => tenant ? `Payment Confirmation - Room ${tenant.room}` : 'Payment Confirmation',
+      subject: (tenant) => tenant ? `Payment Confirmation - Unit ${tenant.current_unit?.unitNumber || ''}` : 'Payment Confirmation',
       template: (tenant) => tenant
-        ? `Dear ${tenant.name},\n\nWe have received your payment for Room ${tenant.room}.\n\nAmount: KSh ${tenant.rentAmount?.toLocaleString() || '{amount}'}.\n\nThank you for your prompt payment.\n\nBest,\nMakao Center`
+        ? `Dear ${tenant.full_name},\n\nWe have received your payment for Unit ${tenant.current_unit?.unitNumber || ''}.\n\nThank you for your prompt payment.\n\nBest,\nMakao Center`
         : `Dear tenant,\n\nWe have received your payment.\n\nThank you for your prompt payment.\n\nBest,\nMakao Center`
     },
     welcome_message: {
       title: 'Welcome Message',
       subject: () => 'Welcome to Makao Center',
       template: (tenant) => tenant
-        ? `Dear ${tenant.name},\n\nWelcome to Room ${tenant.room}! We're pleased to have you. Monthly rent: KSh ${tenant.rentAmount?.toLocaleString() || '{amount}'}.\n\nIf you need assistance contact us.\n\nWarm regards,\nMakao Center`
+        ? `Dear ${tenant.full_name},\n\nWelcome to Unit ${tenant.current_unit?.unitNumber || ''}! We're pleased to have you.\n\nIf you need assistance contact us.\n\nWarm regards,\nMakao Center`
         : `Dear tenant,\n\nWelcome! We're pleased to have you. If you need assistance contact us.\n\nWarm regards,\nMakao Center`
     },
     general_notice: {
@@ -70,7 +79,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
     // personalize when exactly 1 specific tenant is selected
     if (emailData.recipients === 'specific' && emailData.selectedTenants.length === 1) {
       const tenantId = emailData.selectedTenants[0];
-      const tenant = tenants.find(t => t.id === tenantId);
+      const tenant = propertyTenants.find(t => t.id === tenantId);
       const subject = tpl.subject ? tpl.subject(tenant) : '';
       const message = tpl.template ? tpl.template(tenant) : '';
       return { subject, message };
@@ -104,38 +113,65 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prepare payload for Django API
     const payload = {
-      recipients: emailData.recipients,
-      selectedTenants: emailData.recipients === 'specific' ? emailData.selectedTenants : null,
       subject: emailData.subject,
       message: emailData.message,
-      messageType,
-      templateKey: messageType === 'predefined' ? selectedTemplate : null
+      send_to_all: emailData.recipients === 'all',
+      tenants: emailData.recipients === 'specific' ? emailData.selectedTenants : []
     };
 
     try {
-      // Prepare for Django API integration
-      // const response = await fetch('/api/v1/communications/send-email/', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-      //   },
-      //   body: JSON.stringify(payload)
-      // });
+      setLoading(true);
       
-      console.log('Email payload ready for backend:', payload);
-      alert('Email sent successfully!');
-      onClose();
-
-      // reset
-      setEmailData({ recipients: 'all', selectedTenants: [], subject: '', message: '' });
-      setMessageType('custom');
-      setSelectedTemplate('');
+      console.log('Sending email with payload:', payload);
+      
+      // Use your actual API call
+      const response = await communicationAPI.sendEmail(payload);
+      
+      if (response.status >= 200 && response.status < 300) {
+        alert('Emails sent successfully!');
+        
+        // Reset form
+        setEmailData({ 
+          recipients: 'all', 
+          selectedTenants: [], 
+          subject: '', 
+          message: '' 
+        });
+        setMessageType('custom');
+        setSelectedTemplate('');
+        
+        onClose();
+      } else {
+        throw new Error(response.data?.message || 'Failed to send emails');
+      }
     } catch (error) {
       console.error('Error sending email:', error);
-      alert('Error sending email');
+      
+      // Show specific error message from backend
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Failed to send emails. Please try again.';
+      
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    setEmailData({ 
+      recipients: 'all', 
+      selectedTenants: [], 
+      subject: '', 
+      message: '' 
+    });
+    setMessageType('custom');
+    setSelectedTemplate('');
+    setLoading(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -145,7 +181,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border-2 border-black-500">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Send Email to Tenants</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={handleClose} className="text-gray-500 hover:text-gray-700" disabled={loading}>
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -162,6 +198,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
                   checked={emailData.recipients === 'all'}
                   onChange={(e) => setEmailData(prev => ({ ...prev, recipients: e.target.value }))}
                   className="mr-2"
+                  disabled={loading}
                 />
                 All Tenants
               </label>
@@ -173,6 +210,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
                   checked={emailData.recipients === 'specific'}
                   onChange={(e) => setEmailData(prev => ({ ...prev, recipients: e.target.value }))}
                   className="mr-2"
+                  disabled={loading}
                 />
                 Specific Tenants
               </label>
@@ -183,15 +221,16 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Tenants</label>
               <div className="border rounded-lg p-3 max-h-40 overflow-y-auto">
-                {tenants.map(tenant => (
+                {propertyTenants.map(tenant => (
                   <label key={tenant.id} className="flex items-center py-2">
                     <input
                       type="checkbox"
                       checked={emailData.selectedTenants.includes(tenant.id)}
                       onChange={() => handleTenantSelection(tenant.id)}
                       className="mr-2"
+                      disabled={loading}
                     />
-                    <span>{tenant.name} ({tenant.room})</span>
+                    <span>{tenant.full_name} {tenant.current_unit && `(Unit ${tenant.current_unit.unitNumber})`}</span>
                   </label>
                 ))}
               </div>
@@ -210,6 +249,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
                   checked={messageType === 'custom'}
                   onChange={(e) => setMessageType(e.target.value)}
                   className="mr-2"
+                  disabled={loading}
                 />
                 Write Custom Email
               </label>
@@ -227,6 +267,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
                     }
                   }}
                   className="mr-2"
+                  disabled={loading}
                 />
                 Use Predefined Template
               </label>
@@ -242,6 +283,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
                 onChange={(e) => handleTemplateChange(e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 required={messageType === 'predefined'}
+                disabled={loading}
               >
                 <option value="">-- Select a Template --</option>
                 {Object.keys(messageTemplates).map(key => (
@@ -262,6 +304,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
               onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="Email subject"
+              disabled={loading}
             />
           </div>
 
@@ -274,6 +317,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
               onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="Type your message here..."
+              disabled={loading}
             />
           </div>
 
@@ -290,15 +334,26 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center"
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-5 h-5 mr-2" />
-              Send Email
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5 mr-2" />
+                  Send Email
+                </>
+              )}
             </button>
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400"
+              onClick={handleClose}
+              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+              disabled={loading}
             >
               Cancel
             </button>
@@ -310,4 +365,3 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
 };
 
 export default EmailFormModal;
- 

@@ -18,28 +18,45 @@ export function AuthProvider({ children }) {
     try {
       const token = localStorage.getItem('accessToken');
       const storedUserType = localStorage.getItem('userType');
-      
-      if (token && storedUserType) {
-        // Verify token is still valid
+
+      if (!token || !storedUserType) {
+        setIsLoggedIn(false);
+        setUserType(null);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
         const response = await authAPI.getCurrentUser();
         const userData = response.data;
-        
-        if (userData.user_type === storedUserType) {
+
+        if (userData && userData.user_type) {
           setIsLoggedIn(true);
           setUserType(userData.user_type);
           setUser(userData);
         } else {
-          console.warn('User type mismatch, logging out');
+          console.warn('Invalid user data received');
           logout();
         }
-      } else {
-        setIsLoggedIn(false);
-        setUserType(null);
-        setUser(null);
+      } catch (apiError) {
+        console.warn('API call failed, logging out user:', apiError.message);
+        // Only logout if it's a 401 error, otherwise keep user logged in
+        if (apiError.response?.status === 401) {
+          logout();
+        } else {
+          // For other errors, keep user logged in but show warning
+          console.warn('Network error, keeping user logged in');
+          setIsLoggedIn(true);
+          setUserType(storedUserType);
+          setUser(JSON.parse(localStorage.getItem('userData') || '{}'));
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      logout();
+      setIsLoggedIn(false);
+      setUserType(null);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }

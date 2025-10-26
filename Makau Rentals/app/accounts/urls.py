@@ -34,10 +34,13 @@ from .views import (
     CompleteTenantRegistrationView,
     CompleteLandlordRegistrationView,
     AdminLandlordSubscriptionStatusView,
-    UnitListView,  # ADD THIS
-    ValidateLandlordView,  # ADD THIS
-    LandlordProfileView,  # ADD THIS
-    RemoveTenantFromUnitView,  # ADD THIS if it exists
+    UnitListView,
+    ValidateLandlordView,
+    LandlordProfileView,
+    RemoveTenantFromUnitView,
+    # ADD THE NEW VIEWS
+    TenantRegistrationView,
+    LandlordTenantsView,
 )
 
 urlpatterns = [
@@ -63,11 +66,11 @@ urlpatterns = [
     path('properties/<int:property_id>/units/', PropertyUnitsView.as_view(), name='property-units'),
     
     # Unit management
-    path('units/', UnitListView.as_view(), name='unit-list'),  # ✅ ADD THIS
+    path('units/', UnitListView.as_view(), name='unit-list'),
     path('units/create/', CreateUnitView.as_view(), name='unit-create'),
     path('units/<int:unit_id>/', UpdateUnitView.as_view(), name='unit-detail'),
     path('units/<int:unit_id>/assign/<int:tenant_id>/', AssignTenantView.as_view(), name='assign-tenant'),
-    path('units/<int:unit_id>/remove-tenant/', RemoveTenantFromUnitView.as_view(), name='remove-tenant'),  # ADD THIS
+    path('units/<int:unit_id>/remove-tenant/', RemoveTenantFromUnitView.as_view(), name='remove-tenant'),
     path('units/tenant/update/', TenantUpdateUnitView.as_view(), name='tenant-update-unit'),
     
     # Unit types
@@ -89,11 +92,17 @@ urlpatterns = [
     path('available-units/', LandlordAvailableUnitsView.as_view(), name='available-units'),
     
     # Tenants & Landlords
-    path('tenants/', UserListView.as_view(), name='tenant-list'),  # ✅ ADD THIS (alias to users)
-    path('landlords/profile/', LandlordProfileView.as_view(), name='landlord-profile'),  # ✅ ADD THIS
+    path('tenants/', UserListView.as_view(), name='tenant-list'),
+    path('landlords/profile/', LandlordProfileView.as_view(), name='landlord-profile'),
+    
+    # ✅ NEW: Tenant registration with landlord code
+    path('register/tenant/', TenantRegistrationView.as_view(), name='tenant-registration'),
+    
+    # ✅ NEW: Get tenants by landlord
+    path('landlord/tenants/', LandlordTenantsView.as_view(), name='landlord-tenants'),
     
     # Landlord validation for tenant signup
-    path('validate-landlord/', ValidateLandlordView.as_view(), name='validate-landlord'),  # ✅ ADD THIS
+    path('validate-landlord/', ValidateLandlordView.as_view(), name='validate-landlord'),
     
     # Registration steps
     path('tenant/register/step/<int:step>/', TenantRegistrationStepView.as_view(), name='tenant-register-step'),

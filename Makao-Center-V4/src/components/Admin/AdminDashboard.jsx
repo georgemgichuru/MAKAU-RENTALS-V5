@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react'
+import React, { useContext, useState, useEffect } from 'react';
 import { 
   Users, 
   AlertTriangle, 
@@ -7,8 +7,13 @@ import {
   DollarSign,
   AlertCircle,
   ExternalLink,
+  Building,
+  Home,
+  CreditCard,
+  FileText,
+  AlertOctagon
 } from 'lucide-react';
-import {AppContext} from '../../context/AppContext';
+import { AppContext } from '../../context/AppContext';
 import { NavLink } from 'react-router-dom';
 import EmailFormModal from './Modals/EmailFormModal';
 import WhatsAppFormModal from './Modals/WhatsAppFormModal';
@@ -16,222 +21,390 @@ import WhatsAppFormModal from './Modals/WhatsAppFormModal';
 const AdminDashboard = ({ onEmailClick }) => {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
-  const {mockTenants} = useContext(AppContext);
-  // Function to handle the tenant signup link
-  const handleTenantSignup = () => {
-    // Get the current domain and create the public signup URL
-    const signupUrl = `${window.location.origin}/tenant/signup`;
-    
-    // Open in new tab
-    window.open(signupUrl, '_blank');
-  };
+  
+  // Get data from context
+  const { 
+    selectedPropertyId, 
+    tenants,
+    properties,
+    propertyUnits,
+    transactions,
+    reports,
+    tenantsLoading,
+    tenantsError,
+    propertiesLoading,
+    unitsLoading,
+    transactionsLoading,
+    reportsLoading,
+    getUnitsByProperty,
+    getPropertyUnitStats,
+    getEstimatedTenants
+  } = useContext(AppContext);
 
-  // Function to copy the signup link to clipboard
-  const copySignupLink = async () => {
-    const signupUrl = `${window.location.origin}/tenant/signup`;
+  const [dashboardStats, setDashboardStats] = useState({
+    totalTenants: 0,
+    monthlyRevenue: 0,
+    openReports: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    availableUnits: 0,
+    rentDue: 0,
+    totalProperties: 0,
+    totalTransactions: 0
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [error, setError] = useState(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+
+  useEffect(() => {
+    calculateDashboardStats();
+  }, [tenants, properties, propertyUnits, transactions, reports, selectedPropertyId]);
+
+  const calculateDashboardStats = () => {
     try {
-      await navigator.clipboard.writeText(signupUrl);
-      // You could add a toast notification here
-      alert('Signup link copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy: ', err);
+      setLoading(true);
+      
+      console.log('📊 Calculating stats with data:', {
+        properties: properties.length,
+        units: propertyUnits.length,
+        tenants: tenants.length,
+        transactions: transactions.length,
+        reports: reports.length,
+        selectedProperty: selectedPropertyId,
+        tenantsError: tenantsError
+      });
+
+      // Check if we need to use fallback data for tenants
+      const shouldUseFallback = tenants.length === 0 && tenantsError;
+      setUsingFallbackData(shouldUseFallback);
+      
+      // Use actual tenants or fallback estimation
+      const effectiveTenants = shouldUseFallback ? getEstimatedTenants() : tenants;
+
+      // Calculate stats based on ALL data
+      const totalProperties = properties.length;
+      const totalUnits = propertyUnits.length;
+      
+      // Count occupied vs available units
+      const occupiedUnits = propertyUnits.filter(unit => !unit.isAvailable).length;
+      const availableUnits = propertyUnits.filter(unit => unit.isAvailable).length;
+
+      // Calculate revenue from successful transactions
+      const monthlyRevenue = transactions
+        .filter(txn => txn.status === 'Success' || txn.status === 'completed')
+        .reduce((sum, txn) => sum + (parseFloat(txn.amount) || 0), 0);
+
+      // Calculate rent due (pending transactions)
+      const rentDue = transactions
+        .filter(txn => (txn.status === 'pending' || txn.status === 'Pending') && txn.type === 'rent')
+        .reduce((sum, txn) => sum + (parseFloat(txn.amount) || 0), 0);
+
+      // Count open reports
+      const openReportsCount = reports.filter(report => 
+        report.status === 'open' || report.status === 'Open'
+      ).length;
+
+      const stats = {
+        totalTenants: effectiveTenants.length,
+        monthlyRevenue: monthlyRevenue,
+        openReports: openReportsCount,
+        totalUnits: totalUnits,
+        occupiedUnits: occupiedUnits,
+        availableUnits: availableUnits,
+        rentDue: rentDue,
+        totalProperties: totalProperties,
+        totalTransactions: transactions.length
+      };
+
+      console.log('📊 Final dashboard stats:', stats);
+      setDashboardStats(stats);
+
+      // Set recent transactions (last 5)
+      const recent = transactions
+        .filter(txn => txn.status === 'Success' || txn.status === 'completed')
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+      
+      setRecentTransactions(recent);
+
+    } catch (error) {
+      console.error('Error calculating dashboard stats:', error);
+      setError('Failed to calculate dashboard statistics');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleWhatsAppClick = () => {
+    alert("This Feature is not yet available. Coming soon !");
+  };
+
+  // Show loading states
+  if (loading || tenantsLoading || propertiesLoading || unitsLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-3">Loading dashboard data...</span>
+      </div>
+    );
+  }
+
+  // Show errors if any
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 className="text-red-800 font-semibold">Failed to load data</h3>
+        <p className="text-red-600 text-sm">{error}</p>
+        <button 
+          onClick={calculateDashboardStats}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-col sm:flex-row gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your property and tenants</p>
+          <p className="text-gray-600">Overview of your property management</p>
         </div>
         <div className="flex gap-3 flex-col sm:flex-row">
           <button
-           onClick={() => setIsEmailModalOpen(true)}
+            onClick={() => setIsEmailModalOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
           >
             <Mail className="w-5 h-5 mr-2" />
             Send Email
           </button>
-     
-              <button
-          onClick={() => setWhatsAppModalOpen(true)}
-          className="bg-green-400 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
-        >
-          <Mail className="w-5 h-5 mr-2" />
-          Send WhatsApp
-        </button>
+          <button
+            onClick={handleWhatsAppClick}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center"
+          >
+            <Mail className="w-5 h-5 mr-2" />
+            Send WhatsApp
+          </button>
+        </div>
+      </div>
 
-          {/* Dropdown for tenant signup options */}
-          <div className="relative group">
-            {/* <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
-              <Plus className="w-5 h-5 mr-2" />
-              Add New Tenant
-            </button> */}
-            
-            {/* Dropdown menu
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              <div className="py-2">
-                <button
-                  onClick={handleTenantSignup}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open Signup Form
-                </button>
-                <button
-                  onClick={copySignupLink}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Copy Signup Link
-                </button>
-              </div>
-            </div> */}
+      {/* API Status Banner */}
+      {tenantsError && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertOctagon className="w-5 h-5 text-yellow-600 mr-3" />
+            <div>
+              <p className="font-semibold text-yellow-800">API Notice</p>
+              <p className="text-sm text-yellow-700">
+                {tenantsError} Using estimated data from occupied units.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Data Status Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <Building className="w-5 h-5 text-blue-600 mr-3" />
+          <div>
+            <p className="font-semibold text-blue-800">Data Status</p>
+            <p className="text-sm text-blue-600">
+              Properties: {properties.length} | Units: {propertyUnits.length} | 
+              Transactions: {transactions.length} | Reports: {reports.length} |
+              Tenants: {usingFallbackData ? 'Estimated' : 'Actual'} ({dashboardStats.totalTenants})
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Signup URL Display for Admin Reference */}
-      {/* <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h3 className="font-medium text-green-800 mb-2">Tenant Signup Link</h3>
-        <div className="flex items-center justify-between flex-col sm:flex-row">
-          <code className="text-sm text-green-700 text-wrap bg-green-100 px-2 py-1 rounded">
-            {window.location.origin}/tenant/signup
-          </code>
-          <button
-            onClick={copySignupLink}
-            className="text-green-600 hover:text-green-800 text-sm font-medium"
-          >
-            Copy Link
-          </button>
-        </div>
-        <p className="text-sm text-green-600 mt-2">
-          Share this link with prospective tenants to allow them to sign up into the system
-        </p>
-      </div> */}
-
+      {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <NavLink 
-            to={"/admin/tenants"}
-          // close drawer on mobile when clicking a link
-          onClick={() => {  
-            if (typeof onClose === "function") onClose();
-        }}>
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-             
-        
-        <div className="cursor-pointer">
-            <p className="text-blue-600 text-sm font-medium pb-3">Total Tenants</p>
-            <p className="text-3xl pb-2 font-bold text-blue-900">2</p>
-        </div>
-
-     
-            
+        <NavLink to="/admin/tenants">
+          <div className="bg-blue-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-blue-600 text-sm font-medium">Total Tenants</p>
+                  {usingFallbackData && (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                      Estimated
+                    </span>
+                  )}
+                </div>
+                <p className="text-3xl pb-2 font-bold text-blue-900">{dashboardStats.totalTenants}</p>
+                <p className="text-blue-600 text-sm">
+                  {usingFallbackData ? 'Based on occupied units' : 'Active tenants'}
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-blue-600" />
             </div>
-            <Users className="w-8 h-8 text-blue-600" />
           </div>
-        </div>
-           </NavLink>
+        </NavLink>
 
-        <div className="bg-green-50 p-6 rounded-lg">
+        <div className="bg-green-50 p-6 rounded-lg border border-green-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-600 text-sm font-medium pb-3">Monthly Revenue</p>
-              <p className="text-3xl pb-2 font-bold text-green-900">KSh 55,000</p>
-              <p className="text-green-600 text-sm">Expected monthly</p>
+              <p className="text-3xl pb-2 font-bold text-green-900">
+                KSh {dashboardStats.monthlyRevenue.toLocaleString()}
+              </p>
+              <p className="text-green-600 text-sm">Total collected revenue</p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>
         </div>
 
-    <NavLink 
-      to={"/admin/tenants"}
-          // close drawer on mobile when clicking a link
-          onClick={() => {  
-            if (typeof onClose === "function") onClose();
-        }}>
-        <div className="bg-orange-50 p-6 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-600 text-sm font-medium pb-3">Rent Due</p>
-              <p className="text-3xl pb-2 font-bold text-orange-900">KSh 5,000</p>
-              <p className="text-orange-600 text-sm">Outstanding payments</p>
+        <NavLink to="/admin/tenants">
+          <div className="bg-orange-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-orange-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-600 text-sm font-medium pb-3">Rent Due</p>
+                <p className="text-3xl pb-2 font-bold text-orange-900">
+                  KSh {dashboardStats.rentDue.toLocaleString()}
+                </p>
+                <p className="text-orange-600 text-sm">Outstanding payments</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-orange-600" />
             </div>
-            <AlertCircle className="w-8 h-8 text-orange-600" />
           </div>
-        </div>
-
         </NavLink>
 
-        <NavLink    
-        to={"/admin/reports"}    
-                // close drawer on mobile when clicking a link
-                onClick={() => {
-                  if (typeof onClose === "function") onClose();
-              }}>
-        <div className="bg-red-50 p-6 rounded-lg">
-           
+        <NavLink to="/admin/reports">
+          <div className="bg-red-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-red-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-600 text-sm font-medium pb-3">Open Reports</p>
+                <p className="text-3xl pb-2 font-bold text-red-900">{dashboardStats.openReports}</p>
+                <p className="text-red-600 text-sm">Require attention</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+          </div>
+        </NavLink>
+      </div>
+
+      {/* Secondary Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <NavLink to="/admin/organisation">
+          <div className="bg-purple-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-purple-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-600 text-sm font-medium pb-3">Total Properties</p>
+                <p className="text-3xl pb-2 font-bold text-purple-900">{dashboardStats.totalProperties}</p>
+                <p className="text-purple-600 text-sm">Managed properties</p>
+              </div>
+              <Building className="w-8 h-8 text-purple-600" />
+            </div>
+          </div>
+        </NavLink>
+
+        <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-100">
           <div className="flex items-center justify-between">
             <div>
-             
-                
-         
-                 <p className="text-red-600 text-sm font-medium pb-3">Open Reports</p>
-           
-             
-              <p className="text-3xl pb-2 font-bold text-red-900">1</p>
-              <p className="text-red-600 text-sm">Require attention</p>
+              <p className="text-indigo-600 text-sm font-medium pb-3">Occupied Units</p>
+              <p className="text-3xl pb-2 font-bold text-indigo-900">{dashboardStats.occupiedUnits}</p>
+              <p className="text-indigo-600 text-sm">Currently rented</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+            <Home className="w-8 h-8 text-indigo-600" />
           </div>
-         
         </div>
-            </NavLink>
+
+        <div className="bg-cyan-50 p-6 rounded-lg border border-cyan-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-cyan-600 text-sm font-medium pb-3">Available Units</p>
+              <p className="text-3xl pb-2 font-bold text-cyan-900">{dashboardStats.availableUnits}</p>
+              <p className="text-cyan-600 text-sm">Ready for rent</p>
+            </div>
+            <Home className="w-8 h-8 text-cyan-600" />
+          </div>
+        </div>
       </div>
 
+      {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-           <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Revenue Trend</h3>
-          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">Chart placeholder - Revenue over time</p>
+        <div className="bg-white p-6 rounded-lg shadow border">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Building className="w-5 h-5 mr-2 text-gray-600" />
+            Properties Overview
+          </h3>
+          <div className="space-y-3">
+            {properties.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Building className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No properties found</p>
+                <NavLink to="/admin/add-property" className="text-blue-600 hover:text-blue-800 text-sm">
+                  Add your first property
+                </NavLink>
+              </div>
+            ) : (
+              properties.map(property => (
+                <div key={property.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{property.name}</p>
+                    <p className="text-sm text-gray-600">{property.city}, {property.state}</p>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {getUnitsByProperty ? getUnitsByProperty(property.id.toString()).length : 0} units
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-       <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+        <div className="bg-white p-6 rounded-lg shadow border">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
+            Recent Transactions
+          </h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium">Mark Talamson</p>
-                <p className="text-sm text-gray-600">2023-07-20</p>
+            {transactionsLoading ? (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-500">Loading transactions...</span>
               </div>
-              <span className="text-green-600 font-medium">+KSh 35,000</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium">Jeremy Shiroya</p>
-                <p className="text-sm text-gray-600">2023-07-19</p>
+            ) : recentTransactions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No recent transactions</p>
               </div>
-              <span className="text-red-600 font-medium">-KSh 12,050</span>
-            </div>
+            ) : (
+              recentTransactions.map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium truncate">{transaction.description || 'Payment'}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(transaction.date).toLocaleDateString()} • {transaction.reference}
+                    </p>
+                  </div>
+                  <span className="font-medium text-green-600 whitespace-nowrap ml-2">
+                    KSh {parseFloat(transaction.amount || 0).toLocaleString()}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
+      
       <EmailFormModal 
-  isOpen={isEmailModalOpen}
-  onClose={() => setIsEmailModalOpen(false)}
-  tenants={mockTenants}
-/>
-<WhatsAppFormModal
-  isOpen={isWhatsAppModalOpen}
-  onClose={() => setWhatsAppModalOpen(false)}
-  tenants={mockTenants}
-/>
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        tenants={tenants}
+      />
+      <WhatsAppFormModal
+        isOpen={isWhatsAppModalOpen}
+        onClose={() => setWhatsAppModalOpen(false)}
+        tenants={tenants}
+      />
     </div>
   );
 };
 
-export default AdminDashboard
+export default AdminDashboard;

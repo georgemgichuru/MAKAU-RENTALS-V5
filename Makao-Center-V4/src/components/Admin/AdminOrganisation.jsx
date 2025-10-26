@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   Bed, 
@@ -8,11 +8,13 @@ import {
   X,
   Building2,
   Plus,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { NavLink } from "react-router-dom";
+import { propertiesAPI, communicationAPI, tenantsAPI } from '../../services/api';
 
 // Confirmation Dialog Component
 const ConfirmationDialog = ({ isOpen, onClose, onConfirm, room }) => {
@@ -171,13 +173,12 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    if (!unitData.unitNumber || !unitData.type /* || !unitData.size */ || !unitData.rent) {
-      // note: size removed from validation
+    if (!unitData.unitNumber || !unitData.type || !unitData.rent) {
       alert('Please fill in all fields');
       return;
     }
     onAdd(unitData);
-    setUnitData({ unitNumber: '', type: '', /* size: '', */ rent: '' });
+    setUnitData({ unitNumber: '', type: '', rent: '' });
   };
 
   return (
@@ -209,7 +210,7 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
               Room Type
             </label>
             <select
-              value={unitData.type}
+              value={unitData.type || ''}
               onChange={(e) => {
                 const selectedType = roomTypes.find(rt => rt.name === e.target.value);
                 setUnitData({
@@ -226,21 +227,6 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
               ))}
             </select>
           </div>
-          
-          {/* Size field removed per request
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Size (sqm)
-            </label>
-            <input
-              type="text"
-              value={unitData.size}
-              onChange={(e) => setUnitData({...unitData, size: e.target.value})}
-              placeholder="e.g., 30 sqm"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          */}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -276,38 +262,212 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
 };
 
 const AdminOrganisation = () => {
-  const { 
-    mockReports, 
-    mockTenants, 
-    propertyUnits: allPropertyUnits,
-    landlords,
+  // Safe context access with error handling
+  let contextValue;
+  try {
+    contextValue = useContext(AppContext);
+  } catch (error) {
+    console.error('Error accessing AppContext:', error);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Context Error</h2>
+          <p className="text-gray-600">Unable to access application context. Please refresh the page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Use the exact same destructuring as AdminDashboard
+  const {
     selectedPropertyId,
     setSelectedPropertyId,
-    addRoomType,
-    deleteRoomType,
-    addUnit,
-    updateUnitAvailability
-  } = useContext(AppContext);
-  const { showToast } = useToast();
+    reports = [],
+    tenants = [],
+    properties = [],
+    propertyUnits: allPropertyUnits = [],
+    addRoomType = () => {},
+    deleteRoomType = () => {},
+    addUnit = () => {},
+    updateUnitAvailability = () => {},
+  } = contextValue || {};
   
-  // Get current landlord (assuming first landlord)
-  const currentLandlord = landlords[0];
-  const currentProperty = currentLandlord?.properties.find(p => p.propertyId === selectedPropertyId);
+  const { showToast = () => {} } = useToast() || {};
   
-  // Filter data by selected property
-  const propertyUnits = (allPropertyUnits || []).filter(unit => unit.propertyId === selectedPropertyId);
-  const propertyTenants = mockTenants.filter(tenant => tenant.propertyId === selectedPropertyId);
-  const propertyReports = mockReports.filter(report => report.propertyId === selectedPropertyId);
-  
-  const [rooms, setRooms] = useState(propertyUnits);
+  const [currentProperty, setCurrentProperty] = useState(null);
+  const [apiPropertyUnits, setApiPropertyUnits] = useState([]);
+  const [apiPropertyTenants, setApiPropertyTenants] = useState([]);
+  const [apiPropertyReports, setApiPropertyReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [totalTenants, setTotalTenants] = useState(0);
+
+  const [rooms, setRooms] = useState(allPropertyUnits);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, room: null });
   const [roomTypeDialog, setRoomTypeDialog] = useState(false);
   const [addUnitDialog, setAddUnitDialog] = useState(false);
 
+  // Get current property
+  const contextCurrentProperty = properties?.find(p => {
+    const propertyId = p?.id?.toString();
+    const selectedId = selectedPropertyId?.toString();
+    return propertyId === selectedId;
+  }) || properties?.[0];
+
+  // Auto-select first property if none selected
+  useEffect(() => {
+    if (properties?.length > 0 && (!selectedPropertyId || !contextCurrentProperty)) {
+      const firstProperty = properties[0];
+      setSelectedPropertyId(firstProperty.id.toString());
+      setCurrentProperty(firstProperty);
+    }
+  }, [properties, selectedPropertyId, contextCurrentProperty, setSelectedPropertyId]);
+
+  // Filter data by selected property
+  const propertyUnits = useMemo(() => {
+    return (allPropertyUnits || []).filter(unit => {
+      const unitPropertyId = unit?.propertyId?.toString();
+      const selectedId = selectedPropertyId?.toString();
+      return unitPropertyId === selectedId;
+    });
+  }, [allPropertyUnits, selectedPropertyId]);
+
+  const propertyReports = useMemo(() => {
+    return (reports || []).filter(report => {
+      const reportPropertyId = report?.propertyId?.toString();
+      const selectedId = selectedPropertyId?.toString();
+      return reportPropertyId === selectedId;
+    });
+  }, [reports, selectedPropertyId]);
+
   // Update rooms when property changes
   useEffect(() => {
     setRooms(propertyUnits);
-  }, [selectedPropertyId, /* mockUnits changed -> now allPropertyUnits */ allPropertyUnits]);
+  }, [propertyUnits]);
+
+  // Set current property when selectedPropertyId changes
+  useEffect(() => {
+    if (selectedPropertyId && properties?.length > 0) {
+      const property = properties.find(p => p?.id?.toString() === selectedPropertyId.toString());
+      setCurrentProperty(property || properties[0]);
+    }
+  }, [selectedPropertyId, properties]);
+
+  // Fetch API data when property changes
+  useEffect(() => {
+    if (selectedPropertyId) {
+      fetchPropertyData();
+    }
+  }, [selectedPropertyId]);
+
+  // Fetch property data - SIMPLIFIED WITHOUT DEBUGGING
+  const fetchPropertyData = async () => {
+    if (!selectedPropertyId) return;
+
+    try {
+      setLoading(true);
+      setApiError(null);
+
+      const property = properties.find(p => p?.id?.toString() === selectedPropertyId.toString());
+      setCurrentProperty(property);
+
+      const [unitsResponse, tenantsResponse, reportsResponse] = await Promise.allSettled([
+        propertiesAPI.getPropertyUnits(selectedPropertyId),
+        tenantsAPI.getTenants(),
+        communicationAPI.getReports()
+      ]);
+
+      // Process units data
+      if (unitsResponse.status === 'fulfilled') {
+        const unitsWithStatus = (unitsResponse.value.data || []).map(unit => ({
+          ...unit,
+          status: unit.is_available ? 'available' : 'occupied',
+          isAvailable: unit.is_available,
+          unitNumber: unit.unit_number || unit.unitNumber || 'N/A',
+          type: unit.unit_type?.name || unit.type || 'N/A',
+          rent: unit.rent || unit.baseRent || 0,
+          propertyId: unit.property_obj?.id?.toString() || selectedPropertyId,
+          tenant: unit.tenant_obj ? 
+            `${unit.tenant_obj.first_name || ''} ${unit.tenant_obj.last_name || ''}`.trim() : 
+            unit.tenant || null
+        }));
+        setApiPropertyUnits(unitsWithStatus);
+      }
+
+      // Process tenants data - Get all tenants since tenant objects don't have property info
+      if (tenantsResponse.status === 'fulfilled') {
+        const apiTenants = tenantsResponse.value.data || [];
+        setApiPropertyTenants(apiTenants);
+      }
+
+      // Process reports data
+      if (reportsResponse.status === 'fulfilled') {
+        const filteredReports = (reportsResponse.value.data || []).filter(report => {
+          const reportPropertyId = report.unit?.property_obj?.id?.toString() || 
+                                  report.propertyId?.toString();
+          return reportPropertyId === selectedPropertyId.toString();
+        });
+        setApiPropertyReports(filteredReports);
+      }
+
+    } catch (error) {
+      console.error('Error fetching property data:', error);
+      setApiError('Failed to load property data from API');
+      showToast('Failed to load some data', 'error', 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate tenant count from occupied units
+  useEffect(() => {
+    const displayUnits = apiPropertyUnits.length > 0 ? apiPropertyUnits : propertyUnits;
+    const tenantCount = displayUnits.filter(unit => 
+      unit?.status === 'occupied' || 
+      unit?.isAvailable === false ||
+      unit?.is_available === false
+    ).length;
+    
+    setTotalTenants(tenantCount);
+  }, [apiPropertyUnits, propertyUnits]);
+
+  // Calculate other stats
+  const displayUnits = apiPropertyUnits.length > 0 ? apiPropertyUnits : propertyUnits;
+  const totalUnits = displayUnits.length;
+  const occupiedUnits = displayUnits.filter(unit => 
+    unit?.status === 'occupied' || 
+    unit?.isAvailable === false ||
+    unit?.is_available === false
+  ).length;
+  const availableUnits = displayUnits.filter(unit => 
+    unit?.status === 'available' || 
+    unit?.isAvailable === true ||
+    unit?.is_available === true
+  ).length;
+
+  const totalRevenue = displayUnits
+    .filter(unit => unit?.status === 'occupied' || !unit?.isAvailable)
+    .reduce((sum, unit) => sum + (Number(unit?.rent) || 0), 0);
+
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+
+  const displayReports = apiPropertyReports.length > 0 ? apiPropertyReports : propertyReports;
+  const openReportsCount = displayReports.filter(report => 
+    report.status === 'open' || report.status === 'Open' || report.status === 'pending'
+  ).length;
+
+  // Get tenants from occupied units for display
+  const propertyTenantsFromUnits = useMemo(() => {
+    return displayUnits
+      .filter(unit => unit?.status === 'occupied' || !unit?.isAvailable)
+      .map(unit => ({
+        id: unit.id,
+        name: unit.tenant || 'Unknown Tenant',
+        email: unit.tenant_email || 'No email',
+        unitNumber: unit.unitNumber
+      }));
+  }, [displayUnits]);
 
   // Open confirmation dialog
   const openConfirmDialog = (room) => {
@@ -321,6 +481,11 @@ const AdminOrganisation = () => {
   // Toggle room availability with confirmation
   const handleConfirmToggle = () => {
     const roomToUpdate = confirmDialog.room;
+    
+    if (!roomToUpdate?.id) {
+      showToast('Invalid room data', 'error', 3000);
+      return;
+    }
     
     // Update via context
     updateUnitAvailability(roomToUpdate.id, !roomToUpdate.isAvailable);
@@ -336,7 +501,11 @@ const AdminOrganisation = () => {
 
   // Handle adding room type
   const handleAddRoomType = (roomType) => {
-    addRoomType(currentLandlord.id, selectedPropertyId, roomType);
+    if (!selectedPropertyId) {
+      showToast('Please select a property first', 'error', 3000);
+      return;
+    }
+    addRoomType(selectedPropertyId, roomType);
     showToast('Room type added successfully', 'success', 3000);
     setRoomTypeDialog(false);
   };
@@ -344,45 +513,67 @@ const AdminOrganisation = () => {
   // Handle deleting room type
   const handleDeleteRoomType = (roomTypeId) => {
     if (window.confirm('Are you sure you want to delete this room type?')) {
-      deleteRoomType(currentLandlord.id, selectedPropertyId, roomTypeId);
+      deleteRoomType(selectedPropertyId, roomTypeId);
       showToast('Room type deleted successfully', 'success', 3000);
     }
   };
 
   // Handle adding rental unit
-  const handleAddUnit = (unitData) => {
-    const newUnit = {
-      id: Date.now(),
-      unitNumber: unitData.unitNumber,
-      type: unitData.type,
-      rent: parseInt(unitData.rent),
-      // size: unitData.size, // removed per request
-      status: 'available',
-      isAvailable: true,
-      tenant: null,
-      propertyId: selectedPropertyId
-    };
-    
-    addUnit(newUnit);
-    showToast(`Unit ${unitData.unitNumber} added successfully`, 'success', 3000);
-    setAddUnitDialog(false);
+  const handleAddUnit = async (unitData) => {
+    try {
+      if (!selectedPropertyId) {
+        showToast('Please select a property first', 'error', 3000);
+        return;
+      }
+
+      // Call the API to create the unit
+      const response = await propertiesAPI.createUnit({
+        unit_number: unitData.unitNumber,
+        unit_type: unitData.type,
+        rent: parseInt(unitData.rent),
+        property: selectedPropertyId,
+        is_available: true
+      });
+
+      // If API call successful, update local state
+      const newUnit = {
+        id: response.data.id,
+        unitNumber: response.data.unit_number,
+        type: response.data.unit_type,
+        rent: parseInt(response.data.rent),
+        status: 'available',
+        isAvailable: true,
+        tenant: null,
+        propertyId: selectedPropertyId
+      };
+      
+      addUnit(newUnit);
+      showToast(`Unit ${unitData.unitNumber} added successfully`, 'success', 3000);
+      setAddUnitDialog(false);
+      
+      // Refresh the units data
+      fetchPropertyData();
+      
+    } catch (error) {
+      console.error('Error adding unit:', error);
+      showToast('Failed to add unit. Please try again.', 'error', 3000);
+    }
   };
 
-  // Calculate statistics for the selected property
-  const totalUnits = Number(currentProperty?.numberOfUnits || 0);
-  const occupiedUnits = propertyUnits.filter(unit => unit.status === 'occupied').length;
-  const availableUnits = Math.max(0, totalUnits - occupiedUnits);
-  const unitsAdded = propertyUnits.length;
-  const totalRevenue = propertyUnits
-    .filter(unit => unit.status === 'occupied')
-    .reduce((sum, unit) => sum + (Number(unit.rent) || 0), 0);
-  
-  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
-  const totalTenants = propertyTenants.length;
+  const roomTypes = contextCurrentProperty?.unit_types || contextCurrentProperty?.roomTypes || [];
 
-  // Check if property limit reached
-  const canAddUnits = rooms.length < (currentProperty?.numberOfUnits || 0);
- 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading property data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <ConfirmationDialog
@@ -402,11 +593,11 @@ const AdminOrganisation = () => {
         isOpen={addUnitDialog}
         onClose={() => setAddUnitDialog(false)}
         onAdd={handleAddUnit}
-        roomTypes={currentProperty?.roomTypes || []}
+        roomTypes={roomTypes}
         propertyId={selectedPropertyId}
       />
 
-      {/* Header with Property Selector */}
+      {/* Header with Property Selector and Refresh Button */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -416,16 +607,25 @@ const AdminOrganisation = () => {
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <select
-              value={selectedPropertyId}
+              value={selectedPropertyId || ''}
               onChange={(e) => setSelectedPropertyId(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              {currentLandlord?.properties.map(property => (
-                <option key={property.propertyId} value={property.propertyId}>
-                  {property.name}
+              {properties?.map(property => (
+                <option key={property?.id} value={property?.id?.toString()}>
+                  {property?.name || 'Unnamed Property'}
                 </option>
               ))}
             </select>
+            
+            <button
+              onClick={fetchPropertyData}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Refreshing...' : 'Refresh Data'}
+            </button>
             
             <NavLink to="/admin/add-property">
               <button className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
@@ -437,20 +637,36 @@ const AdminOrganisation = () => {
         </div>
       </div>
 
+      {/* API Status Banner */}
+      {apiError && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+          <div className="flex items-start">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5" />
+            <div>
+              <p className="font-semibold text-yellow-900">API Connection Issue</p>
+              <p className="text-sm text-yellow-700">
+                Using local data. Some features may be limited. {apiError}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Property Info Banner */}
-      {currentProperty && (
+      {contextCurrentProperty && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
           <div className="flex items-start">
             <Building2 className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
             <div>
               <p className="font-semibold text-blue-900">
-                Viewing: {currentProperty.name}
+                Viewing: {contextCurrentProperty.name}
               </p>
               <p className="text-sm text-blue-700">
-                {currentProperty.address} • {currentProperty.city}
+                {contextCurrentProperty.address || contextCurrentProperty.city} • {contextCurrentProperty.city}
               </p>
               <p className="text-sm text-blue-600 mt-1">
-                Unit Capacity: {rooms.length}/{currentProperty.numberOfUnits} units added
+                Units: {displayUnits.length} total ({occupiedUnits} occupied, {availableUnits} available) • 
+                Tenants: {totalTenants}
               </p>
             </div>
           </div>
@@ -473,9 +689,9 @@ const AdminOrganisation = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Total Units (capacity)</p>
+              <p className="text-gray-600 text-sm">Total Units</p>
               <p className="text-3xl font-bold text-gray-900">{totalUnits}</p>
-              <p className="text-gray-600 text-sm">Units capacity for this property</p>
+              <p className="text-gray-600 text-sm">Units in this property</p>
             </div>
             <Bed className="w-8 h-8 text-gray-400" />
           </div>
@@ -505,20 +721,20 @@ const AdminOrganisation = () => {
       </div>
 
       {/* Property Images */}
-      {currentProperty?.images && currentProperty.images.length > 0 && (
+      {contextCurrentProperty?.images && contextCurrentProperty.images.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Property Gallery</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentProperty.images.map((image, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg overflow-hidden">
+            {contextCurrentProperty.images.map((image, index) => (
+              <div key={`image-${index}`} className="bg-gray-50 rounded-lg overflow-hidden">
                 <img 
                   src={image} 
-                  alt={`${currentProperty.name} ${index + 1}`}
+                  alt={`${contextCurrentProperty.name} ${index + 1}`}
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-4">
-                  <h3 className="font-medium text-gray-900">{currentProperty.name}</h3>
-                  <p className="text-sm text-gray-600">{currentProperty.address}</p>
+                  <h3 className="font-medium text-gray-900">{contextCurrentProperty.name}</h3>
+                  <p className="text-sm text-gray-600">{contextCurrentProperty.address}</p>
                 </div>
               </div>
             ))}
@@ -540,13 +756,13 @@ const AdminOrganisation = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {currentProperty?.roomTypes?.map(roomType => (
+          {roomTypes.map(roomType => (
             <div key={roomType.id} className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold text-gray-900">{roomType.name}</h3>
                   <p className="text-lg text-blue-600 font-bold mt-1">
-                    KSh {roomType.baseRent.toLocaleString()}
+                    KSh {roomType.baseRent?.toLocaleString() || roomType.rent?.toLocaleString()}
                   </p>
                 </div>
                 <button 
@@ -560,7 +776,7 @@ const AdminOrganisation = () => {
             </div>
           ))}
           
-          {(!currentProperty?.roomTypes || currentProperty.roomTypes.length === 0) && (
+          {roomTypes.length === 0 && (
             <div className="col-span-full text-center py-8 text-gray-500">
               No room types defined. Click "Add Room Type" to get started.
             </div>
@@ -574,19 +790,12 @@ const AdminOrganisation = () => {
           <div>
             <h2 className="text-xl font-semibold">Room Management</h2>
             <p className="text-sm text-gray-500 mt-1">
-              {canAddUnits 
-                ? `You can add ${currentProperty?.numberOfUnits - rooms.length} more units`
-                : 'Unit limit reached for this property'}
+              {displayUnits.length} units total • {occupiedUnits} occupied • {availableUnits} available
             </p>
           </div>
           <button
             onClick={() => setAddUnitDialog(true)}
-            disabled={!canAddUnits}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-              canAddUnits
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
             <Plus className="w-4 h-4" />
             Add Rental Unit
@@ -599,7 +808,6 @@ const AdminOrganisation = () => {
               <tr className="border-b">
                 <th className="text-left py-3 px-4">Room</th>
                 <th className="text-left py-3 px-4">Type</th>
-                {/* <th className="text-left py-3 px-4">Size</th> */} {/* commented out */}
                 <th className="text-left py-3 px-4">Rent (KSh)</th>
                 <th className="text-left py-3 px-4">Tenant</th>
                 <th className="text-left py-3 px-4">Status</th>
@@ -607,15 +815,12 @@ const AdminOrganisation = () => {
               </tr>
             </thead>
             <tbody>
-              {rooms.map(room => (
+              {displayUnits.map(room => (
                 <tr key={room.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{room.unitNumber}</td>
                   <td className="py-3 px-4">{room.type}</td>
-                  {/* <td className="py-3 px-4">{room.size}</td> */} {/* commented out */}
-                  <td className="py-3 px-4">{room.rent.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
-                    {room.tenant || '-'}
-                  </td>
+                  <td className="py-3 px-4">{room.rent?.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{room.tenant || '-'}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       room.status === 'available' 
@@ -628,18 +833,16 @@ const AdminOrganisation = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      onClick={() => openConfirmDialog(room)}
+                    <button 
+                      onClick={() => openConfirmDialog(room)} 
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                         room.isAvailable ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
+                      }`} 
                       title="Click to change availability"
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          room.isAvailable ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        room.isAvailable ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
                     </button>
                   </td>
                 </tr>
@@ -647,7 +850,7 @@ const AdminOrganisation = () => {
             </tbody>
           </table>
           
-          {rooms.length === 0 && (
+          {displayUnits.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Bed className="w-12 h-12 mx-auto mb-3 text-gray-300" />
               <p>No rental units added yet for this property.</p>
@@ -662,7 +865,7 @@ const AdminOrganisation = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4">Recent Reports</h3>
           <div className="space-y-3">
-            {propertyReports.slice(0, 3).map(report => (
+            {displayReports.slice(0, 3).map(report => (
               <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{report.title}</p>
@@ -676,7 +879,7 @@ const AdminOrganisation = () => {
               </div>
             ))}
             
-            {propertyReports.length === 0 && (
+            {displayReports.length === 0 && (
               <p className="text-center py-8 text-gray-500">No reports for this property</p>
             )}
           </div>
@@ -690,19 +893,19 @@ const AdminOrganisation = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4">Recent Tenants</h3>
           <div className="space-y-3">
-            {propertyTenants.slice(0, 3).map(tenant => (
+            {propertyTenantsFromUnits.slice(0, 3).map(tenant => (
               <div key={tenant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{tenant.name}</p>
-                  <p className="text-sm text-gray-600">Room {tenant.room}</p>
+                  <p className="text-sm text-gray-600">Room {tenant.unitNumber}</p>
                 </div>
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                  {tenant.status}
+                  Active
                 </span>
               </div>
             ))}
             
-            {propertyTenants.length === 0 && (
+            {propertyTenantsFromUnits.length === 0 && (
               <p className="text-center py-8 text-gray-500">No tenants for this property</p>
             )}
           </div>

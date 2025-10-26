@@ -19,6 +19,7 @@ from celery.schedules import crontab
 from urllib.parse import urlparse, parse_qsl
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 import os
 
@@ -66,7 +67,11 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev',
+]
 
 
 # Application definition
@@ -117,9 +122,33 @@ TEMPLATES = [
     },
 ]
 
-# for CORS handling 
-# TODO: Update CORS settings for production use
+# CORS Settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev",
+]
+
+# For development - allow all origins (easier but less secure)
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Allow credentials
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow the ngrok header
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'ngrok-skip-browser-warning',
+]
+
+# Allow all HTTP methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 WSGI_APPLICATION = 'app.wsgi.application'
 
@@ -253,14 +282,12 @@ MPESA_SHORTCODE = config('MPESA_SHORTCODE', default='')
 MPESA_PASSKEY = config('MPESA_PASSKEY', default='')
 MPESA_INITIATOR_NAME = config('MPESA_INITIATOR_NAME', default='')  # For B2C payments
 MPESA_SECURITY_CREDENTIAL = config('MPESA_SECURITY_CREDENTIAL', default='')  # For B2C payments
-MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL', default='')
-# Provide explicit callback URLs expected by payment views. If not set, fall back to MPESA_CALLBACK_URL
-MPESA_RENT_CALLBACK_URL = config('MPESA_RENT_CALLBACK_URL', default=MPESA_CALLBACK_URL)
-MPESA_SUBSCRIPTION_CALLBACK_URL = config('MPESA_SUBSCRIPTION_CALLBACK_URL', default=MPESA_CALLBACK_URL)
-MPESA_DEPOSIT_CALLBACK_URL = config('MPESA_DEPOSIT_CALLBACK_URL', default=MPESA_CALLBACK_URL)
-# B2C callback URLs
-MPESA_B2C_RESULT_URL = config('MPESA_B2C_RESULT_URL', default=MPESA_CALLBACK_URL)
-MPESA_B2C_TIMEOUT_URL = config('MPESA_B2C_TIMEOUT_URL', default=MPESA_CALLBACK_URL)
+# Provide explicit callback URLs expected by payment views. These are required and loaded from .env
+MPESA_RENT_CALLBACK_URL = config('MPESA_RENT_CALLBACK_URL')
+MPESA_SUBSCRIPTION_CALLBACK_URL = config('MPESA_SUBSCRIPTION_CALLBACK_URL')
+MPESA_DEPOSIT_CALLBACK_URL = config('MPESA_DEPOSIT_CALLBACK_URL')
+MPESA_B2C_RESULT_URL = config('MPESA_B2C_RESULT_URL')
+# MPESA_B2C_TIMEOUT_URL = config('MPESA_B2C_TIMEOUT_URL', default=MPESA_B2C_RESULT_URL)  # Not implemented yet
 
 # Logging Configuration - Enhanced for payment callbacks
 LOGGING = {

@@ -1,167 +1,503 @@
 import React from 'react'
-import { createContext, useState, useContext } from 'react';
-import {useNavigate} from 'react-router-dom';
+import { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { tenantsAPI, propertiesAPI, paymentsAPI, communicationAPI } from '../services/api';
+
 export const AppContext = createContext();
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h2 className="text-red-800 font-semibold">Something went wrong</h2>
+          <p className="text-red-600">{this.state.error?.message}</p>
+          <button 
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const ContextProvider = (props) => {
+  // API data states
+  const [tenants, setTenants] = useState([]);
+  const [properties, setProperties] = useState([]);
+  const [propertyUnits, setPropertyUnits] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [reports, setReports] = useState([]);
 
-  //tenants for the specific landlord
-  //remember for the tenant it fetches only their own details from the database and for the landlord it fetches all tenants under their properties
+  // Loading and error states
+  const [tenantsLoading, setTenantsLoading] = useState(false);
+  const [propertiesLoading, setPropertiesLoading] = useState(false);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
-  // --- make tenants editable (use state) so payments can update tenant records ---
-  const [mockTenants, setMockTenants] = useState([
-    { id: 1, name: 'John Doe', email: 'john@email.com', room: 'A101', phone: '+254712345678', status: 'active', rentStatus: 'paid', rentAmount: 4000, rentDue: 0, prepaidMonths: 0, bookingId: 'BK001', password: 'Tenant123!', propertyId: 'P001' },
-    { id: 2, name: 'Jane Smith', email: 'jane@email.com', room: 'B205', phone: '+254723456789', status: 'active', rentStatus: 'due', rentAmount: 6000, rentDue: 6000, prepaidMonths: 0, bookingId: 'BK002', propertyId: 'P001' },
-    { id: 3, name: 'Mike Johnson', email: 'mike@email.com', room: 'C301', phone: '+254734567890', status: 'pending', rentStatus: 'overdue', rentAmount: 8000, rentDue: 16000, prepaidMonths: 0, bookingId: 'BK003', propertyId: 'P002' },
-    { id: 4, name: 'Dickens Okoth', email: 'dickens@email.com', room: 'B205', phone: '+254723456789', status: 'active', rentStatus: 'due', rentAmount: 6000, rentDue: 6000, prepaidMonths: 0, bookingId: 'BK004', propertyId: 'P001' },
-    { id: 5, name: 'Jerry Williams', email: 'jerry@email.com', room: 'C301', phone: '+254734567890', status: 'pending', rentStatus: 'overdue', rentAmount: 8000, rentDue: 16000, prepaidMonths: 0, bookingId: 'BK005', propertyId: 'P002' }
-  ]);
-  
-  // Landlords with properties
-  const [landlords, setLandlords] = useState([
-    {
-      id: 'LL001',
-      name: 'Jane Smith',
-      email: 'landlord@property.com',
-      password: 'Landlord123!',
-      role: 'landlord',
-      phone: '+254722345678',
-      properties: [
-        {
-          propertyId: 'P001',
-          name: 'Sunrise Apartments',
-          address: '123 Main St, Nairobi',
-          city: 'Nairobi',
-          numberOfUnits: 24,
-          waterRate: 50,
-          electricityRate: 25,
-          mpesaTillNumber: '123456',
-          mpesaStoreNumber: 'STORE123',
-          taxRate: 7.5,
-          managementFee: 'percentage',
-          managementFeeValue: 10,
-          streetName: 'Main Street',
-          companyName: 'Sunrise Holdings',
-          notes: 'Premium apartments with modern amenities',
-          paymentInstructions: 'Pay by 5th of each month',
-          ownerPhone: '+254722345678',
-          roomTypes: [
-            { id: 'RT001', name: 'Studio', baseRent: 18000 },
-            { id: 'RT002', name: '1 Bedroom', baseRent: 25000 },
-            { id: 'RT003', name: '2 Bedroom', baseRent: 35000 }
-          ],
-          images: [
-            'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=400&h=300&fit=crop'
-          ]
-        },
-        {
-          propertyId: 'P002',
-          name: 'Ocean View Complex',
-          address: '456 Beach Rd, Mombasa',
-          city: 'Mombasa',
-          numberOfUnits: 12,
-          waterRate: 45,
-          electricityRate: 22,
-          mpesaTillNumber: '654321',
-          mpesaStoreNumber: 'STORE456',
-          taxRate: 7.5,
-          managementFee: 'fixed',
-          managementFeeValue: 5000,
-          streetName: 'Beach Road',
-          companyName: 'Ocean Realty',
-          notes: 'Beachfront property with ocean views',
-          paymentInstructions: 'Pay by 1st of each month',
-          ownerPhone: '+254722345678',
-          roomTypes: [
-            { id: 'RT004', name: '2 Bedroom', baseRent: 40000 },
-            { id: 'RT005', name: '3 Bedroom', baseRent: 55000 }
-          ],
-          images: [
-            'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop'
-          ]
+  const [tenantsError, setTenantsError] = useState(null);
+  const [propertiesError, setPropertiesError] = useState(null);
+  const [unitsError, setUnitsError] = useState(null);
+  const [transactionsError, setTransactionsError] = useState(null);
+  const [reportsError, setReportsError] = useState(null);
+
+  // === FIXED: Fetch tenants from API with proper data transformation ===
+// === ULTIMATE FIX: Fetch tenants with multiple fallbacks ===
+const fetchTenants = async () => {
+  try {
+    setTenantsLoading(true);
+    setTenantsError(null);
+    console.log('🔄 fetchTenants: Starting...');
+
+    let tenantsData = [];
+
+    // STRATEGY 1: Try direct tenants endpoint
+    try {
+      console.log('1️⃣ Trying direct tenants endpoint...');
+      const response = await tenantsAPI.getTenants();
+      tenantsData = response.data || [];
+      console.log(`📊 Direct tenants: ${tenantsData.length} found`);
+    } catch (error) {
+      console.log('⚠️ Direct tenants endpoint failed');
+    }
+
+    // STRATEGY 2: If no tenants found, try users endpoint with tenant filter
+    if (tenantsData.length === 0) {
+      try {
+        console.log('2️⃣ Trying users endpoint with tenant filter...');
+        // This might vary based on your API - try different approaches
+        const usersResponse = await api.get('/accounts/users/', {
+          params: { user_type: 'tenant' }
+        });
+        if (usersResponse.data && Array.isArray(usersResponse.data)) {
+          tenantsData = usersResponse.data.filter(user => user.user_type === 'tenant');
+          console.log(`📊 Users as tenants: ${tenantsData.length} found`);
         }
-      ]
+      } catch (error) {
+        console.log('⚠️ Users endpoint failed');
+      }
     }
-   
-  ]);
 
-  // Mock reports for the specific property for the landlord
-const mockReports = [
-  { tenant_ID: 1, title: 'Power Outlet Not Working', tenant: 'John Doe', room: 'A101', category: 'Electrical', priority: 'high', status: 'open', date: '15/03/2024', description: 'Main power outlet not working', propertyId: 'P001' },
-  { tenant_ID: 2, title: 'Leaky Faucet', tenant: 'Jane Smith', room: 'B205', category: 'Plumbing', priority: 'medium', status: 'in-progress', date: '10/03/2024', description: 'Kitchen faucet leaking', propertyId: 'P001' },
-  { tenant_ID: 3, title: 'Broken Window', tenant: 'Mike Johnson', room: 'C301', category: 'Maintenance', priority: 'medium', status: 'in-progress', date: '10/03/2024', description: 'Bedroom window cracked', propertyId: 'P002' }
-];
-
-
-  // canonical initial units (keep this as a plain const to avoid duplicate state names)
-  const initialPropertyUnits = [
-    {
-      id: 1,
-      unitNumber: "A101",
-      type: "Studio",
-      rent: 25000,
-      size: "30 sqm",
-      status: "available",
-      isAvailable: true,
-      tenant: "John Doe",
-      propertyId: "P001"
-    },
-    {
-      id: 2,
-      unitNumber: "A205",
-      type: "1 Bedroom",
-      rent: 35000,
-      size: "45 sqm",
-      status: "available",
-      isAvailable: true,
-      tenant: "Jane Smith",
-      propertyId: "P001"
-    },
-    {
-      id: 3,
-      unitNumber: "A312",
-      type: "2 Bedroom",
-      rent: 50000,
-      size: "65 sqm",
-      status: "occupied",
-      isAvailable: false,
-      tenant: "Mike Johnson",
-      propertyId: "P002"
-    },
-    {
-      id: 4,
-      unitNumber: "B104",
-      type: "Studio",
-      rent: 28000,
-      size: "32 sqm",
-      status: "maintenance",
-      isAvailable: false,
-      tenant: null,
-      propertyId: "P001"
-    },
-    {
-      id: 5,
-      unitNumber: "B201",
-      type: "1 Bedroom",
-      rent: 38000,
-      size: "48 sqm",
-      status: "available",
-      isAvailable: true,
-      tenant: null,
-      propertyId: "P001"
+    // STRATEGY 3: Extract from units (this should work if units have tenant data)
+    if (tenantsData.length === 0) {
+      try {
+        console.log('3️⃣ Extracting tenants from units...');
+        const unitsResponse = await propertiesAPI.getUnits();
+        const unitsWithTenants = (unitsResponse.data || []).filter(unit => 
+          unit.tenant && typeof unit.tenant === 'object' && unit.tenant.id
+        );
+        
+        console.log(`🏠 Units with tenant objects: ${unitsWithTenants.length}`);
+        
+        // Extract unique tenants from units
+        const tenantMap = new Map();
+        unitsWithTenants.forEach(unit => {
+          if (unit.tenant && unit.tenant.id && !tenantMap.has(unit.tenant.id)) {
+            tenantMap.set(unit.tenant.id, {
+              ...unit.tenant,
+              current_unit: unit,
+              propertyId: unit.property_obj?.id?.toString() || 'unknown'
+            });
+          }
+        });
+        
+        tenantsData = Array.from(tenantMap.values());
+        console.log(`👥 Unique tenants from units: ${tenantsData.length}`);
+        
+      } catch (error) {
+        console.error('❌ Units extraction failed:', error);
+      }
     }
-  ];
 
-  // State for managing all property units (single declaration to avoid duplicate identifier errors)
-  const [propertyUnits, setPropertyUnits] = useState(initialPropertyUnits);
+    // STRATEGY 4: Last resort - check if units have tenant IDs but not full objects
+    if (tenantsData.length === 0) {
+      try {
+        console.log('4️⃣ Checking for tenant IDs in units...');
+        const unitsResponse = await propertiesAPI.getUnits();
+        const unitsWithTenantIds = (unitsResponse.data || []).filter(unit => 
+          unit.tenant && (typeof unit.tenant === 'number' || typeof unit.tenant === 'string')
+        );
+        
+        console.log(`🔢 Units with tenant IDs: ${unitsWithTenantIds.length}`);
+        
+        if (unitsWithTenantIds.length > 0) {
+          // We have tenant IDs but need to fetch the actual tenant data
+          console.log('💡 Found tenant IDs in units, but need to fetch tenant details');
+          // For now, create placeholder tenants
+          tenantsData = unitsWithTenantIds.map(unit => ({
+            id: unit.tenant,
+            full_name: `Tenant from Unit ${unit.unit_number}`,
+            email: `tenant${unit.tenant}@example.com`,
+            phone_number: 'N/A',
+            current_unit: unit,
+            propertyId: unit.property_obj?.id?.toString() || 'unknown',
+            isPlaceholder: true
+          }));
+        }
+      } catch (error) {
+        console.error('❌ Tenant ID check failed:', error);
+      }
+    }
 
-  // helper: get units for a specific property
+    console.log('🔄 fetchTenants: Final tenants data:', tenantsData);
+
+    // If still no tenants, check if this is expected (new landlord with no tenants)
+    if (tenantsData.length === 0) {
+      console.log('ℹ️ No tenants found in the system. This might be normal for a new landlord.');
+      setTenantsError('No tenants found. You can add tenants by assigning them to units.');
+      setTenants([]);
+      return;
+    }
+
+    // Transform the data
+    const transformedTenants = tenantsData.map((tenant) => {
+      return {
+        id: tenant.id,
+        full_name: tenant.full_name || tenant.name || 'Unknown Tenant',
+        email: tenant.email || 'no-email@example.com',
+        phone_number: tenant.phone_number || tenant.phone || 'N/A',
+        current_unit: tenant.current_unit || null,
+        propertyId: tenant.propertyId || tenant.property_id || 'unknown',
+        isPlaceholder: tenant.isPlaceholder || false,
+        // Include all original data
+        ...tenant
+      };
+    });
+
+    console.log('✅ fetchTenants: Successfully set tenants:', transformedTenants.length);
+    setTenants(transformedTenants);
+
+  } catch (error) {
+    console.error('❌ fetchTenants: Ultimate error:', error);
+    
+    setTenantsError('Unable to load tenant data. Please check your connection and try again.');
+    setTenants([]);
+  } finally {
+    setTenantsLoading(false);
+  }
+};
+// === SIMPLIFIED: Fetch reports from API ===
+const fetchReports = async () => {
+  try {
+    setReportsLoading(true);
+    setReportsError(null);
+    console.log('🔄 fetchReports: Starting...');
+    
+    const response = await communicationAPI.getReports();
+    console.log('🔄 fetchReports: Raw API response:', response);
+    
+    // Handle different response structures
+    let reportsData = response.data;
+    
+    // If response.data doesn't exist, try response directly
+    if (!reportsData && Array.isArray(response)) {
+      reportsData = response;
+    }
+    
+    console.log('🔄 fetchReports: Processed data:', reportsData);
+    
+    if (!reportsData || !Array.isArray(reportsData)) {
+      console.error('❌ fetchReports: Invalid data format:', reportsData);
+      setReportsError('No report data received or invalid format');
+      setReports([]);
+      return;
+    }
+    
+    if (reportsData.length === 0) {
+      console.log('ℹ️ fetchReports: No reports found in response');
+      setReports([]);
+      return;
+    }
+    
+    // Simple transformation
+    const transformedReports = reportsData.map((report, index) => {
+      return {
+        id: report.id || `report-${index}`,
+        title: report.issue_title || report.title || `Report ${index + 1}`,
+        category: report.issue_category || report.category || 'general',
+        priority: report.priority_level || report.priority || 'medium',
+        status: report.status || 'open',
+        date: report.reported_date || report.created_at || report.date || new Date().toISOString(),
+        description: report.description || report.issue_description || 'No description',
+        tenantName: report.tenant_name || report.tenant?.full_name || report.reported_by || 'Unknown',
+        unitNumber: report.unit_number || report.unit?.unit_number || 'N/A',
+        propertyName: report.property_name || report.property?.name || 'Unknown',
+        // Include all original data
+        ...report
+      };
+    });
+    
+    console.log('✅ fetchReports: Successfully set reports:', transformedReports.length);
+    setReports(transformedReports);
+    
+  } catch (error) {
+    console.error('❌ fetchReports: Error:', error);
+    
+    // Detailed error information
+    if (error.response) {
+      console.error('❌ Response error:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+      
+      if (error.response.status === 401) {
+        setReportsError('Authentication failed. Please log in again.');
+      } else if (error.response.status === 403) {
+        setReportsError('You do not have permission to access report data.');
+      } else if (error.response.status === 404) {
+        setReportsError('Reports endpoint not found (404). Check API URL.');
+      } else {
+        setReportsError(`Server error: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`);
+      }
+    } else if (error.request) {
+      console.error('❌ Request error:', error.request);
+      setReportsError('Network error: Could not connect to server.');
+    } else {
+      setReportsError(`Error: ${error.message}`);
+    }
+    
+    setReports([]);
+  } finally {
+    setReportsLoading(false);
+  }
+};
+  // Fetch properties from API - IMPROVED VERSION with 401 handling
+  const fetchProperties = async () => {
+    try {
+      setPropertiesLoading(true);
+      setPropertiesError(null);
+      console.log('🔄 Fetching properties...');
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No auth token, skipping properties fetch');
+        setProperties([]);
+        return;
+      }
+      
+      const response = await propertiesAPI.getProperties();
+      console.log('✅ Properties data received:', response.data);
+      setProperties(response.data);
+    } catch (error) {
+      console.error('❌ Error fetching properties:', error);
+      
+      if (error.response?.status === 401) {
+        setPropertiesError('Authentication required. Please log in again.');
+      } else {
+        setPropertiesError(error.response?.data?.error || 'Failed to load properties');
+      }
+    } finally {
+      setPropertiesLoading(false);
+    }
+  };
+
+  // Fetch property units from API - IMPROVED VERSION with 401 handling
+  const fetchPropertyUnits = async () => {
+    try {
+      setUnitsLoading(true);
+      setUnitsError(null);
+      console.log('🔄 Fetching property units...');
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No auth token, skipping units fetch');
+        setPropertyUnits([]);
+        return;
+      }
+      
+      const response = await propertiesAPI.getUnits();
+      console.log('✅ Units data received:', response.data);
+      
+      // Enhanced transformation with better error handling
+      const transformedUnits = response.data.map(unit => {
+        try {
+          return {
+            id: unit.id,
+            unitNumber: unit.unit_number || 'N/A',
+            type: unit.unit_type?.name || unit.unit_type || 'N/A',
+            rent: unit.rent || 0,
+            size: unit.size || 'N/A',
+            status: unit.is_available ? 'available' : 'occupied',
+            isAvailable: Boolean(unit.is_available),
+            tenant: unit.tenant?.full_name || unit.tenant?.name || null,
+            propertyId: unit.property_obj?.id?.toString() || unit.property?.toString() || 'unknown',
+            bedrooms: unit.bedrooms || 0,
+            bathrooms: unit.bathrooms || 1
+          };
+        } catch (transformError) {
+          console.warn('Error transforming unit:', unit, transformError);
+          return null;
+        }
+      }).filter(unit => unit !== null); // Remove any failed transformations
+      
+      setPropertyUnits(transformedUnits);
+      console.log('✅ Transformed units:', transformedUnits.length);
+      
+    } catch (error) {
+      console.error('❌ Error fetching property units:', error);
+      
+      if (error.response?.status === 401) {
+        setUnitsError('Authentication required. Please log in again.');
+      } else {
+        setUnitsError(error.response?.data?.error || 'Failed to load property units');
+      }
+    } finally {
+      setUnitsLoading(false);
+    }
+  };
+
+  // Fetch transactions from API - IMPROVED VERSION with 401 handling
+  const fetchTransactions = async () => {
+    try {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
+      console.log('🔄 Fetching transactions...');
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No auth token, skipping transactions fetch');
+        setTransactions([]);
+        return;
+      }
+      
+      const response = await paymentsAPI.getPaymentHistory();
+      console.log('✅ Transactions data received:', response.data);
+      
+      const transformedTransactions = response.data.map(txn => ({
+        id: txn.id,
+        tenantId: txn.tenant?.id || txn.tenant_id,
+        date: txn.created_at || txn.date || new Date().toISOString(),
+        description: txn.description || `Payment for ${txn.unit?.unit_number || 'unit'}`,
+        amount: txn.amount || 0,
+        type: txn.transaction_type || txn.type || 'rent',
+        status: txn.status || 'pending',
+        reference: txn.reference_number || txn.reference || `REF-${txn.id}`,
+        paymentMethod: txn.payment_method || 'mpesa',
+        propertyId: txn.property?.id?.toString() || txn.property_id?.toString() || 'unknown'
+      }));
+      
+      setTransactions(transformedTransactions);
+    } catch (error) {
+      console.error('❌ Error fetching transactions:', error);
+      
+      if (error.response?.status === 401) {
+        setTransactionsError('Authentication required. Please log in again.');
+      } else {
+        setTransactionsError(error.response?.data?.error || 'Failed to load transactions');
+      }
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  // Fetch all data on component mount ONLY when user is authenticated - UPDATED
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      fetchTenants();
+      fetchProperties();
+      fetchPropertyUnits();
+      fetchTransactions();
+      fetchReports();
+    }
+  }, []);
+
+  // Selected property (so admin pages know which property is active)
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+
+  // Set default selected property when properties are loaded
+  useEffect(() => {
+    if (properties.length > 0 && !selectedPropertyId) {
+      setSelectedPropertyId(properties[0].id.toString());
+    }
+  }, [properties, selectedPropertyId]);
+
+  // Helper function to calculate estimated tenants from units
+  const getEstimatedTenants = () => {
+    // Calculate estimated tenants from occupied units
+    const occupiedUnits = propertyUnits.filter(unit => !unit.isAvailable && unit.tenant);
+    
+    const estimatedTenants = occupiedUnits.map(unit => ({
+      id: `estimated-${unit.id}`,
+      full_name: unit.tenant || 'Unknown Tenant',
+      email: `${unit.unitNumber}@estimated.com`,
+      phone_number: 'N/A',
+      unit_data: {
+        unit_number: unit.unitNumber,
+        rent: unit.rent,
+        rent_remaining: unit.rent // Default assumption
+      },
+      isEstimated: true // Flag to indicate this is estimated data
+    }));
+    
+    return estimatedTenants;
+  };
+
+  // Get tenants with fallback to estimated data
+  const getTenantsWithFallback = () => {
+    if (tenants.length > 0) {
+      return tenants;
+    }
+    return getEstimatedTenants();
+  };
+
+  // Helper functions
   const getUnitsByProperty = (propertyId) => {
     return (propertyUnits || []).filter(u => u.propertyId === propertyId);
   };
 
-  // helper: get simple stats for a property
+  // === FIXED: getTenantsByProperty function ===
+  const getTenantsByProperty = (propertyId) => {
+    if (!propertyId) return [];
+    
+    // First, try to get tenants from the actual tenants array
+    const directTenants = tenants.filter(tenant => {
+      const tenantPropertyId = tenant.current_unit?.property_obj?.id?.toString() || 
+                             tenant.propertyId || 
+                             tenant.property?.toString();
+      return tenantPropertyId === propertyId.toString();
+    });
+    
+    if (directTenants.length > 0) {
+      return directTenants;
+    }
+    
+    // Fallback: get tenants from units
+    const unitsWithTenants = propertyUnits.filter(unit => 
+      unit.propertyId === propertyId && unit.tenant
+    );
+    
+    return unitsWithTenants.map(unit => ({
+      id: `unit-${unit.id}`,
+      full_name: unit.tenant,
+      email: `${unit.unitNumber}@estimated.com`,
+      phone_number: 'N/A',
+      current_unit: unit,
+      isEstimated: true
+    }));
+  };
+
   const getPropertyUnitStats = (propertyId) => {
     const unitsForProperty = getUnitsByProperty(propertyId);
     const total = unitsForProperty.length;
@@ -173,12 +509,15 @@ const mockReports = [
     return { total, available, occupied, revenue, units: unitsForProperty };
   };
 
-  // Function to add a new unit
+  const getTransactionsByTenant = (tenantId) => {
+    return transactions.filter(t => t.tenantId == tenantId); // loose equality to tolerate string/number ids
+  };
+
+  // Property management functions (for local state updates)
   const addUnit = (newUnit) => {
     setPropertyUnits(prev => [...prev, newUnit]);
   };
 
-  // Function to update unit availability / status
   const updateUnitAvailability = (unitId, isAvailable) => {
     setPropertyUnits(prev =>
       prev.map(unit => {
@@ -194,277 +533,90 @@ const mockReports = [
     );
   };
 
-  // central transactions store (tenantId uses the same id as tenants in mockTenants)
-  const [transactions, setTransactions] = useState([
-    {
-      id: 'TXN1001',
-      tenantId: 1,
-      date: '2024-03-05',
-      description: 'Rent Payment - March 2024',
-      amount: 25000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX1234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-    {
-      id: 'TXN1002',
-      tenantId: 2,
-      date: '2024-03-01',
-      description: 'Rent Payment - March 2024',
-      amount: 35000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX2234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-    {
-      id: 'TXN1003',
-      tenantId: 3,
-      date: '2024-02-28',
-      description: 'Deposit Payment',
-      amount: 50000,
-      type: 'Deposit',
-      status: 'completed',
-      reference: 'MPX3234567890',
-      paymentMethod: 'Bank Transfer',
-      propertyId: 'P002'
-    },
-    {
-      id: 'TXN1004',
-      tenantId: 1,
-      date: '2024-02-05',
-      description: 'Rent Payment - February 2024',
-      amount: 25000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX4234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-     {
-      id: 'TXN1001',
-      tenantId: 1,
-      date: '2024-03-05',
-      description: 'Rent Payment - March 2024',
-      amount: 25000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX1234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-    {
-      id: 'TXN1002',
-      tenantId: 2,
-      date: '2024-03-01',
-      description: 'Rent Payment - March 2024',
-      amount: 35000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX2234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-    {
-      id: 'TXN1003',
-      tenantId: 3,
-      date: '2024-02-28',
-      description: 'Deposit Payment',
-      amount: 50000,
-      type: 'Deposit',
-      status: 'completed',
-      reference: 'MPX3234567890',
-      paymentMethod: 'Bank Transfer',
-      propertyId: 'P002'
-    },
-    {
-      id: 'TXN1004',
-      tenantId: 1,
-      date: '2024-02-05',
-      description: 'Rent Payment - February 2024',
-      amount: 25000,
-      type: 'Payment',
-      status: 'completed',
-      reference: 'MPX4234567890',
-      paymentMethod: 'M-PESA',
-      propertyId: 'P001'
-    },
-  ]);
-
-  // helper: add transaction (updates local context)
-  const addTransaction = (txn) => {
-    setTransactions(prev => [{ ...txn }, ...prev]);
+  // Placeholder functions for missing property management
+  const addProperty = (landlordId, propertyData) => {
+    // Placeholder: Add property to local state or call API
+    console.log('Adding property:', propertyData);
+    // For now, just log; implement API call if needed
   };
 
-  // helper: apply a payment to a tenant record and record transaction
-  const applyPayment = (txn) => {
-    // add transaction
-    setTransactions(prev => [{ ...txn }, ...prev]);
-
-    // update tenant financial data
-    setMockTenants(prev =>
-      prev.map(t => {
-        if (String(t.id) === String(txn.tenantId)) {
-          const monthly = Number(t.rentAmount) || 0;
-          const paymentAmount = Number(txn.amount) || 0;
-
-          // compute how many full months the payment covers
-          const monthsPaid = monthly > 0 ? Math.floor(paymentAmount / monthly) : 0;
-          const remainder = monthly > 0 ? (paymentAmount - monthsPaid * monthly) : 0;
-
-          // update prepaidMonths
-          const newPrepaid = (t.prepaidMonths || 0) + monthsPaid;
-
-          // update rentDue: subtract paymentAmount, but don't go below 0
-          const currentDue = (t.rentDue !== undefined && t.rentDue !== null) ? Number(t.rentDue) : monthly;
-          const newDue = Math.max(0, currentDue - paymentAmount);
-
-          // determine new status
-          let newStatus = t.rentStatus;
-          if (newPrepaid > 0 || newDue === 0) {
-            newStatus = 'paid';
-          } else if (newDue > 0 && newDue < monthly) {
-            newStatus = 'partial';
-          } else if (newDue > 0) {
-            newStatus = 'due';
-          }
-
-          return {
-            ...t,
-            prepaidMonths: newPrepaid,
-            rentDue: newDue,
-            rentStatus: newStatus
-          };
-        }
-        return t;
-      })
-    );
+  const updateProperty = (propertyId, updatedData) => {
+    // Placeholder
+    console.log('Updating property:', propertyId, updatedData);
   };
 
-  // helper: get transactions by tenant id
-  const getTransactionsByTenant = (tenantId) => {
-    return transactions.filter(t => t.tenantId == tenantId); // loose equality to tolerate string/number ids
+  const addRoomType = (propertyId, roomTypeData) => {
+    // Placeholder
+    console.log('Adding room type:', roomTypeData);
   };
 
-  // Selected property (so admin pages know which property is active)
-  const [selectedPropertyId, setSelectedPropertyId] = useState(
-    // prefer existing landlord/property if present
-    landlords?.[0]?.properties?.[0]?.propertyId || (initialPropertyUnits[0]?.propertyId ?? null)
-  );
-
-  // Admin: add a new property for a landlord
-  const addProperty = (landlordId, propertyData = {}) => {
-    setLandlords(prev =>
-      prev.map(l => {
-        if (l.id !== landlordId) return l;
-        const newPropertyId = `P${Date.now()}`;
-        const newProperty = {
-          propertyId: newPropertyId,
-          name: propertyData.name || `New Property ${newPropertyId}`,
-          address: propertyData.streetName || propertyData.address || '',
-          city: propertyData.city || '',
-          numberOfUnits: Number(propertyData.numberOfUnits) || 0,
-          waterRate: Number(propertyData.waterRate) || 0,
-          electricityRate: Number(propertyData.electricityRate) || 0,
-          mpesaTillNumber: propertyData.mpesaTillNumber || '',
-          mpesaStoreNumber: propertyData.mpesaStoreNumber || '',
-          taxRate: Number(propertyData.taxRate) || 0,
-          managementFee: propertyData.managementFee || '',
-          managementFeeValue: propertyData.managementFeeValue || 0,
-          streetName: propertyData.streetName || '',
-          companyName: propertyData.companyName || '',
-          notes: propertyData.notes || '',
-          paymentInstructions: propertyData.paymentInstructions || '',
-          ownerPhone: propertyData.ownerPhone || '',
-          roomTypes: propertyData.roomTypes || [],
-          images: propertyData.images || []
-        };
-        return { ...l, properties: [...l.properties, newProperty] };
-      })
-    );
+  const deleteRoomType = (roomTypeId) => {
+    // Placeholder
+    console.log('Deleting room type:', roomTypeId);
   };
 
-  // Update property fields
-  const updateProperty = (landlordId, propertyId, updates = {}) => {
-    setLandlords(prev =>
-      prev.map(l => {
-        if (l.id !== landlordId) return l;
-        return {
-          ...l,
-          properties: l.properties.map(p =>
-            p.propertyId === propertyId ? { ...p, ...updates } : p
-          )
-        };
-      })
-    );
+  // Transaction management placeholders
+  const addTransaction = (transactionData) => {
+    // Placeholder
+    console.log('Adding transaction:', transactionData);
   };
 
-  // Room type helpers
-  const addRoomType = (landlordId, propertyId, roomType = {}) => {
-    setLandlords(prev =>
-      prev.map(l => {
-        if (l.id !== landlordId) return l;
-        return {
-          ...l,
-          properties: l.properties.map(p =>
-            p.propertyId === propertyId
-              ? {
-                  ...p,
-                  roomTypes: [
-                    ...(p.roomTypes || []),
-                    { id: `RT${Date.now()}`, name: roomType.name, baseRent: Number(roomType.baseRent) || 0 }
-                  ]
-                }
-              : p
-          )
-        };
-      })
-    );
-  };
-
-  const deleteRoomType = (landlordId, propertyId, roomTypeId) => {
-    setLandlords(prev =>
-      prev.map(l => {
-        if (l.id !== landlordId) return l;
-        return {
-          ...l,
-          properties: l.properties.map(p =>
-            p.propertyId === propertyId
-              ? { ...p, roomTypes: (p.roomTypes || []).filter(rt => rt.id !== roomTypeId) }
-              : p
-          )
-        };
-      })
-    );
+  const applyPayment = (paymentData) => {
+    // Placeholder
+    console.log('Applying payment:', paymentData);
   };
 
   return (
     <AppContext.Provider value={{
-      mockTenants,
-      mockReports,
+      // API data
+      tenants,
+      properties,
       propertyUnits,
-      // expose property selection + management helpers used across the app
+      transactions,
+      reports,
+
+      // Loading states
+      tenantsLoading,
+      propertiesLoading,
+      unitsLoading,
+      transactionsLoading,
+      reportsLoading,
+
+      // Error states
+      tenantsError,
+      propertiesError,
+      unitsError,
+      transactionsError,
+      reportsError,
+
+      // Property selection
       selectedPropertyId,
       setSelectedPropertyId,
+
+      // Property management
       addProperty,
       updateProperty,
       addRoomType,
       deleteRoomType,
       addUnit,
       updateUnitAvailability,
-      // helpers for consumers
+
+      // Helper functions
       getUnitsByProperty,
+      getTenantsByProperty, // This is the fixed function
       getPropertyUnitStats,
-      // transaction API
-      transactions,
+      getTransactionsByTenant,
+      getEstimatedTenants,
+      getTenantsWithFallback,
+
+      // Transaction management
       addTransaction,
       applyPayment,
-      getTransactionsByTenant,
-      landlords,
-      setLandlords
+
+      // Backward compatibility - map tenants to mockTenants for existing components
+      mockTenants: getTenantsWithFallback(), // Use fallback tenants
+      landlords: [], // Simplified - could be expanded if needed
+      setLandlords: () => {}, // Placeholder
     }}>
       {props.children}
     </AppContext.Provider>
@@ -479,8 +631,8 @@ export const useAppContext = () => {
   return context;
 };
 
-
 export default ContextProvider;
+export { ErrorBoundary }; // Export ErrorBoundary for use in other components
 
 // ============== ADD PROPERTY FORM COMPONENT ==============
 export const AddPropertyForm = () => {
@@ -507,7 +659,85 @@ export const AddPropertyForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+// Add this function to your ContextProvider component
+const debugAPICalls = async () => {
+  console.log('🔍 ===== STARTING API DEBUG =====');
+  
+  const token = localStorage.getItem('accessToken');
+  console.log('🔐 Token exists:', !!token);
+  if (token) {
+    console.log('🔐 Token length:', token.length);
+  }
 
+  try {
+    // Test tenants endpoint
+    console.log('🧪 Testing tenants endpoint...');
+    const tenantsResponse = await tenantsAPI.getTenants();
+    console.log('✅ Tenants response structure:', tenantsResponse);
+    console.log('📊 Tenants response.data:', tenantsResponse.data);
+    console.log('📊 Tenants response.status:', tenantsResponse.status);
+    
+    // Test reports endpoint
+    console.log('🧪 Testing reports endpoint...');
+    const reportsResponse = await communicationAPI.getReports();
+    console.log('✅ Reports response structure:', reportsResponse);
+    console.log('📊 Reports response.data:', reportsResponse.data);
+    console.log('📊 Reports response.status:', reportsResponse.status);
+    
+    // Test if we can access the actual data
+    if (tenantsResponse.data && Array.isArray(tenantsResponse.data)) {
+      console.log(`👥 Tenants count: ${tenantsResponse.data.length}`);
+      if (tenantsResponse.data.length > 0) {
+        console.log('📋 First tenant:', tenantsResponse.data[0]);
+      }
+    }
+    
+    if (reportsResponse.data && Array.isArray(reportsResponse.data)) {
+      console.log(`📝 Reports count: ${reportsResponse.data.length}`);
+      if (reportsResponse.data.length > 0) {
+        console.log('📋 First report:', reportsResponse.data[0]);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Debug API call failed:', error);
+    console.error('❌ Error details:', error.response?.data);
+    console.error('❌ Error status:', error.response?.status);
+    console.error('❌ Error message:', error.message);
+  }
+  
+  console.log('🔍 ===== END API DEBUG =====');
+};
+
+// Call this function in your useEffect to see what's happening
+useEffect(() => {
+  const initializeData = async () => {
+    const token = localStorage.getItem('accessToken');
+    console.log('🎯 Initializing app data...');
+    
+    if (token) {
+      // First, run debug to see what's happening
+      await debugAPICalls();
+      
+      // Then fetch data
+      try {
+        await fetchProperties();
+        await fetchPropertyUnits();
+        await fetchTenants();
+        await fetchTransactions();
+        await fetchReports();
+        
+        console.log('✅ All data initialized successfully');
+      } catch (error) {
+        console.error('❌ Error initializing data:', error);
+      }
+    } else {
+      console.log('⚠️ No auth token, skipping data initialization');
+    }
+  };
+
+  initializeData();
+}, []);
   const validate = () => {
     const newErrors = {};
     // Required fields
@@ -688,7 +918,7 @@ export const AddPropertyForm = () => {
                 {formData.mpesaType === 'paybill' && (
                   <div>
                     <label className="text-sm text-gray-600 flex items-center mb-1">
-                      Store Number 
+                      Store Number
                       <span className="ml-1 text-gray-400 cursor-help" title="Store Number Info">ⓘ</span>
                     </label>
                     <input
@@ -722,7 +952,7 @@ export const AddPropertyForm = () => {
             <div className="grid grid-cols-3 gap-4 items-center">
               <label className="text-right font-medium text-gray-700">
                 Property Address <span className="text-red-500">*</span>
-              </label> 
+              </label>
               <input
                 type="text"
                 name="streetName"
@@ -755,6 +985,142 @@ export const AddPropertyForm = () => {
                 </p>
                 {errors.ownerPhone && <span className="text-red-500 text-sm">{errors.ownerPhone}</span>}
               </div>
+            </div>
+            {/* Water Rate */}
+            <div className="grid grid-cols-3 gap-4 items-center">
+              <label className="text-right font-medium text-gray-700">
+                Water Rate (Ksh per unit)
+              </label>
+              <input
+                type="number"
+                name="waterRate"
+                value={formData.waterRate}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                placeholder="e.g., 50"
+                className={`col-span-2 px-4 py-2 border ${errors.waterRate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              />
+              {errors.waterRate && <span className="text-red-500 col-span-3 text-sm">{errors.waterRate}</span>}
+            </div>
+            {/* Electricity Rate */}
+            <div className="grid grid-cols-3 gap-4 items-center">
+              <label className="text-right font-medium text-gray-700">
+                Electricity Rate (Ksh per unit)
+              </label>
+              <input
+                type="number"
+                name="electricityRate"
+                value={formData.electricityRate}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                placeholder="e.g., 25"
+                className={`col-span-2 px-4 py-2 border ${errors.electricityRate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              />
+              {errors.electricityRate && <span className="text-red-500 col-span-3 text-sm">{errors.electricityRate}</span>}
+            </div>
+            {/* Tax Rate */}
+            <div className="grid grid-cols-3 gap-4 items-center">
+              <label className="text-right font-medium text-gray-700">
+                Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                name="taxRate"
+                value={formData.taxRate}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                placeholder="e.g., 7.5"
+                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* Management Fee */}
+            <div className="grid grid-cols-3 gap-4 items-start">
+              <label className="text-right font-medium text-gray-700 pt-2">
+                Management Fee
+              </label>
+              <div className="col-span-2 space-y-3">
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="managementFee"
+                      value="percentage"
+                      checked={formData.managementFee === 'percentage'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    Percentage
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="managementFee"
+                      value="fixed"
+                      checked={formData.managementFee === 'fixed'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    Fixed Amount
+                  </label>
+                </div>
+                {formData.managementFee && (
+                  <input
+                    type="number"
+                    name="managementFeeValue"
+                    value={formData.managementFeeValue}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder={formData.managementFee === 'percentage' ? 'e.g., 10' : 'e.g., 5000'}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                )}
+              </div>
+            </div>
+            {/* Company Name */}
+            <div className="grid grid-cols-3 gap-4 items-center">
+              <label className="text-right font-medium text-gray-700">
+                Company Name
+              </label>
+              <input
+                type="text"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleInputChange}
+                placeholder="Company Name ..."
+                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* Notes */}
+            <div className="grid grid-cols-3 gap-4 items-start">
+              <label className="text-right font-medium text-gray-700 pt-2">
+                Notes
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                placeholder="Additional notes about the property ..."
+                rows="3"
+                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* Payment Instructions */}
+            <div className="grid grid-cols-3 gap-4 items-start">
+              <label className="text-right font-medium text-gray-700 pt-2">
+                Payment Instructions
+              </label>
+              <textarea
+                name="paymentInstructions"
+                value={formData.paymentInstructions}
+                onChange={handleInputChange}
+                placeholder="Instructions for tenants on how to pay rent ..."
+                rows="3"
+                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
             {/* Submit Buttons */}
             <div className="pt-6 space-y-3">

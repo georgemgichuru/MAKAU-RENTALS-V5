@@ -630,7 +630,7 @@ def mpesa_subscription_callback(request):
     except Exception as e:
         logger.error(f"Unexpected error in subscription callback: {str(e)}")
         return JsonResponse({"ResultCode": 1, "ResultDesc": "Internal error"})
-
+    
 class InitiateDepositPaymentRegistrationView(APIView):
     """
     Initiate deposit payment during tenant registration (no auth required)
@@ -642,20 +642,45 @@ class InitiateDepositPaymentRegistrationView(APIView):
             unit_id = request.data.get('unit_id')
             phone_number = request.data.get('phone_number')
             session_id = request.data.get('session_id')
+            amount = request.data.get('amount')  # ✅ GET AMOUNT FROM FRONTEND
 
-            if not unit_id or not phone_number:
-                return Response({"error": "Unit ID and phone number are required"}, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"Registration deposit STK push request: unit_id={unit_id}, phone={phone_number}, amount={amount}")
+
+            # Parse unit_id as integer
+            try:
+                unit_id = int(unit_id)
+            except (ValueError, TypeError):
+                return Response({"error": "Unit ID must be a valid integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not phone_number:
+                return Response({"error": "Phone number is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             unit = get_object_or_404(Unit, id=unit_id)
 
             if not unit.is_available:
                 return Response({"error": "Unit is not available"}, status=status.HTTP_400_BAD_REQUEST)
 
-            amount = unit.deposit
+            # ✅ USE AMOUNT FROM FRONTEND, FALLBACK TO UNIT DEPOSIT OR RENT
+            if amount:
+                try:
+                    amount = float(amount)
+                except (ValueError, TypeError):
+                    return Response({"error": "Invalid amount format"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # Fallback: use deposit if set, otherwise use rent
+                amount = float(unit.deposit) if unit.deposit and float(unit.deposit) > 0 else float(unit.rent)
+
+            # ✅ VALIDATE AMOUNT BEFORE PROCEEDING
+            if amount <= 0:
+                logger.error(f"Invalid amount for unit {unit.id}: {amount}")
+                return Response({"error": "Deposit amount must be greater than 0"}, status=status.HTTP_400_BAD_REQUEST)
+
+            logger.info(f"Processing deposit payment: amount={amount}, unit={unit.unit_number}")
 
             # Validate phone number
             is_valid, validation_result = validate_mpesa_payment(phone_number, amount)
             if not is_valid:
+                logger.error(f"Phone validation failed: {validation_result}")
                 return Response({"error": validation_result}, status=status.HTTP_400_BAD_REQUEST)
 
             phone_number = validation_result
@@ -663,7 +688,10 @@ class InitiateDepositPaymentRegistrationView(APIView):
             # Generate access token
             access_token = generate_access_token()
             if not access_token:
+                logger.error("Failed to generate M-Pesa access token")
                 return Response({"error": "Failed to generate M-Pesa access token"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            logger.info(f"Access token generated successfully: {access_token[:20]}...")
 
             # Prepare STK push request
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -675,7 +703,7 @@ class InitiateDepositPaymentRegistrationView(APIView):
                 "Password": password,
                 "Timestamp": timestamp,
                 "TransactionType": "CustomerPayBillOnline",
-                "Amount": int(amount),
+                "Amount": int(amount),  # ✅ ENSURE IT'S AN INTEGER
                 "PartyA": phone_number,
                 "PartyB": settings.MPESA_SHORTCODE,
                 "PhoneNumber": phone_number,
@@ -695,17 +723,23 @@ class InitiateDepositPaymentRegistrationView(APIView):
             else:
                 url = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
 
+            logger.info(f"Sending STK push request to: {url}")
+            logger.info(f"Payload: {payload}")
+
             response = requests.post(url, json=payload, headers=headers, timeout=30)
             response_data = response.json()
 
+            logger.info(f"M-Pesa response: Status={response.status_code}, Data={response_data}")
+
             if response.status_code == 200 and response_data.get("ResponseCode") == "0":
-                # Create pending deposit payment record without tenant (will be linked later)
+                # ✅ FIX: Create payment without tenant (will be linked later during registration)
                 payment = Payment.objects.create(
                     unit=unit,
                     amount=amount,
                     status="pending",
                     payment_type="deposit",
-                    mpesa_checkout_request_id=response_data["CheckoutRequestID"]
+                    mpesa_checkout_request_id=response_data["CheckoutRequestID"],
+                    # tenant is NULL for registration payments - this is OK now
                 )
 
                 # Cache checkout request ID for callback with registration data
@@ -719,7 +753,7 @@ class InitiateDepositPaymentRegistrationView(APIView):
                 }
                 cache.set(cache_key, cache_data, timeout=300)  # 5 minutes
 
-                logger.info(f"Registration deposit STK push initiated for payment {payment.id}, amount {amount}")
+                logger.info(f"✅ Registration deposit STK push initiated successfully: payment_id={payment.id}, checkout_id={response_data['CheckoutRequestID']}")
 
                 return Response({
                     "success": True,
@@ -731,15 +765,15 @@ class InitiateDepositPaymentRegistrationView(APIView):
             else:
                 error_message = response_data.get('errorMessage', response_data.get('ResponseDescription', 'Unknown error'))
                 logger.error(f"Registration deposit STK push failed: {error_message}")
+                logger.error(f"Full response: {response_data}")
                 return Response({
                     "error": "Failed to initiate deposit STK push",
                     "details": error_message
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            logger.error(f"Registration deposit payment error: {str(e)}", exc_info=True)
-            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            logger.error(f"❌ Registration deposit payment error: {str(e)}", exc_info=True)
+            return Response({"error": "Internal server error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class InitiateDepositPaymentView(APIView):
     """

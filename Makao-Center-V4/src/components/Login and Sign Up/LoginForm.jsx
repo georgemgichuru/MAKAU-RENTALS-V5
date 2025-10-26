@@ -128,7 +128,14 @@ const LoginForm = ({ onLogin }) => {
         password: loginData.password,
         user_type: userType
       });
-      
+
+      // Check if response is HTML error page (server error)
+      if (typeof response.data === 'string' && response.data.includes('DOCTYPE html')) {
+        console.error('Login failed: server error or backend unavailable');
+        setError('Login service temporarily unavailable. Please try again later.');
+        return;
+      }
+
       const { access, refresh } = response.data;
       
       // Store tokens immediately
@@ -200,15 +207,24 @@ const LoginForm = ({ onLogin }) => {
     return [];
   };
 
-  // Handle room selection
+  // Handle room selection - ensure amounts are properly set
   const handleRoomSelection = (roomId) => {
     const room = availableRooms.find(r => r.id === roomId);
     if (room) {
+      const rentAmount = parseFloat(room.rent) || 5000; // Fallback to 5000 if 0
+      const depositAmount = parseFloat(room.deposit) || rentAmount; // Use deposit if set, otherwise use rent
+
+      console.log('Room selected:', {
+        roomId,
+        rent: rentAmount,
+        deposit: depositAmount
+      });
+
       setTenantData(prev => ({
         ...prev,
         selectedRoom: roomId,
-        monthlyRent: parseFloat(room.rent) || 0,
-        depositAmount: parseFloat(room.rent) || 0 // Deposit = 1 month rent
+        monthlyRent: rentAmount,
+        depositAmount: depositAmount
       }));
 
       // Clear any previous errors
@@ -261,14 +277,30 @@ const LoginForm = ({ onLogin }) => {
         throw new Error('Invalid M-Pesa phone number');
       }
 
-      // Real payment processing for registration
-      const paymentData = {
+      // Ensure we have a session ID
+      const currentSessionId = sessionId || generateUUID();
+      if (!sessionId) {
+        setSessionId(currentSessionId);
+      }
+
+      console.log('Processing deposit payment:', {
         unit_id: tenantData.selectedRoom,
-        phone_number: tenantData.mpesaPhone,
-        session_id: sessionId // Include session ID for linking later
+        amount: tenantData.depositAmount,
+        phone: tenantData.mpesaPhone,
+        session_id: currentSessionId
+      });
+
+      // Real payment processing for registration (use unauthenticated endpoint)
+      const paymentData = {
+        unit_id: parseInt(tenantData.selectedRoom), // Ensure it's a number
+        phone_number: tenantData.mpesaPhone.replace(/\s+/g, ''), // Remove spaces
+        amount: Math.round(tenantData.depositAmount), // ✅ SEND AMOUNT EXPLICITLY
+        session_id: currentSessionId
       };
 
-      const response = await paymentsAPI.initiateDeposit(paymentData);
+      const response = await paymentsAPI.initiateDepositRegistration(paymentData);
+
+      console.log('Payment response:', response.data);
 
       setPaymentStatus({
         type: 'success',
@@ -278,7 +310,11 @@ const LoginForm = ({ onLogin }) => {
       });
       return true;
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Payment initiation failed. Please try again.';
+      console.error('Payment error:', err);
+      const errorMessage = err.response?.data?.error ||
+                          err.response?.data?.message ||
+                          err.response?.data?.detail ||
+                          'Payment initiation failed. Please try again.';
       setPaymentStatus({
         type: 'error',
         message: errorMessage
@@ -294,8 +330,9 @@ const LoginForm = ({ onLogin }) => {
     setError('');
 
     // Generate session_id if not exists (when starting registration)
+    const currentSessionId = sessionId || generateUUID();
     if (!sessionId) {
-      setSessionId(generateUUID());
+      setSessionId(currentSessionId);
     }
 
     // Step 2: Personal Information validation
@@ -332,10 +369,10 @@ const LoginForm = ({ onLogin }) => {
       // Save step data to backend
       try {
         await authAPI.registerTenantStep(2, {
-          session_id: sessionId,
+          session_id: currentSessionId,
           landlord_id: tenantData.landlordId,
           full_name: tenantData.name,
-          government_id: tenantData.governmentId,
+          national_id: tenantData.governmentId,
           email: tenantData.email,
           phone_number: tenantData.phone,
           emergency_contact: tenantData.emergencyContact
@@ -387,12 +424,12 @@ const LoginForm = ({ onLogin }) => {
       setIsLoading(true);
       try {
         const registrationData = {
-          session_id: sessionId,
+          session_id: currentSessionId,
           full_name: tenantData.name,
           email: tenantData.email,
           password: tenantData.password,
           phone_number: tenantData.phone,
-          government_id: tenantData.governmentId,
+          national_id: tenantData.governmentId,
           emergency_contact: tenantData.emergencyContact,
           landlord_code: tenantData.landlordId,
           unit_code: tenantData.selectedRoom,
@@ -810,7 +847,7 @@ const LoginForm = ({ onLogin }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Government ID *</label>
+            <label className="block text-sm font-medium mb-1">National ID *</label>
             <input
               type="text"
               value={tenantData.governmentId}
@@ -819,6 +856,7 @@ const LoginForm = ({ onLogin }) => {
               placeholder="12345678 or AB1234567"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">Must be 7-10 characters</p>
           </div>
         </div>
 

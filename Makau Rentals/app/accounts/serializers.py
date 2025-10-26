@@ -1,5 +1,6 @@
 from .models import CustomUser, Property, Unit, UnitType, TenantProfile
 from rest_framework import serializers
+from django.db import transaction
 
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
@@ -55,7 +56,81 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         
         return data
 
-
+class TenantRegistrationSerializer(serializers.ModelSerializer):
+    landlord_code = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            'email', 'full_name', 'password', 'confirm_password', 
+            'phone_number', 'national_id', 'emergency_contact',
+            'landlord_code'
+        ]
+    
+    def validate_landlord_code(self, value):
+        """Validate that landlord code exists and is active"""
+        try:
+            landlord = CustomUser.objects.get(
+                landlord_code=value,
+                user_type='landlord',
+                is_active=True
+            )
+            return value
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError(
+                "Invalid landlord code. Please check the code and try again."
+            )
+    
+    def validate(self, data):
+        """Validate password match and landlord exists"""
+        if data.get('password') != data.get('confirm_password'):
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        
+        # Verify landlord exists (redundant but ensures data consistency)
+        landlord_code = data.get('landlord_code')
+        if not CustomUser.get_landlord_by_code(landlord_code):
+            raise serializers.ValidationError({"landlord_code": "Landlord not found or inactive."})
+        
+        return data
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        """Create tenant user and link to landlord with validation"""
+        # Extract tenant data
+        landlord_code = validated_data.pop('landlord_code')
+        password = validated_data.pop('password')
+        validated_data.pop('confirm_password')  # Remove confirm_password
+        
+        # Get landlord with validation
+        landlord = CustomUser.get_landlord_by_code(landlord_code)
+        if not landlord:
+            raise serializers.ValidationError({
+                "landlord_code": "Landlord not found. Registration failed."
+            })
+        
+        # Create tenant user
+        validated_data['user_type'] = 'tenant'
+        tenant = CustomUser.objects.create_user(
+            **validated_data,
+            password=password
+        )
+        
+        # Create tenant profile linked to landlord
+        try:
+            TenantProfile.objects.create(
+                tenant=tenant,
+                landlord=landlord
+            )
+        except Exception as e:
+            # If profile creation fails, delete the tenant user
+            tenant.delete()
+            raise serializers.ValidationError({
+                "error": f"Failed to create tenant profile: {str(e)}"
+            })
+        
+        return tenant
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

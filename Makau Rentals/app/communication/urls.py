@@ -6,7 +6,7 @@ from .views import (
     InProgressReportsView,
     ResolvedReportsView,
     UpdateReportStatusView,
-    SendEmailView,
+    SendEmailView,ReportListView,
 )
 
 urlpatterns = [
@@ -21,6 +21,8 @@ urlpatterns = [
 
     # List in-progress reports for the authenticated user (GET)
     path('reports/in-progress/', InProgressReportsView.as_view(), name='in-progress-reports'),
+    # List all reports (GET) - ADD THIS ENDPOINT
+    path('reports/', ReportListView.as_view(), name='list-reports'),
 
     # List resolved reports for the authenticated user (GET)
     path('reports/resolved/', ResolvedReportsView.as_view(), name='resolved-reports'),

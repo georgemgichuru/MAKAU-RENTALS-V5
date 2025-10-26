@@ -36,27 +36,8 @@ class CustomUserManager(BaseUserManager):
                 user.landlord_code = f"L-{uuid.uuid4().hex[:10].upper()}"
                 user.save(update_fields=['landlord_code'])
 
+        # REMOVE automatic TenantProfile creation here - handle it in serializers/views
         return user
-
-    def create_superuser(self, email, full_name, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        # set default user_type if not provided
-        user_type = extra_fields.pop("user_type", "landlord")
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-
-        return self.create_user(
-            email=email,
-            full_name=full_name,
-            user_type=user_type,
-            password=password,
-            **extra_fields
-        )
-
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -97,21 +78,40 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.full_name} ({self.email})"
+    
     @property
     def my_tenants(self):
-        """For landlords: Get all their tenants"""
+        """For landlords: Get all their tenants through TenantProfile"""
         if self.user_type == 'landlord':
             return CustomUser.objects.filter(
-                tenantprofile__landlord=self,
+                tenant_profile__landlord=self,
                 user_type='tenant'
             ).distinct()
         return CustomUser.objects.none()
 
     @property
     def my_landlord(self):
-        """For tenants: Get their landlord"""
-        if self.user_type == 'tenant' and hasattr(self, 'tenantprofile'):
-            return self.tenantprofile.landlord
+        """For tenants: Get their landlord through TenantProfile"""
+        if self.user_type == 'tenant' and hasattr(self, 'tenant_profile'):
+            return self.tenant_profile.landlord
+        return None
+
+    @classmethod
+    def get_landlord_by_code(cls, landlord_code):
+        """Get active landlord by landlord_code"""
+        try:
+            return cls.objects.get(
+                landlord_code=landlord_code, 
+                user_type='landlord',
+                is_active=True
+            )
+        except cls.DoesNotExist:
+            return None
+
+    def get_tenant_profile(self):
+        """Get tenant profile if user is a tenant"""
+        if self.user_type == 'tenant':
+            return getattr(self, 'tenant_profile', None)
         return None
 
 
@@ -154,6 +154,7 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.plan}"
 
+
 class Property(models.Model):
     landlord = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -164,8 +165,6 @@ class Property(models.Model):
     def __str__(self):
         return f"{self.name}, {self.city}"
 
-    def __str__(self):
-        return f"{self.name}, {self.city}"
 
 # TODO: Ensure that the landlord can only have a certain amount of units linked to property unit count
 class UnitType(models.Model):
@@ -220,9 +219,11 @@ class Unit(models.Model):
         return self.rent_remaining - self.rent_paid
 
     def clean(self):
-        current_units = self.__class__.objects.filter(property_obj=self.property_obj).count()
-        if self.property_obj.unit_count is not None and current_units >= self.property_obj.unit_count:
-            raise ValidationError("The number of units for this property has reached the limit.")
+        # Only check unit limit when creating a NEW unit, not when updating existing one
+        if not self.pk:  # This is a new unit being created
+            current_units = Unit.objects.filter(property_obj=self.property_obj).count()
+            if self.property_obj.unit_count is not None and current_units >= self.property_obj.unit_count:
+                raise ValidationError("The number of units for this property has reached the limit.")
 
     def save(self, *args, **kwargs):
         # Calculate rent_remaining as rent - rent_paid
@@ -240,25 +241,58 @@ class Unit(models.Model):
                 self.assigned_date = timezone.now()
         super().save(*args, **kwargs)
 
-
     def __str__(self):
         return f"{self.property_obj.name} - Unit {self.unit_number}"
 
+
+# In models.py - Update the TenantProfile model
 class TenantProfile(models.Model):
     """ENHANCED: Separate profile for tenant-specific data"""
-    tenant = models.OneToOneField(CustomUser, on_delete=models.CASCADE, limit_choices_to={'user_type': 'tenant'})
-    landlord = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='tenants', limit_choices_to={'user_type': 'landlord'})
-    current_unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True, blank=True, related_name='current_tenant')
+    tenant = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        limit_choices_to={'user_type': 'tenant'},
+        related_name='tenant_profile'  # Add related_name for easier access
+    )
+    landlord = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE,  # Changed from SET_NULL to CASCADE for data integrity
+        related_name='tenants', 
+        limit_choices_to={'user_type': 'landlord'},
+        null=False,  # Make this required
+        blank=False   # Make this required
+    )
+    current_unit = models.ForeignKey(
+        Unit, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='current_tenant'
+    )
     move_in_date = models.DateTimeField(null=True, blank=True)
     lease_end_date = models.DateTimeField(null=True, blank=True)
     emergency_contact_name = models.CharField(max_length=255, blank=True, null=True)
     emergency_contact_phone = models.CharField(max_length=15, blank=True, null=True)
     
+    class Meta:
+        unique_together = ['tenant', 'landlord']  # Prevent duplicate relationships
+    
     def __str__(self):
-        return f"Profile - {self.tenant.full_name}"
+        return f"Profile - {self.tenant.full_name} (Landlord: {self.landlord.full_name})"
+
+    def clean(self):
+        """Validate that tenant belongs to the landlord"""
+        if self.landlord and self.tenant:
+            if self.tenant.user_type != 'tenant':
+                raise ValidationError("User must be a tenant")
+            if self.landlord.user_type != 'landlord':
+                raise ValidationError("Landlord must be a landlord")
+        
+        # Ensure landlord exists and is active
+        if self.landlord and not self.landlord.is_active:
+            raise ValidationError("Landlord account is not active")
 
     def save(self, *args, **kwargs):
-        # Automatically set landlord based on unit assignment
-        if self.current_unit and self.current_unit.property_obj.landlord:
-            self.landlord = self.current_unit.property_obj.landlord
+        self.clean()
+        # Don't automatically set landlord from unit - require explicit assignment
         super().save(*args, **kwargs)

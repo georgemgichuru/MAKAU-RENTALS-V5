@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { AppContext } from './AppContext';
+import { communicationAPI } from '../services/api';
 
 const NotificationContext = createContext();
 
@@ -12,8 +12,6 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  // Move useContext to the top level of the component
-  const { mockReports } = useContext(AppContext);
   
   const [notifications, setNotifications] = useState({
     reports: {
@@ -23,18 +21,24 @@ export const NotificationProvider = ({ children }) => {
     }
   });
   
-  // Check for new reports - now mockReports is available in the closure
-  const checkForNewReports = useCallback(() => {
+  // Check for new reports using API
+  const checkForNewReports = useCallback(async () => {
     try {
-      const openReports = mockReports.filter(report => report.status === 'open');
-      const newReportsCount = openReports.length;
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No auth token, skipping reports check');
+        return;
+      }
       
+      const response = await communicationAPI.getOpenReports();
+      const openReports = response.data;
+      const newReportsCount = openReports.length;
+
       setNotifications(prev => {
-        // Only update if the count actually changed
         if (prev.reports.count === newReportsCount) {
           return prev;
         }
-        
+
         return {
           ...prev,
           reports: {
@@ -46,8 +50,9 @@ export const NotificationProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Error checking for new reports:', error);
+      // Don't throw error, just log it
     }
-  }, []); // Remove mockReports dependency - access it directly from context
+  }, []);
 
   // Mark reports as viewed
   const markReportsAsViewed = useCallback(() => {
