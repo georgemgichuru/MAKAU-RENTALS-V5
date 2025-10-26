@@ -1193,3 +1193,5 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 django.db.utils.OperationalError: no such table: communication_remindersetting
 WARNING 2025-10-26 16:36:14,169 log 19800 45976 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 17:35:10,574 log 19800 35644 Not Found: /api/payments/rent-payments/csv/
+WARNING 2025-10-26 17:36:23,745 log 19800 35644 Unauthorized: /api/communication/reports/open/

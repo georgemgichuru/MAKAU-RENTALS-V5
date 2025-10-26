@@ -46,6 +46,11 @@ import {
 const AdminPayments = () => {
   const {mockTenants, mockReports, propertyUnits} = useContext(AppContext);
 
+  // Property selection state for CSV download
+  const [selectedPropertyId, setSelectedPropertyId] = useState(
+    propertyUnits && propertyUnits.length > 0 ? propertyUnits[0].id : ''
+  );
+
   // Payments state
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
@@ -241,28 +246,20 @@ const AdminPayments = () => {
     setPaymentsLoading(true);
     setPaymentsError(null);
     try {
-      // Get selected property ID from context
-      const propertyId = selectedPropertyId;
-      if (!propertyId) {
-        setPaymentsError('No property selected.');
-        setPaymentsLoading(false);
-        return;
-      }
-      // Call correct backend endpoint for landlord CSV
+      // Call correct backend endpoint for rent payments CSV
       const token = localStorage.getItem('accessToken');
       const response = await paymentsAPI.downloadPaymentsCSV({
-        url: `/payments/landlord-csv/${propertyId}/`,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         responseType: 'blob',
       });
       const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: 'text/csv' });
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveOrOpenBlob(blob, `landlord_payments_${propertyId}.csv`);
+        window.navigator.msSaveOrOpenBlob(blob, `rent_payments.csv`);
       } else {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `landlord_payments_${propertyId}.csv`;
+        a.download = `rent_payments.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -294,6 +291,20 @@ const AdminPayments = () => {
 
   return (
     <div className="space-y-6 relative">
+      {/* Property Selection Dropdown for CSV Download */}
+      <div className="flex items-center gap-4 mb-4">
+        <label htmlFor="property-select" className="font-medium">Select Property:</label>
+        <select
+          id="property-select"
+          value={selectedPropertyId}
+          onChange={e => setSelectedPropertyId(e.target.value)}
+          className="p-2 border rounded"
+        >
+          {(propertyUnits || []).map(unit => (
+            <option key={unit.id} value={unit.id}>{unit.name || unit.unit_name || `Property ${unit.id}`}</option>
+          ))}
+        </select>
+      </div>
       {/* Success Notification */}
       {bulkUpdateSuccess && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
