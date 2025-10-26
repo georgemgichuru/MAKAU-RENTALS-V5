@@ -138,7 +138,11 @@ export const paymentsAPI = {
 
   // Download payments CSV (for landlord, all payments)
   downloadPaymentsCSV: (config = {}) =>
-    api.get('/payments/rent-payments/csv/', { ...config, responseType: 'blob' }),
+    api.get('/payments/rent-payments/csv/', { 
+      ...config, 
+      responseType: 'blob',
+      params: config.params || {}
+    }),
 };
 
 // Properties API endpoints

@@ -1201,3 +1201,101 @@ INFO 2025-10-26 17:40:28,710 autoreload 19800 44568 C:\Users\George Mwangi\Deskt
 INFO 2025-10-26 17:40:39,660 autoreload 7800 37644 Watching for file changes with StatReloader
 INFO 2025-10-26 17:40:49,684 autoreload 7800 37644 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\urls.py changed, reloading.
 INFO 2025-10-26 17:40:54,271 autoreload 23320 43752 Watching for file changes with StatReloader
+INFO 2025-10-26 17:41:05,742 autoreload 23320 43752 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\urls.py changed, reloading.
+INFO 2025-10-26 17:41:11,697 autoreload 15156 38120 Watching for file changes with StatReloader
+ERROR 2025-10-26 17:44:39,468 log 15156 29600 Internal Server Error: /api/payments/rent-payments/csv/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py", line 1197, in get
+    payments = Payment.objects.filter(unit__in=units, status='Success').select_related('unit', 'tenant').order_by('-transaction_date')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1659, in order_by
+    obj.query.add_ordering(*field_names)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 2221, in add_ordering
+    self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1724, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'transaction_date' into field. Choices are: amount, created_at, description, failure_reason, id, mpesa_checkout_request_id, mpesa_receipt, payment_method, payment_type, reference_number, status, tenant, tenant_id, unit, unit_id, updated_at
+ERROR 2025-10-26 17:44:42,416 log 15156 24856 Internal Server Error: /api/payments/rent-payments/csv/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py", line 1197, in get
+    payments = Payment.objects.filter(unit__in=units, status='Success').select_related('unit', 'tenant').order_by('-transaction_date')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1659, in order_by
+    obj.query.add_ordering(*field_names)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 2221, in add_ordering
+    self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1724, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'transaction_date' into field. Choices are: amount, created_at, description, failure_reason, id, mpesa_checkout_request_id, mpesa_receipt, payment_method, payment_type, reference_number, status, tenant, tenant_id, unit, unit_id, updated_at
+INFO 2025-10-26 17:45:52,053 autoreload 15156 38120 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:45:56,968 autoreload 39876 20844 Watching for file changes with StatReloader
+INFO 2025-10-26 17:46:03,536 autoreload 39876 20844 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:46:08,681 autoreload 1332 34408 Watching for file changes with StatReloader
+INFO 2025-10-26 17:48:07,610 autoreload 1332 34408 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:48:12,506 autoreload 31972 23612 Watching for file changes with StatReloader
+INFO 2025-10-26 17:48:29,442 autoreload 31972 23612 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:48:33,766 autoreload 9184 8588 Watching for file changes with StatReloader
+INFO 2025-10-26 17:49:22,901 autoreload 9184 8588 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:49:27,840 autoreload 45100 10936 Watching for file changes with StatReloader
+INFO 2025-10-26 17:49:39,507 autoreload 45100 10936 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:49:46,187 autoreload 17400 41956 Watching for file changes with StatReloader
+INFO 2025-10-26 17:50:01,368 autoreload 17400 41956 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:50:08,748 autoreload 34984 30388 Watching for file changes with StatReloader
+INFO 2025-10-26 17:50:58,496 views 34984 37096 Subscription callback received: {'Body': {'stkCallback': {'MerchantRequestID': '1d98-42f3-9cf7-c3703adb52e321315', 'CheckoutRequestID': 'ws_CO_26102025175038246722714334', 'ResultCode': 1032, 'ResultDesc': 'Request Cancelled by user.'}}}
+INFO 2025-10-26 17:50:58,498 views 34984 37096 Subscription callback - ResultCode: 1032, CheckoutRequestID: ws_CO_26102025175038246722714334
+ERROR 2025-10-26 17:50:58,499 views 34984 37096 Subscription payment failed - ResultCode: 1032, Description: Request Cancelled by user.
+INFO 2025-10-26 17:52:46,982 autoreload 34984 30388 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:52:54,653 autoreload 41856 18984 Watching for file changes with StatReloader
+INFO 2025-10-26 18:12:46,367 autoreload 41856 18984 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 18:12:49,956 autoreload 31604 31984 Watching for file changes with StatReloader
+INFO 2025-10-26 18:13:04,659 autoreload 31604 31984 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 18:13:06,998 autoreload 3720 36308 Watching for file changes with StatReloader
+INFO 2025-10-26 18:19:23,292 autoreload 3720 36308 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\serializers.py changed, reloading.
+INFO 2025-10-26 18:19:25,985 autoreload 28496 17664 Watching for file changes with StatReloader
+INFO 2025-10-26 18:19:52,463 autoreload 28496 17664 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\serializers.py changed, reloading.
+INFO 2025-10-26 18:19:55,090 autoreload 26996 25976 Watching for file changes with StatReloader
+WARNING 2025-10-26 18:37:21,807 log 26996 23500 Unauthorized: /api/communication/reports/open/

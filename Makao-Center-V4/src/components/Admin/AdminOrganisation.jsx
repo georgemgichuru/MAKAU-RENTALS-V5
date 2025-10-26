@@ -121,21 +121,10 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
     
     console.log('🚀 Creating unit type with payload:', payload);
     
-    try {
-      const { propertiesAPI } = await import('../../services/api');
-      const response = await propertiesAPI.createUnitType(payload);
-      console.log('✅ Unit type created successfully:', response.data);
-      
-      if (onAdd) onAdd(response.data);
-      setRoomType({ name: '', baseRent: '', description: '' });
-      onClose();
-      
-      // Refresh the page to show the new room type
-      window.location.reload();
-    } catch (error) {
-      console.error('❌ Failed to create unit type:', error.response?.data || error);
-      alert(`Failed to add room type: ${error.response?.data?.error || error.message || 'Unknown error'}`);
-    }
+    // Let the parent component handle the API call
+    if (onAdd) onAdd(payload);
+    setRoomType({ name: '', baseRent: '', description: '' });
+    onClose();
   };
 
   return (
@@ -254,18 +243,19 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
             <select
               value={unitData.type || ''}
               onChange={(e) => {
-                const selectedType = roomTypes.find(rt => rt.name === e.target.value);
+                // Store the unit_type ID in state and derive rent from selected type
+                const selectedType = roomTypes.find(rt => `${rt.id}` === e.target.value);
                 setUnitData({
                   ...unitData, 
-                  type: e.target.value,
-                  rent: selectedType ? selectedType.baseRent : unitData.rent
+                  type: e.target.value, // id as string
+                  rent: selectedType ? (selectedType.rent ?? selectedType.baseRent ?? unitData.rent) : unitData.rent
                 });
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select room type</option>
               {roomTypes.map(rt => (
-                <option key={rt.id} value={rt.name}>{rt.name}</option>
+                <option key={rt.id} value={`${rt.id}`}>{rt.name}</option>
               ))}
             </select>
           </div>
@@ -449,6 +439,7 @@ const AdminOrganisation = () => {
       // Process units data
       if (unitsResponse.status === 'fulfilled') {
         console.log('🏠 Raw units from API:', unitsResponse.value.data);
+        const roomTypesData = roomTypesResponse.status === 'fulfilled' ? (roomTypesResponse.value.data || []) : [];
         
         const unitsWithStatus = (unitsResponse.value.data || []).map(unit => {
           console.log('🔍 Processing unit:', {
@@ -461,6 +452,12 @@ const AdminOrganisation = () => {
           // Determine if unit is occupied based on tenant presence
           const hasTenant = unit.tenant !== null && unit.tenant !== undefined;
           const actuallyAvailable = !hasTenant && unit.is_available;
+
+          // Resolve unit type id and name from various shapes
+          const typeId = unit.unit_type?.id || unit.unit_type || unit.unit_type_id || null;
+          const typeName = unit.unit_type_obj?.name ||
+                           roomTypesData.find(rt => `${rt.id}` === `${typeId}`)?.name ||
+                           unit.unit_type?.name || unit.type || 'N/A';
           
           // Format tenant name
           let tenantName = null;
@@ -476,7 +473,8 @@ const AdminOrganisation = () => {
             status: hasTenant ? 'occupied' : (actuallyAvailable ? 'available' : 'unavailable'),
             isAvailable: actuallyAvailable,
             unitNumber: unit.unit_number || unit.unitNumber || 'N/A',
-            type: unit.unit_type?.name || unit.type || 'N/A',
+            type: typeName,
+            typeId,
             rent: unit.rent || unit.baseRent || 0,
             propertyId: unit.property_obj?.id?.toString() || selectedPropertyId,
             tenant: tenantName || unit.tenant || null,
@@ -661,6 +659,16 @@ const AdminOrganisation = () => {
       });
   }, [displayUnits, apiPropertyTenants]);
 
+  // Units count per room type (by typeId if available, fallback to name)
+  const unitsCountByTypeKey = useMemo(() => {
+    const map = new Map();
+    (displayUnits || []).forEach(u => {
+      const key = (u.typeId ?? u.unit_type?.id ?? u.unit_type ?? u.type) ?? 'unknown';
+      map.set(`${key}`, (map.get(`${key}`) || 0) + 1);
+    });
+    return map;
+  }, [displayUnits]);
+
   // Open confirmation dialog
   const openConfirmDialog = (room) => {
     // Don't allow changing availability if room has a tenant
@@ -697,21 +705,44 @@ const AdminOrganisation = () => {
   };
 
   // Handle adding room type
-  const handleAddRoomType = (roomType) => {
+  const handleAddRoomType = async (roomType) => {
     if (!selectedPropertyId) {
       showToast('Please select a property first', 'error', 3000);
       return;
     }
-    addRoomType(selectedPropertyId, roomType);
-    showToast('Room type added successfully', 'success', 3000);
-    setRoomTypeDialog(false);
+    
+    try {
+      await addRoomType(selectedPropertyId, roomType);
+      showToast('Room type added successfully', 'success', 3000);
+      setRoomTypeDialog(false);
+      // Refresh the room types data
+      await fetchPropertyData();
+    } catch (error) {
+      console.error('Error adding room type:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Failed to add room type. Please try again.';
+      showToast(errorMessage, 'error', 3000);
+    }
   };
 
   // Handle deleting room type
-  const handleDeleteRoomType = (roomTypeId) => {
-    if (window.confirm('Are you sure you want to delete this room type?')) {
-      deleteRoomType(selectedPropertyId, roomTypeId);
+  const handleDeleteRoomType = async (roomTypeId) => {
+    if (!window.confirm('Are you sure you want to delete this room type? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await deleteRoomType(roomTypeId);
       showToast('Room type deleted successfully', 'success', 3000);
+      // Refresh the room types data
+      await fetchPropertyData();
+    } catch (error) {
+      console.error('Error deleting room type:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Failed to delete room type. It may be in use by existing units.';
+      showToast(errorMessage, 'error', 3000);
     }
   };
 
@@ -723,10 +754,14 @@ const AdminOrganisation = () => {
         return;
       }
 
+      // Resolve selected type: unitData.type is an ID (string)
+      const selectedType = (roomTypes || []).find(rt => `${rt.id}` === `${unitData.type}`) ||
+                           (roomTypes || []).find(rt => rt.name === unitData.type);
+
       // Call the API to create the unit
       const response = await propertiesAPI.createUnit({
         unit_number: unitData.unitNumber,
-        unit_type: unitData.type,
+        unit_type: selectedType?.id || unitData.type, // send ID to backend
         rent: parseInt(unitData.rent),
         property: selectedPropertyId,
         is_available: true
@@ -736,7 +771,9 @@ const AdminOrganisation = () => {
       const newUnit = {
         id: response.data.id,
         unitNumber: response.data.unit_number,
-        type: response.data.unit_type,
+        // Prefer the resolved name for display; fall back to API echo
+        type: selectedType?.name || response.data.unit_type?.name || response.data.unit_type || 'N/A',
+        typeId: selectedType?.id || response.data.unit_type?.id || response.data.unit_type || null,
         rent: parseInt(response.data.rent),
         status: 'available',
         isAvailable: true,
@@ -965,6 +1002,9 @@ const AdminOrganisation = () => {
                   <h3 className="font-semibold text-gray-900">{roomType.name}</h3>
                   <p className="text-lg text-blue-600 font-bold mt-1">
                     KSh {roomType.baseRent?.toLocaleString() || roomType.rent?.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {(unitsCountByTypeKey.get(`${roomType.id}`) || 0)} units
                   </p>
                 </div>
                 <button 

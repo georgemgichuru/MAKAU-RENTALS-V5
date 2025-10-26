@@ -1123,7 +1123,7 @@ class LandLordCSVView(APIView):
 
         property_obj = get_object_or_404(Property, id=property_id, landlord=user)
         units = Unit.objects.filter(property_obj=property_obj)
-        payments = Payment.objects.filter(unit__in=units, status='Success')
+        payments = Payment.objects.filter(unit__in=units, status='completed')
 
         # Create CSV response
         response = HttpResponse(content_type='text/csv')
@@ -1137,7 +1137,7 @@ class LandLordCSVView(APIView):
                 payment.unit.unit_number,
                 payment.tenant.full_name if payment.tenant else '',
                 payment.amount,
-                payment.transaction_date.strftime('%Y-%m-%d'),
+                payment.created_at.strftime('%Y-%m-%d'),
                 payment.mpesa_receipt or ''
             ])
 
@@ -1160,7 +1160,7 @@ class TenantCSVView(APIView):
         if user.user_type == 'landlord' and unit.property_obj.landlord != user:
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-        payments = Payment.objects.filter(unit=unit, status='Success')
+        payments = Payment.objects.filter(unit=unit, status='completed')
 
         # Create CSV response
         response = HttpResponse(content_type='text/csv')
@@ -1172,7 +1172,7 @@ class TenantCSVView(APIView):
         for payment in payments:
             writer.writerow([
                 payment.amount,
-                payment.transaction_date.strftime('%Y-%m-%d'),
+                payment.created_at.strftime('%Y-%m-%d'),
                 payment.mpesa_receipt or '',
                 payment.payment_type
             ])
@@ -1183,6 +1183,7 @@ class TenantCSVView(APIView):
 class RentPaymentsCSVView(APIView):
     """
     Export all rent payments data as CSV for landlord
+    Supports optional property_id filter via query parameter
     """
     permission_classes = [IsAuthenticated]
 
@@ -1191,21 +1192,40 @@ class RentPaymentsCSVView(APIView):
         if user.user_type != 'landlord':
             return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
 
+        # Get property_id from query parameters (optional)
+        property_id = request.query_params.get('property_id', None)
+        
         # Get all payments for landlord's properties
         properties = Property.objects.filter(landlord=user)
+        
+        # Filter by specific property if provided
+        if property_id:
+            try:
+                properties = properties.filter(id=property_id)
+                if not properties.exists():
+                    return Response({"error": "Property not found"}, status=status.HTTP_404_NOT_FOUND)
+            except (ValueError, TypeError):
+                return Response({"error": "Invalid property ID"}, status=status.HTTP_400_BAD_REQUEST)
+        
         units = Unit.objects.filter(property_obj__in=properties)
-        payments = Payment.objects.filter(unit__in=units, status='Success').select_related('unit', 'tenant').order_by('-transaction_date')
+        
+        # Use 'completed' status (lowercase) which matches the Payment model choices
+        payments = Payment.objects.filter(unit__in=units, status='completed').select_related('unit', 'tenant').order_by('-created_at')
+        
+        property_name = properties.first().name if property_id and properties.exists() else "all_properties"
+        print(f"🔍 CSV Export - User: {user.email}, Property: {property_name}, Properties: {properties.count()}, Units: {units.count()}, Payments: {payments.count()}")
 
         # Create CSV response
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="rent_payments.csv"'
+        filename = f'rent_payments_{property_name}.csv' if property_id else 'rent_payments.csv'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response)
         writer.writerow(['Date', 'Unit Number', 'Tenant', 'Amount', 'Payment Type', 'M-Pesa Receipt', 'Property'])
 
         for payment in payments:
             writer.writerow([
-                payment.transaction_date.strftime('%Y-%m-%d %H:%M:%S'),
+                payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 payment.unit.unit_number,
                 payment.tenant.full_name if payment.tenant else 'N/A',
                 payment.amount,

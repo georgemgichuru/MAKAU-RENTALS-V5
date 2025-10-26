@@ -44,11 +44,11 @@ import {
 } from 'lucide-react';
 
 const AdminPayments = () => {
-  const {mockTenants, mockReports, propertyUnits} = useContext(AppContext);
+  const {mockTenants, mockReports, properties, propertyUnits} = useContext(AppContext);
 
   // Property selection state for CSV download
   const [selectedPropertyId, setSelectedPropertyId] = useState(
-    propertyUnits && propertyUnits.length > 0 ? propertyUnits[0].id : ''
+    properties && properties.length > 0 ? properties[0].id : ''
   );
 
   // Payments state
@@ -70,6 +70,13 @@ const AdminPayments = () => {
   const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
   const [bulkUpdateError, setBulkUpdateError] = useState(null);
   const [bulkUpdateSuccess, setBulkUpdateSuccess] = useState(null);
+
+  // Update selected property when properties are loaded
+  React.useEffect(() => {
+    if (properties && properties.length > 0 && !selectedPropertyId) {
+      setSelectedPropertyId(properties[0].id.toString());
+    }
+  }, [properties]);
 
   // Fetch units from backend
   React.useEffect(() => {
@@ -108,7 +115,7 @@ const AdminPayments = () => {
       setPaymentsError(null);
       try {
         // Get payments for current landlord
-  const response = await paymentsAPI.getPaymentHistory();
+        const response = await paymentsAPI.getPaymentHistory();
         console.log('🔄 Payments API raw response:', response);
         // Try to handle different response formats
         let data = [];
@@ -121,6 +128,18 @@ const AdminPayments = () => {
           data = response.data.payments || response.data.data || [];
         }
         console.log('✅ Payments processed data:', data);
+        
+        // Debug: Log first payment to see structure
+        if (data.length > 0) {
+          console.log('🔍 First payment structure:', data[0]);
+          console.log('🔍 Payment unit info:', {
+            unit: data[0].unit,
+            unit_id: data[0].unit_id,
+            property: data[0].property,
+            property_id: data[0].property_id
+          });
+        }
+        
         setPayments(data);
       } catch (error) {
         console.error('❌ Failed to load payments:', error);
@@ -131,6 +150,56 @@ const AdminPayments = () => {
     };
     fetchPayments();
   }, []);
+
+  // Filter units by selected property
+  const filteredUnits = React.useMemo(() => {
+    if (!selectedPropertyId || !units.length) return units;
+    return units.filter(unit => unit.propertyId === selectedPropertyId.toString());
+  }, [units, selectedPropertyId]);
+
+  // Filter payments by selected property
+  const filteredPayments = React.useMemo(() => {
+    console.log('🔍 Filtering payments - selectedPropertyId:', selectedPropertyId);
+    console.log('🔍 Total payments:', payments.length);
+    console.log('🔍 Total units:', units.length);
+    
+    // If no property selected or no payments, show all payments
+    if (!selectedPropertyId || !payments.length) {
+      console.log('ℹ️ No filter applied - showing all payments');
+      return payments;
+    }
+    
+    // Get unit IDs for the selected property
+    const propertyUnits = units.filter(unit => 
+      unit.propertyId === selectedPropertyId.toString()
+    );
+    const propertyUnitIds = propertyUnits.map(unit => unit.id);
+    
+    console.log('🔍 Property units count:', propertyUnits.length);
+    console.log('🔍 Property unit IDs:', propertyUnitIds);
+    
+    // Filter payments that belong to units in the selected property
+    const filtered = payments.filter(payment => {
+      // Check various possible unit ID fields in payment object
+      const paymentUnitId = payment.unit?.id || payment.unit_id || payment.unit;
+      
+      // Also check if payment has property information directly
+      const paymentPropertyId = payment.property?.id || payment.property_id || payment.property;
+      
+      // Match by unit ID or property ID
+      const matchByUnit = paymentUnitId && propertyUnitIds.includes(paymentUnitId);
+      const matchByProperty = paymentPropertyId && paymentPropertyId.toString() === selectedPropertyId.toString();
+      
+      return matchByUnit || matchByProperty;
+    });
+    
+    console.log('✅ Filtered payments count:', filtered.length);
+    if (filtered.length > 0) {
+      console.log('🔍 First filtered payment:', filtered[0]);
+    }
+    
+    return filtered;
+  }, [payments, selectedPropertyId, units]);
 
   // Individual unit price update
   const handlePriceUpdate = async (unitId, newPrice) => {
@@ -152,8 +221,8 @@ const AdminPayments = () => {
   };
 
   const getRoomTypes = () => {
-  if (!units || units.length === 0) return [];
-  const types = [...new Set(units.map(unit => unit.type).filter(Boolean))];
+  if (!filteredUnits || filteredUnits.length === 0) return [];
+  const types = [...new Set(filteredUnits.map(unit => unit.type).filter(Boolean))];
   return types.length > 0 ? types : ['No types available'];
 };
 
@@ -218,7 +287,7 @@ const AdminPayments = () => {
   };
 
   const previewBulkUpdate = () => {
-    let affectedUnits = units.filter(unit => 
+    let affectedUnits = filteredUnits.filter(unit => 
       selectedRoomType === 'all' || unit.type === selectedRoomType
     );
     
@@ -246,25 +315,44 @@ const AdminPayments = () => {
     setPaymentsLoading(true);
     setPaymentsError(null);
     try {
-      // Call correct backend endpoint for rent payments CSV
       const token = localStorage.getItem('accessToken');
+      
+      // Build URL with property_id parameter if a property is selected
+      let url = '/payments/rent-payments/csv/';
+      if (selectedPropertyId) {
+        url += `?property_id=${selectedPropertyId}`;
+      }
+      
+      console.log('📥 Downloading CSV for property:', selectedPropertyId);
+      console.log('📥 CSV URL:', url);
+      
       const response = await paymentsAPI.downloadPaymentsCSV({
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         responseType: 'blob',
+        params: selectedPropertyId ? { property_id: selectedPropertyId } : {}
       });
+      
       const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: 'text/csv' });
+      
+      // Get property name for filename
+      const selectedProperty = properties.find(p => p.id.toString() === selectedPropertyId.toString());
+      const propertyName = selectedProperty?.name || 'property';
+      const filename = `rent_payments_${propertyName.replace(/\s+/g, '_')}.csv`;
+      
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveOrOpenBlob(blob, `rent_payments.csv`);
+        window.navigator.msSaveOrOpenBlob(blob, filename);
       } else {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `rent_payments.csv`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       }
+      
+      console.log('✅ CSV downloaded successfully');
     } catch (error) {
       console.error('❌ CSV download failed:', error);
       setPaymentsError('Failed to download CSV.');
@@ -300,9 +388,13 @@ const AdminPayments = () => {
           onChange={e => setSelectedPropertyId(e.target.value)}
           className="p-2 border rounded"
         >
-          {(propertyUnits || []).map(unit => (
-            <option key={unit.id} value={unit.id}>{unit.name || unit.unit_name || `Property ${unit.id}`}</option>
-          ))}
+          {properties && properties.length > 0 ? (
+            properties.map(property => (
+              <option key={property.id} value={property.id}>{property.name || `Property ${property.id}`}</option>
+            ))
+          ) : (
+            <option value="">No properties available</option>
+          )}
         </select>
       </div>
       {/* Success Notification */}
@@ -388,10 +480,10 @@ const AdminPayments = () => {
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading payments...</td></tr>
               ) : paymentsError ? (
                 <tr><td colSpan={6} className="py-4 text-center text-red-500">{paymentsError}</td></tr>
-              ) : payments.length === 0 ? (
-                <tr><td colSpan={6} className="py-4 text-center text-gray-400">No payments found.</td></tr>
+              ) : filteredPayments.length === 0 ? (
+                <tr><td colSpan={6} className="py-4 text-center text-gray-400">No payments found for this property.</td></tr>
               ) : (
-                payments.map((p) => (
+                filteredPayments.map((p) => (
                   <tr key={p.id || p.payment_id} className="border-b">
                     <td className="py-3 px-4">{p.id || p.payment_id}</td>
                     <td className="py-3 px-4">{p.client || p.tenant_name || p.tenant || p.payer_name}</td>
@@ -435,7 +527,12 @@ const AdminPayments = () => {
         </div>
       
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {units.map(unit => (
+          {filteredUnits.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              No units found for this property.
+            </div>
+          ) : (
+            filteredUnits.map(unit => (
             <div key={unit.id} className="border rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold">Unit {unit.unitNumber}</h3>
@@ -479,7 +576,8 @@ const AdminPayments = () => {
                 )}
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </div>
         {/* Bulk Price Update Section */}

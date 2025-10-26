@@ -585,14 +585,34 @@ const fetchReports = async () => {
     console.log('Updating property:', propertyId, updatedData);
   };
 
-  const addRoomType = (propertyId, roomTypeData) => {
-    // Placeholder
-    console.log('Adding room type:', roomTypeData);
+  const addRoomType = async (propertyId, roomTypeData) => {
+    try {
+      console.log('Adding room type:', roomTypeData);
+      const response = await propertiesAPI.createUnitType(roomTypeData);
+      console.log('✅ Room type created:', response.data);
+      
+      // Refresh properties to get updated room types
+      await fetchProperties();
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to add room type:', error);
+      throw error;
+    }
   };
 
-  const deleteRoomType = (roomTypeId) => {
-    // Placeholder
-    console.log('Deleting room type:', roomTypeId);
+  const deleteRoomType = async (roomTypeId) => {
+    try {
+      console.log('🗑️ Deleting room type:', roomTypeId);
+      await propertiesAPI.deleteUnitType(roomTypeId);
+      console.log('✅ Room type deleted successfully');
+      
+      // Refresh properties to get updated room types
+      await fetchProperties();
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to delete room type:', error);
+      throw error;
+    }
   };
 
   // Transaction management placeholders

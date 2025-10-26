@@ -7,6 +7,10 @@ class PaymentSerializer(serializers.ModelSerializer):
     tenant_name = serializers.CharField(source='tenant.full_name', read_only=True)
     unit_number = serializers.CharField(source='unit.unit_number', read_only=True)
     
+    # Add property information
+    property_id = serializers.IntegerField(source='unit.property_obj.id', read_only=True)
+    property_name = serializers.CharField(source='unit.property_obj.name', read_only=True)
+    
     # Add status display field to map backend status to frontend
     status_display = serializers.SerializerMethodField()
 
@@ -15,7 +19,8 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'tenant', 'tenant_name', 'unit', 'unit_number', 
             'payment_type', 'amount', 'mpesa_receipt', 'date', 'phone', 
-            'status', 'status_display', 'reference_number'
+            'status', 'status_display', 'reference_number',
+            'property_id', 'property_name'  # Add property fields
         ]
         read_only_fields = ['created_at', 'status']
 
