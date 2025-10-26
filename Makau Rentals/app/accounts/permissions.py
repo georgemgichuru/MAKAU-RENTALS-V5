@@ -5,11 +5,11 @@ from .models import CustomUser, Subscription
 
 class IsLandlord(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.user_type == 'landlord'
+        return request.user.is_authenticated and getattr(request.user, 'is_landlord', False)
 
 class IsTenant(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.user_type == 'tenant'
+        return request.user.is_authenticated and getattr(request.user, 'is_tenant', False)
 
 class IsSuperuser(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -25,7 +25,7 @@ class HasActiveSubscription(permissions.BasePermission):
             return False
         
         # For landlords, check their own subscription
-        if request.user.user_type == 'landlord':
+        if getattr(request.user, 'is_landlord', False):
             cache_key = f"subscription_status:{request.user.id}"
             has_active_sub = cache.get(cache_key)
             
@@ -40,7 +40,7 @@ class HasActiveSubscription(permissions.BasePermission):
             return has_active_sub
         
         # For tenants, check their landlord's subscription
-        elif request.user.user_type == 'tenant':
+        elif getattr(request.user, 'is_tenant', False):
             try:
                 # Get tenant's landlord through tenant profile
                 tenant_profile = request.user.tenant_profile
@@ -74,8 +74,8 @@ class CanAccessReport(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if not request.user.is_authenticated:
             return False
-        if request.user.user_type == 'tenant':
+        if getattr(request.user, 'is_tenant', False):
             return obj.tenant == request.user
-        elif request.user.user_type == 'landlord':
+        elif getattr(request.user, 'is_landlord', False):
             return obj.unit.property_obj.landlord == request.user
         return False

@@ -1,28 +1,41 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group
 from django.utils import timezone
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 import uuid
+from django.db.models.signals import post_save, m2m_changed
+from django.dispatch import receiver
 
 
 class CustomUserManager(BaseUserManager):
-    # ensure the email is normalized and user_type is provided
+    # ensure the email is normalized and user_type (legacy) or group is provided
     def create_user(self, email, full_name, user_type, password=None, **extra_fields):
         if not email:
             raise ValueError("The Email field must be set")
         if not user_type:
             raise ValueError("User type must be set (landlord or tenant)")
 
+        # Normalize and create basic user record
         email = self.normalize_email(email)
         user = self.model(
             email=email,
             full_name=full_name,
-            user_type=user_type,
+            user_type=user_type,  # keep legacy field in sync
             **extra_fields
         )
         user.set_password(password)
         user.save(using=self._db)
+
+        # Ensure default groups exist
+        landlord_group, _ = Group.objects.get_or_create(name='landlord')
+        tenant_group, _ = Group.objects.get_or_create(name='tenant')
+
+        # Assign group according to user_type
+        if user_type == 'landlord':
+            user.groups.add(landlord_group)
+        elif user_type == 'tenant':
+            user.groups.add(tenant_group)
 
         # Auto-assign free trial for landlords
         if user_type == "landlord":
@@ -47,6 +60,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     landlord_code = models.CharField(max_length=50, unique=True, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     type = [('landlord', 'Landlord'), ('tenant', 'Tenant')]
+    # Legacy field (kept for backward compatibility). The source of truth is now Groups
     user_type = models.CharField(max_length=10, choices=type)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -79,20 +93,56 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.full_name} ({self.email})"
     
+    # ===== Role helpers (Groups-first, legacy field as fallback) =====
+    @property
+    def is_landlord(self) -> bool:
+        try:
+            return self.groups.filter(name='landlord').exists()
+        except Exception:
+            return getattr(self, 'user_type', None) == 'landlord'
+
+    @property
+    def is_tenant(self) -> bool:
+        try:
+            return self.groups.filter(name='tenant').exists()
+        except Exception:
+            return getattr(self, 'user_type', None) == 'tenant'
+
+    def sync_user_type_from_groups(self, save: bool = True):
+        """Keep legacy user_type in sync with current Groups for compatibility."""
+        new_type = 'landlord' if self.groups.filter(name='landlord').exists() else (
+            'tenant' if self.groups.filter(name='tenant').exists() else None
+        )
+        if new_type and self.user_type != new_type:
+            self.user_type = new_type
+            if save:
+                super(CustomUser, self).save(update_fields=['user_type'])
+
+    def sync_groups_from_user_type(self):
+        """Ensure Groups reflect the legacy user_type value."""
+        landlord_group, _ = Group.objects.get_or_create(name='landlord')
+        tenant_group, _ = Group.objects.get_or_create(name='tenant')
+        if self.user_type == 'landlord':
+            self.groups.add(landlord_group)
+            self.groups.remove(tenant_group)
+        elif self.user_type == 'tenant':
+            self.groups.add(tenant_group)
+            self.groups.remove(landlord_group)
+
     @property
     def my_tenants(self):
         """For landlords: Get all their tenants through TenantProfile"""
-        if self.user_type == 'landlord':
+        if self.is_landlord:
             return CustomUser.objects.filter(
                 tenant_profile__landlord=self,
-                user_type='tenant'
+                groups__name='tenant'
             ).distinct()
         return CustomUser.objects.none()
 
     @property
     def my_landlord(self):
         """For tenants: Get their landlord through TenantProfile"""
-        if self.user_type == 'tenant' and hasattr(self, 'tenant_profile'):
+        if self.is_tenant and hasattr(self, 'tenant_profile'):
             return self.tenant_profile.landlord
         return None
 
@@ -101,8 +151,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """Get active landlord by landlord_code"""
         try:
             return cls.objects.get(
-                landlord_code=landlord_code, 
-                user_type='landlord',
+                landlord_code=landlord_code,
+                groups__name='landlord',
                 is_active=True
             )
         except cls.DoesNotExist:
@@ -110,7 +160,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def get_tenant_profile(self):
         """Get tenant profile if user is a tenant"""
-        if self.user_type == 'tenant':
+        if self.is_tenant:
             return getattr(self, 'tenant_profile', None)
         return None
 
@@ -249,18 +299,19 @@ class Unit(models.Model):
 class TenantProfile(models.Model):
     """ENHANCED: Separate profile for tenant-specific data"""
     tenant = models.OneToOneField(
-        CustomUser, 
-        on_delete=models.CASCADE, 
+        CustomUser,
+        on_delete=models.CASCADE,
+        # Keep legacy constraints for compatibility; enforced strictly in clean()
         limit_choices_to={'user_type': 'tenant'},
-        related_name='tenant_profile'  # Add related_name for easier access
+        related_name='tenant_profile'
     )
     landlord = models.ForeignKey(
-        CustomUser, 
-        on_delete=models.CASCADE,  # Changed from SET_NULL to CASCADE for data integrity
-        related_name='tenants', 
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='tenants',
         limit_choices_to={'user_type': 'landlord'},
-        null=False,  # Make this required
-        blank=False   # Make this required
+        null=False,
+        blank=False
     )
     current_unit = models.ForeignKey(
         Unit, 
@@ -283,9 +334,9 @@ class TenantProfile(models.Model):
     def clean(self):
         """Validate that tenant belongs to the landlord"""
         if self.landlord and self.tenant:
-            if self.tenant.user_type != 'tenant':
+            if not self.tenant.is_tenant:
                 raise ValidationError("User must be a tenant")
-            if self.landlord.user_type != 'landlord':
+            if not self.landlord.is_landlord:
                 raise ValidationError("Landlord must be a landlord")
         
         # Ensure landlord exists and is active
@@ -296,3 +347,23 @@ class TenantProfile(models.Model):
         self.clean()
         # Don't automatically set landlord from unit - require explicit assignment
         super().save(*args, **kwargs)
+
+
+# ===== Signals to keep Groups and legacy user_type in sync =====
+
+@receiver(post_save, sender=CustomUser)
+def sync_groups_after_user_save(sender, instance: CustomUser, created, **kwargs):
+    # Ensure groups reflect the legacy user_type (for existing code paths)
+    if getattr(instance, 'user_type', None):
+        try:
+            instance.sync_groups_from_user_type()
+        except Exception:
+            pass
+
+@receiver(m2m_changed, sender=CustomUser.groups.through)
+def sync_user_type_after_group_change(sender, instance: CustomUser, action, **kwargs):
+    if action in {'post_add', 'post_remove', 'post_clear'}:
+        try:
+            instance.sync_user_type_from_groups(save=True)
+        except Exception:
+            pass

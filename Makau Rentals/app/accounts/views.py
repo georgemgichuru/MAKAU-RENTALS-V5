@@ -59,10 +59,10 @@ class LandlordTenantsView(APIView):
 
     def get(self, request):
         # For landlords: get their own tenants through TenantProfile
-        if request.user.user_type == 'landlord':
+        if getattr(request.user, 'is_landlord', False):
             tenants = CustomUser.objects.filter(
                 tenant_profile__landlord=request.user,  # Changed from tenantprofile to tenant_profile
-                user_type='tenant'
+                groups__name='tenant'
             ).select_related('tenant_profile')
         
         # For superusers: get all tenants or filter by landlord_code
@@ -71,10 +71,10 @@ class LandlordTenantsView(APIView):
             if landlord_code:
                 tenants = CustomUser.objects.filter(
                     tenant_profile__landlord__landlord_code=landlord_code,  # Changed from tenantprofile to tenant_profile
-                    user_type='tenant'
+                    groups__name='tenant'
                 ).select_related('tenant_profile')
             else:
-                tenants = CustomUser.objects.filter(user_type='tenant').select_related('tenant_profile')
+                tenants = CustomUser.objects.filter(groups__name='tenant').select_related('tenant_profile')
         else:
             return Response({"error": "Permission denied"}, status=403)
         
@@ -163,7 +163,7 @@ class LandlordDashboardStatsView(APIView):
 
         # Total active tenants: tenants assigned to units of this landlord and active
         total_active_tenants = CustomUser.objects.filter(
-            user_type='tenant',
+            groups__name='tenant',
             is_active=True,
             unit__property_obj__landlord=landlord
         ).distinct().count()
@@ -264,7 +264,7 @@ class AdminLandlordSubscriptionStatusView(APIView):
     permission_classes = [IsAuthenticated, IsSuperuser]
 
     def get(self, request):
-        landlords = CustomUser.objects.filter(user_type='landlord')
+        landlords = CustomUser.objects.filter(groups__name='landlord')
         data = []
         for landlord in landlords:
             subscription = getattr(landlord, 'subscription', None)
@@ -303,7 +303,7 @@ class UserCreateView(APIView):
             print(f"User created successfully: {user.email}, ID: {user.id}")  # Debug logging
 
             # Landlord onboarding: optionally auto-create properties and units if provided
-            if user.user_type == 'landlord':
+            if getattr(user, 'is_landlord', False):
                 # Expect optional 'properties' array in request.data, each item: {name, city, state, unit_count, vacant_units}
                 properties = request.data.get('properties')
                 from .models import Property, Unit, UnitType
@@ -342,13 +342,13 @@ class UserCreateView(APIView):
                             )
 
             # Tenant created: attempt to assign unit if landlord_code and unit_code provided
-            if user.user_type == "tenant":
+            if getattr(user, 'is_tenant', False):
                 cache.delete("tenants:list")
                 landlord_code = request.data.get('landlord_code')
                 unit_code = request.data.get('unit_code')
                 if landlord_code and unit_code:
                     try:
-                        landlord = CustomUser.objects.get(landlord_code=landlord_code, user_type='landlord')
+                        landlord = CustomUser.objects.get(landlord_code=landlord_code, groups__name='landlord')
                         unit = Unit.objects.get(unit_code=unit_code, property_obj__landlord=landlord)
                         # Check for deposit payments
                         from payments.models import Payment
@@ -582,7 +582,7 @@ class AssignTenantView(APIView):
                 }, status=400)
 
             # Validate tenant exists and is a tenant
-            tenant = CustomUser.objects.get(id=tenant_id, user_type="tenant")
+            tenant = CustomUser.objects.get(id=tenant_id, groups__name='tenant')
             logger.info(f"Tenant found: {tenant.full_name} (ID: {tenant.id})")
 
             # Check if tenant already has a unit assigned
@@ -1058,7 +1058,7 @@ class LandlordsListView(APIView):
     permission_classes = [IsAuthenticated, IsSuperuser]
 
     def get(self, request):
-        landlords = CustomUser.objects.filter(user_type='landlord')
+        landlords = CustomUser.objects.filter(groups__name='landlord')
         data = []
         for landlord in landlords:
             subscription = getattr(landlord, 'subscription', None)
@@ -1080,7 +1080,7 @@ class PendingApplicationsView(APIView):
     def get(self, request):
         # For now, return tenants without assigned units (pending applications)
         tenants = CustomUser.objects.filter(
-            user_type="tenant",
+            groups__name='tenant',
             is_active=True,
             unit__isnull=True
         )
@@ -1094,7 +1094,7 @@ class EvictedTenantsView(APIView):
     def get(self, request):
         # For now, return inactive tenants that were previously assigned to landlord's units
         evicted_tenants = CustomUser.objects.filter(
-            user_type="tenant",
+            groups__name='tenant',
             is_active=False,
             unit__property_obj__landlord=request.user
         ).distinct()
@@ -1119,8 +1119,8 @@ class ValidateLandlordView(APIView):
             # Find landlord by landlord_code
             landlord = CustomUser.objects.get(
                 landlord_code=landlord_code,
-                user_type='landlord',
-                is_active=True
+                is_active=True,
+                groups__name='landlord'
             )
             
             print(f"✅ Landlord found: {landlord.full_name} (ID: {landlord.id})")  # DEBUG
@@ -1247,8 +1247,8 @@ class TenantRegistrationStepView(APIView):
                         # Verify landlord exists and is active
                         landlord = CustomUser.objects.get(
                             landlord_code=landlord_id,
-                            user_type='landlord',
-                            is_active=True
+                            is_active=True,
+                            groups__name='landlord'
                         )
                         
                         # Add landlord info to cached data
@@ -1344,8 +1344,8 @@ class CompleteTenantRegistrationView(APIView):
             try:
                 landlord = CustomUser.objects.get(
                     landlord_code=landlord_code,
-                    user_type='landlord',
-                    is_active=True
+                    is_active=True,
+                    groups__name='landlord'
                 )
             except CustomUser.DoesNotExist:
                 return Response({
@@ -1715,7 +1715,7 @@ class UnitListView(generics.ListAPIView):
         user = self.request.user
         print(f"🔍 UnitListView - User: {user.email}, Type: {user.user_type}")
         
-        if user.user_type == 'landlord':
+        if getattr(user, 'is_landlord', False):
             # Landlords see all units from their properties
             units = Unit.objects.filter(property_obj__landlord=user).select_related(
                 'property_obj', 'unit_type', 'tenant'
@@ -1723,7 +1723,7 @@ class UnitListView(generics.ListAPIView):
             print(f"🏠 Landlord units found: {units.count()}")
             return units
             
-        elif user.user_type == 'tenant':
+        elif getattr(user, 'is_tenant', False):
             # Tenants see only their assigned unit
             units = Unit.objects.filter(tenant=user).select_related(
                 'property_obj', 'unit_type'
@@ -1765,8 +1765,8 @@ class DeleteTenantView(APIView):
         try:
             # Validate tenant exists and belongs to landlord's properties
             tenant = CustomUser.objects.get(
-                id=tenant_id, 
-                user_type="tenant",
+                id=tenant_id,
+                groups__name='tenant',
                 unit__property_obj__landlord=request.user
             )
             
@@ -1800,11 +1800,11 @@ class DeleteTenantView(APIView):
 @permission_classes([permissions.IsAuthenticated])
 def get_pending_applications(request):
     """ENHANCED: Get tenants without units (pending applications)"""
-    if request.user.user_type != 'landlord':
+    if not getattr(request.user, 'is_landlord', False):
         return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
     
     # Get tenants without units OR tenants not assigned to this landlord's units
-    all_tenants = CustomUser.objects.filter(user_type='tenant')
+    all_tenants = CustomUser.objects.filter(groups__name='tenant')
     landlord_tenant_ids = Unit.objects.filter(
         property_obj__landlord=request.user
     ).exclude(tenant__isnull=True).values_list('tenant_id', flat=True)
@@ -1828,7 +1828,7 @@ def assign_tenant_to_unit(request, unit_id):
     if not tenant_id:
         return Response({"error": "tenant_id is required"}, status=status.HTTP_400_BAD_REQUEST)
     
-    tenant = get_object_or_404(CustomUser, id=tenant_id, user_type='tenant')
+    tenant = get_object_or_404(CustomUser, id=tenant_id, groups__name='tenant')
     
     # Check if unit is available
     if not unit.is_available:
@@ -1911,12 +1911,12 @@ def get_users(request):
 @permission_classes([permissions.IsAuthenticated])
 def get_tenants_with_units(request):
     """ENHANCED: Get tenants with their unit information"""
-    if request.user.user_type != 'landlord':
+    if not getattr(request.user, 'is_landlord', False):
         return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
     
     # Get tenants assigned to landlord's properties
     tenants = CustomUser.objects.filter(
-        user_type='tenant',
+        groups__name='tenant',
         assigned_units__property_obj__landlord=request.user
     ).distinct()
     
@@ -1927,7 +1927,7 @@ def get_tenants_with_units(request):
 @permission_classes([permissions.IsAuthenticated])
 def landlord_dashboard(request):
     """ENHANCED: Landlord dashboard with complete stats"""
-    if request.user.user_type != 'landlord':
+    if not getattr(request.user, 'is_landlord', False):
         return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
     
     # Calculate statistics
@@ -1945,7 +1945,7 @@ def landlord_dashboard(request):
     ).distinct().count()
     
     # Get pending applications (tenants without units in this landlord's properties)
-    all_tenants = CustomUser.objects.filter(user_type='tenant')
+    all_tenants = CustomUser.objects.filter(groups__name='tenant')
     landlord_tenant_ids = units.exclude(tenant__isnull=True).values_list('tenant_id', flat=True)
     pending_applications = all_tenants.exclude(id__in=landlord_tenant_ids).count()
     

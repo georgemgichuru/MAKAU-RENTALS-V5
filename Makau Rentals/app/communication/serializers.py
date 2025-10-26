@@ -69,7 +69,7 @@ class SendEmailSerializer(serializers.Serializer):
         # If property_id provided, validate ownership for landlords
         request = self.context.get('request')
         if data.get('property_id') is not None:
-            if not request or request.user.user_type != 'landlord':
+            if not request or not getattr(request.user, 'is_landlord', False):
                 raise serializers.ValidationError("property_id can only be used by landlords.")
             try:
                 prop = Property.objects.get(id=data['property_id'], landlord=request.user)
@@ -80,7 +80,7 @@ class SendEmailSerializer(serializers.Serializer):
     def validate_tenants(self, value):
         # Ensure all tenants belong to the landlord's properties
         request = self.context.get('request')
-        if request and request.user.user_type == 'landlord':
+        if request and getattr(request.user, 'is_landlord', False):
             landlord_properties = Property.objects.filter(landlord=request.user)
             tenant_units = Unit.objects.filter(property_obj__in=landlord_properties, tenant__in=value)
             valid_tenants = set(tenant_units.values_list('tenant', flat=True))

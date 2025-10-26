@@ -37,8 +37,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not user.is_active:
             raise serializers.ValidationError("User account is disabled")
         
-        # Get the actual user type from the database
-        actual_user_type = user.user_type
+        # Determine the actual user type from Groups (fallback to legacy field)
+        if user.groups.filter(name='landlord').exists():
+            actual_user_type = 'landlord'
+        elif user.groups.filter(name='tenant').exists():
+            actual_user_type = 'tenant'
+        else:
+            actual_user_type = getattr(user, 'user_type', None)
         
         # If user_type is provided, validate it matches
         if requested_user_type:
@@ -82,8 +87,8 @@ class TenantRegistrationSerializer(serializers.ModelSerializer):
         try:
             landlord = CustomUser.objects.get(
                 landlord_code=value,
-                user_type='landlord',
-                is_active=True
+                is_active=True,
+                groups__name='landlord'
             )
             return value
         except CustomUser.DoesNotExist:
@@ -171,7 +176,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def get_current_unit(self, obj):
-        if obj.user_type == 'tenant' and hasattr(obj, 'tenant_profile'):
+        if obj.is_tenant and hasattr(obj, 'tenant_profile'):
             current_unit = obj.tenant_profile.current_unit
             if current_unit:
                 return {

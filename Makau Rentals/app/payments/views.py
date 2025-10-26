@@ -88,7 +88,7 @@ def stk_push(request, unit_id):
         tenant = request.user
 
         # Validate tenant owns the unit AND user is a tenant
-        if request.user.user_type != 'tenant':
+        if not getattr(request.user, 'is_tenant', False):
             return Response({"error": "Only tenants can make rent payments"}, status=status.HTTP_403_FORBIDDEN)
         # Validate tenant owns the unit
         if unit.tenant != tenant:
@@ -936,10 +936,10 @@ class RentPaymentStatusView(APIView):
             payment = Payment.objects.get(id=payment_id, payment_type='rent')
             
             # Check if user has permission to view this payment
-            if request.user.user_type == 'tenant' and payment.tenant != request.user:
+            if getattr(request.user, 'is_tenant', False) and payment.tenant != request.user:
                 return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-            if request.user.user_type == 'landlord' and payment.unit.property_obj.landlord != request.user:
+            if getattr(request.user, 'is_landlord', False) and payment.unit.property_obj.landlord != request.user:
                 return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
             return Response({
@@ -969,10 +969,9 @@ class DepositPaymentStatusView(APIView):
             payment = Payment.objects.get(id=payment_id)
             
             # Check if user has permission to view this payment
-            if request.user.user_type == 'tenant' and payment.tenant != request.user:
+            if getattr(request.user, 'is_tenant', False) and payment.tenant != request.user:
                 return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-
-            if request.user.user_type == 'landlord' and payment.unit.property_obj.landlord != request.user:
+            if getattr(request.user, 'is_landlord', False) and payment.unit.property_obj.landlord != request.user:
                 return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
             return Response({
@@ -996,9 +995,9 @@ class PaymentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Payment.objects.filter(tenant=user)
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             # Landlords can see payments for their properties
             return Payment.objects.filter(unit__property_obj__landlord=user)
         return Payment.objects.none()
@@ -1016,9 +1015,9 @@ class PaymentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Payment.objects.filter(tenant=user)
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             return Payment.objects.filter(unit__property_obj__landlord=user)
         return Payment.objects.none()
 
@@ -1079,7 +1078,7 @@ class RentSummaryView(APIView):
         user = request.user
         
         # Tenant: Get their own rent summary
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             try:
                 # Get tenant's assigned unit
                 unit = Unit.objects.filter(tenant=user).first()
@@ -1111,7 +1110,7 @@ class RentSummaryView(APIView):
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Landlord: Get overall summary
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             # Calculate total collected and outstanding rent
             properties = Property.objects.filter(landlord=user)
             units = Unit.objects.filter(property_obj__in=properties)
@@ -1131,7 +1130,7 @@ class RentSummaryView(APIView):
                 "properties_count": properties.count(),
                 "units_count": units.count()
             })
-        
+
         else:
             return Response({"error": "Invalid user type"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -1188,7 +1187,7 @@ class LandLordCSVView(APIView):
 
     def get(self, request, property_id):
         user = request.user
-        if user.user_type != 'landlord':
+        if not getattr(user, 'is_landlord', False):
             return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
 
         property_obj = get_object_or_404(Property, id=property_id, landlord=user)
@@ -1224,10 +1223,9 @@ class TenantCSVView(APIView):
         user = request.user
         unit = get_object_or_404(Unit, id=unit_id)
 
-        if user.user_type == 'tenant' and unit.tenant != user:
+        if getattr(user, 'is_tenant', False) and unit.tenant != user:
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-
-        if user.user_type == 'landlord' and unit.property_obj.landlord != user:
+        if getattr(user, 'is_landlord', False) and unit.property_obj.landlord != user:
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
         payments = Payment.objects.filter(unit=unit, status='completed')
@@ -1259,7 +1257,7 @@ class RentPaymentsCSVView(APIView):
 
     def get(self, request):
         user = request.user
-        if user.user_type != 'landlord':
+        if not getattr(user, 'is_landlord', False):
             return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
 
         # Get property_id from query parameters (optional)
@@ -1349,7 +1347,7 @@ class BulkRentUpdateView(APIView):
             user = request.user
             print(f"🔍 BULK UPDATE - User: {user.email}, Type: {user.user_type}")  # DEBUG
             
-            if user.user_type != 'landlord':
+            if not getattr(user, 'is_landlord', False):
                 return Response({"error": "Only landlords can update rents"}, status=status.HTTP_403_FORBIDDEN)
 
             update_type = request.data.get('update_type')  # 'percentage' or 'fixed'
@@ -1497,7 +1495,7 @@ class UnitRentUpdateView(APIView):
             user = request.user
 
             # Check if user has permission to update this unit
-            if user.user_type == 'landlord' and unit.property_obj.landlord != user:
+            if getattr(user, 'is_landlord', False) and unit.property_obj.landlord != user:
                 return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
             new_rent = request.data.get('rent')

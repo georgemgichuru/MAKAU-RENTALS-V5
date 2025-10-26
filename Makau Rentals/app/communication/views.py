@@ -66,9 +66,9 @@ class ReportListView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Report.objects.filter(tenant=user)
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             # Landlords see reports from their properties
             from accounts.models import Property
             landlord_properties = Property.objects.filter(landlord=user)
@@ -82,9 +82,9 @@ class OpenReportsView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Report.objects.filter(tenant=user, status='open')
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             return Report.objects.filter(unit__property_obj__landlord=user, status='open')
         return Report.objects.none()
 
@@ -94,9 +94,9 @@ class UrgentReportsView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Report.objects.filter(tenant=user, priority_level='urgent')
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             return Report.objects.filter(unit__property_obj__landlord=user, priority_level='urgent')
         return Report.objects.none()
 
@@ -106,9 +106,9 @@ class InProgressReportsView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Report.objects.filter(tenant=user, status='in_progress')
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             return Report.objects.filter(unit__property_obj__landlord=user, status='in_progress')
         return Report.objects.none()
 
@@ -118,9 +118,9 @@ class ResolvedReportsView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == 'tenant':
+        if getattr(user, 'is_tenant', False):
             return Report.objects.filter(tenant=user, status='resolved')
-        elif user.user_type == 'landlord':
+        elif getattr(user, 'is_landlord', False):
             return Report.objects.filter(unit__property_obj__landlord=user, status='resolved')
         return Report.objects.none()
 
@@ -146,7 +146,7 @@ class SendEmailView(APIView):
                 if property_id:
                     landlord_properties = landlord_properties.filter(id=property_id)
                 tenants_qs = CustomUser.objects.filter(
-                    user_type='tenant',
+                    groups__name='tenant',
                     unit__property_obj__in=landlord_properties
                 ).distinct()
                 tenant_ids = list(tenants_qs.values_list('id', flat=True))
@@ -159,7 +159,7 @@ class SendEmailView(APIView):
                 return Response({"message": "Emails queued for delivery."}, status=status.HTTP_202_ACCEPTED)
             else:
                 # Synchronous fallback (useful when Celery isn't running)
-                tenants_qs = CustomUser.objects.filter(id__in=tenant_ids, user_type='tenant')
+                tenants_qs = CustomUser.objects.filter(id__in=tenant_ids, groups__name='tenant')
                 send_landlord_email(subject, message, tenants_qs)
                 return Response({"message": "Emails sent successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -169,7 +169,7 @@ class ReportStatisticsView(APIView):
     
     def get(self, request):
         user = request.user
-        if user.user_type == 'landlord':
+        if getattr(user, 'is_landlord', False):
             reports = Report.objects.filter(unit__property_obj__landlord=user)
         else:
             reports = Report.objects.filter(tenant=user)

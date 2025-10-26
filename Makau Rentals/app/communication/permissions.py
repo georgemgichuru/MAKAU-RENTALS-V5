@@ -7,7 +7,7 @@ class IsTenantWithUnit(permissions.BasePermission):
     Allows access only to tenants who have at least one assigned unit.
     """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated or request.user.user_type != 'tenant':
+        if not request.user.is_authenticated or not getattr(request.user, 'is_tenant', False):
             return False
         
         # Check cache first
@@ -30,7 +30,7 @@ class IsLandlordWithActiveSubscription(permissions.BasePermission):
     Allows access only to landlords with active subscriptions.
     """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated or request.user.user_type != 'landlord':
+        if not request.user.is_authenticated or not getattr(request.user, 'is_landlord', False):
             return False
         
         # Use cache to avoid repeated database queries

@@ -743,9 +743,64 @@ const LoginForm = ({ onLogin }) => {
           properties: landlordData.properties
         });
 
-        alert('Landlord registration successful! Please login.');
-        setAuthMode('login');
-        resetLandlordForm();
+        // Determine landlord identifier from response (best-effort)
+        const landlordId = response?.data?.id || response?.data?.user_id || null;
+
+        // Decide whether this is a first-time signup. For registration flow we treat newly created
+        // accounts as "first time". We also persist a small local marker so subsequent flow can
+        // detect that the free trial was already granted for this email.
+        const trialKey = `trial_${landlordData.email}`;
+        const hasTrial = !!localStorage.getItem(trialKey);
+
+        if (!hasTrial) {
+          // Grant 30-day free trial locally (backend should also track this ideally).
+          const trialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          localStorage.setItem(trialKey, trialEnds);
+
+          // NOTE: Ideally you'd call a backend endpoint here to register the trial server-side.
+          // If such an endpoint exists (e.g. subscriptionAPI.createTrial) call it.
+
+          alert(`Registration successful! You have a 30-day free trial until ${new Date(trialEnds).toLocaleString()}. Please login to continue.`);
+          setAuthMode('login');
+          resetLandlordForm();
+        } else {
+          // Non-first-time flow: initiate subscription payment and navigate to payment tracking
+          const amount = calculateMonthlyFee();
+          if (!amount || amount <= 0) {
+            // Free / contact-us tier — just finish registration
+            alert('Registration successful! Your plan requires manual setup. Please contact support.');
+            setAuthMode('login');
+            resetLandlordForm();
+          } else {
+            try {
+              setPaymentStatus(null);
+              // Start subscription STK push (backend endpoint: /payments/stk-push-subscription/)
+              const payPayload = {
+                amount: Math.round(amount),
+                phone_number: landlordData.phone.replace(/\s+/g, ''),
+                session_id: sessionId,
+                email: landlordData.email,
+                landlord_id: landlordId
+              };
+
+              const payResp = await paymentsAPI.stkPushSubscription(payPayload);
+
+              // navigate to a payment tracking page (frontend should have a route to show status)
+              const paymentId = payResp?.data?.payment_id || payResp?.data?.id || null;
+              const checkoutRequestId = payResp?.data?.checkout_request_id || payResp?.data?.checkout_request || null;
+
+              setPaymentStatus({ type: 'success', message: 'Subscription payment initiated. Check your phone for M-Pesa prompt.' });
+
+              // Pass payment tracking info to a payments page (or show inline). We navigate with state.
+              navigate('/payments/subscribe', { state: { paymentId, checkoutRequestId, landlordEmail: landlordData.email } });
+            } catch (payErr) {
+              console.error('Subscription payment initiation failed:', payErr);
+              const errorMessage = payErr.response?.data?.error || payErr.response?.data?.message || 'Failed to initiate subscription payment. Please try again.';
+              setPaymentStatus({ type: 'error', message: errorMessage });
+              // Allow the user to try again or login
+            }
+          }
+        }
       } catch (err) {
         const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Registration failed. Please try again.';
         setError(errorMessage);
