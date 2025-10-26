@@ -15,6 +15,7 @@ import TenantLayout from "./components/Tenant/TenantLayout"
 import ForgotPasswordRequest from "./components/Login and Sign Up/ForgotPasswordRequest"
 import ResetPassword from "./components/Login and Sign Up/ResetPassword"
 import ResetPasswordSuccess from "./components/Login and Sign Up/ResetPasswordSuccess"
+import PasswordResetConfirm from "./components/Login and Sign Up/PasswordResetConfirm"
 
 // admin pages
 import AdminDashboard from "./components/Admin/AdminDashboard"
@@ -135,8 +136,26 @@ function ProtectedRoute({ children, role }) {
     return <LoadingSpinner />
   }
 
-  if (!isLoggedIn) return <Navigate to="/login" replace />
-  if (role && userType !== role) return <Navigate to="/login" replace />
+  if (!isLoggedIn) {
+    console.warn('Access attempt without login');
+    return <Navigate to="/login" replace />
+  }
+
+  // Validate user has required role
+  if (role && userType !== role) {
+    console.warn(
+      `Role validation failed: User is '${userType}' but route requires '${role}'. Redirecting to appropriate dashboard.`
+    );
+    
+    // Redirect users to their appropriate dashboard instead of login
+    if (userType === 'landlord') {
+      return <Navigate to="/admin" replace />
+    } else if (userType === 'tenant') {
+      return <Navigate to="/tenant" replace />
+    }
+    
+    return <Navigate to="/login" replace />
+  }
 
   return children
 }
@@ -166,6 +185,9 @@ function AppContent() {
 
         <Route path="/forgot-password" element={<ForgotPasswordRequest />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+  <Route path="/reset-password/:uid/:token" element={<PasswordResetConfirm />} />
+  {/* Accept links with a trailing slash or extra segment */}
+  <Route path="/reset-password/:uid/:token/*" element={<PasswordResetConfirm />} />
         <Route path="/reset-success" element={<ResetPasswordSuccess />} />
 
         {/* Admin routes */}

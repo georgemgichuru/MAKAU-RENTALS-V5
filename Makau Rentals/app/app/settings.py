@@ -269,7 +269,8 @@ LOGGING = {
 }
 
 # Email Configuration
-# Default to console backend for local development; override with env to send real email
+# Default to console backend in development so requests never hang due to SMTP
+# Override in .env to use real SMTP
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
 # Common SMTP settings (used when EMAIL_BACKEND is SMTP)
@@ -282,8 +283,12 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'no-reply@example.com')
 SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
 
+# Reduce email socket timeout so it never blocks requests for long if misconfigured
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=5, cast=int)
+
 # Control whether emails are sent asynchronously via Celery
-EMAIL_ASYNC_ENABLED = config('EMAIL_ASYNC_ENABLED', default=True, cast=bool)
+# Default to False to avoid dependency on Celery in development
+EMAIL_ASYNC_ENABLED = config('EMAIL_ASYNC_ENABLED', default=False, cast=bool)
 
 # Mpesa Configuration
 # TODO: Update these settings with your actual Mpesa credentials
@@ -354,7 +359,8 @@ CELERY_RESULT_BACKEND = REDIS_URL
 
 
 # Frontend URL for password reset links
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+# Use 5173 (Vite) as a safer local default; can be overridden via .env FRONTEND_URL
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
 # Optional: S3 storage for uploaded id_document files via django-storages
 # To enable, set USE_S3=True and provide the AWS_* env vars. Install: pip install django-storages[boto3]

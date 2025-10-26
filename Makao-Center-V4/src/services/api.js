@@ -1,11 +1,33 @@
 import axios from 'axios';
 
-// Use ngrok URL for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api';
+// Resolve API base URL with smart fallbacks
+// Priority:
+// 1) VITE_API_BASE_URL from env
+// 2) If running on localhost, use local Django server
+// 3) Fallback to previous ngrok URL (may be offline)
+const resolveApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    return envUrl.replace(/\/$/, '');
+  }
+
+  // Browser-only check; safe in Vite client bundles
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(host);
+  if (isLocalhost) {
+    return 'http://localhost:8000/api';
+  }
+
+  // Final fallback (remote)
+  return 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api';
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000, // 15s timeout to avoid infinite pending requests
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
@@ -19,6 +41,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log(`🔵 API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log('🔵 Token present:', !!token);
     return config;
   },
   (error) => {
@@ -28,8 +52,20 @@ api.interceptors.request.use(
 
 // Response interceptor to handle token refresh and authentication errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.method.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
   async (error) => {
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏰ Request timeout:', error.message);
+    }
+    if (!error.response) {
+      console.error('🌐 Network error or server unreachable. Base URL:', API_BASE_URL);
+    } else {
+      console.error(`❌ API Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+      console.error('❌ Error details:', error.response?.data);
+    }
     const originalRequest = error.config;
 
     // Handle 401 errors
@@ -64,9 +100,11 @@ api.interceptors.response.use(
       localStorage.removeItem('userData');
       
       // Redirect to login if we're not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+      try {
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+      } catch (_) {}
     }
 
     return Promise.reject(error);
@@ -103,6 +141,29 @@ export const authAPI = {
 
   // Update user
   updateUser: (userId, data) => api.put(`/accounts/users/${userId}/update/`, data),
+
+  // Update tenant account info (exclude read-only fields)
+  updateTenantAccount: (userId, data) => {
+    const payload = { ...data };
+    // Strip read-only fields if present
+    delete payload.id;
+    delete payload.date_joined;
+    delete payload.is_active;
+    delete payload.is_staff;
+    delete payload.is_superuser;
+    delete payload.landlord_code;
+    return api.put(`/accounts/users/${userId}/update/`, payload).then(r => r.data);
+  },
+
+  // Change tenant password
+  changeTenantPassword: (currentPassword, newPassword) => {
+    return api.put('/accounts/change-password/', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    }).then(r => r.data);
+  },
+  
+// Update tenant account info
 };
 
 // Payments API endpoints
@@ -116,6 +177,7 @@ export const paymentsAPI = {
   
   // Rent payments
   stkPush: (unitId, data) => api.post(`/payments/stk-push/${unitId}/`, data),
+  getRentPaymentStatus: (paymentId) => api.get(`/payments/rent-status/${paymentId}/`),
   
   // Subscription payments
   stkPushSubscription: (data) => api.post('/payments/stk-push-subscription/', data),

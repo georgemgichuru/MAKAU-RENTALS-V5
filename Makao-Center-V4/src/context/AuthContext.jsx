@@ -32,6 +32,16 @@ export function AuthProvider({ children }) {
         const userData = response.data;
 
         if (userData && userData.user_type) {
+          // Validate that the stored user type matches the actual user type
+          // This prevents cross-type dashboard access even if tokens are valid
+          if (userData.user_type !== storedUserType) {
+            console.warn(
+              `User type mismatch! Stored: ${storedUserType}, Actual: ${userData.user_type}. Logging out.`
+            );
+            logout();
+            return;
+          }
+
           setIsLoggedIn(true);
           setUserType(userData.user_type);
           setUser(userData);
@@ -40,9 +50,10 @@ export function AuthProvider({ children }) {
           logout();
         }
       } catch (apiError) {
-        console.warn('API call failed, logging out user:', apiError.message);
-        // Only logout if it's a 401 error, otherwise keep user logged in
-        if (apiError.response?.status === 401) {
+        console.warn('API call failed for /accounts/me/:', apiError.message);
+        const status = apiError.response?.status;
+        // Treat 401 and 403 as invalid session for the me endpoint
+        if (status === 401 || status === 403) {
           logout();
         } else {
           // For other errors, keep user logged in but show warning
@@ -63,6 +74,14 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (type, userData, tokens) => {
+    // Validate that the user type matches before storing
+    if (userData.user_type !== type) {
+      console.error(
+        `Login validation failed: User type mismatch! Expected: ${type}, Got: ${userData.user_type}`
+      );
+      throw new Error('User type mismatch during login');
+    }
+
     localStorage.setItem('accessToken', tokens.access);
     localStorage.setItem('refreshToken', tokens.refresh);
     localStorage.setItem('userType', type);

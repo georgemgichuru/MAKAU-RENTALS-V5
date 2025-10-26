@@ -26,6 +26,23 @@ class ReportSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can only modify your own reports")
         return data
 
+    def create(self, validated_data):
+        # Auto-set tenant from request user
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['tenant'] = request.user
+            
+            # If unit is not provided, try to get it from tenant's profile
+            if 'unit' not in validated_data:
+                if hasattr(request.user, 'tenant_profile') and request.user.tenant_profile.current_unit:
+                    validated_data['unit'] = request.user.tenant_profile.current_unit
+                else:
+                    raise serializers.ValidationError({
+                        'unit': 'No unit assigned to your account. Please contact your landlord.'
+                    })
+        
+        return super().create(validated_data)
+
 class UpdateReportStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report

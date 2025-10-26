@@ -26,6 +26,13 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [paymentStatus, setPaymentStatus] = useState(null);
 
+  // Forgot password states
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotError, setForgotError] = useState('');
+
   // Add this state
   const [sessionId, setSessionId] = useState(null);
 
@@ -68,12 +75,22 @@ const LoginForm = ({ onLogin }) => {
     website: '',
     password: '',
     confirmPassword: '',
+    unitTypes: [
+      {
+        id: Date.now(),
+        name: '',
+        rent: '',
+        deposit: '',
+        description: '',
+        amenities: []
+      }
+    ],
     properties: [
       {
         id: Date.now(),
         propertyName: '',
         propertyAddress: '',
-        units: []
+        units: [] // Will contain {unitTypeId, count} objects
       }
     ]
   });
@@ -160,9 +177,45 @@ const LoginForm = ({ onLogin }) => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.detail || 
-                          err.response?.data?.error || 
-                          'Invalid email or password';
+      console.error('Error response:', err.response?.data);
+      
+      // Extract error message from backend response
+      let errorMessage = 'Invalid email or password';
+      
+      if (err.response?.data) {
+        // Handle non-field errors (detail)
+        if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } 
+        // Handle form-level errors (error key)
+        else if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        }
+        // Handle field-specific errors
+        else if (err.response.data.non_field_errors) {
+          errorMessage = Array.isArray(err.response.data.non_field_errors) 
+            ? err.response.data.non_field_errors[0] 
+            : err.response.data.non_field_errors;
+        }
+        // Handle user_type validation errors
+        else if (err.response.data.user_type) {
+          errorMessage = Array.isArray(err.response.data.user_type) 
+            ? err.response.data.user_type[0] 
+            : err.response.data.user_type;
+        }
+      }
+      
+      // Check for account type mismatch error and provide user-friendly message
+      if (errorMessage.toLowerCase().includes('invalid account type') || 
+          errorMessage.toLowerCase().includes('not a')) {
+        // Extract actual user type from error message if available
+        const actualUserType = errorMessage.includes('landlord') ? 'landlord' : 
+                              errorMessage.includes('tenant') ? 'tenant' : 'different user type';
+        const currentUserType = userType === 'landlord' ? 'Landlord' : 'Tenant';
+        
+        errorMessage = `This account is registered as a ${actualUserType}, not as a ${currentUserType}. Please log in with the correct account type.`;
+      }
+      
       setError(errorMessage);
       
       // Clear tokens on error
@@ -171,6 +224,55 @@ const LoginForm = ({ onLogin }) => {
       localStorage.removeItem('userType');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle forgot password submit
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+    setForgotLoading(true);
+    
+    try {
+      // Get the API base URL from environment or use default
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api';
+      
+      console.log('Sending password reset request to:', `${API_BASE_URL}/accounts/password/reset/`);
+      console.log('Email:', forgotEmail);
+      console.log('Frontend URL:', window.location.origin);
+      
+      // Call backend API to send reset email
+      const response = await fetch(`${API_BASE_URL}/accounts/password/reset/`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({ 
+          email: forgotEmail,
+          frontend_url: window.location.origin  // Send actual frontend URL
+        })
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('Error response:', data);
+        throw new Error(data.error || data.email?.[0] || 'Failed to send reset email');
+      }
+      
+      const result = await response.json();
+      console.log('Success response:', result);
+      
+      setForgotSuccess('A password reset link has been sent to your email.');
+      setForgotEmail('');
+    } catch (err) {
+      console.error('Forgot password error:', err);
+      setForgotError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -1335,6 +1437,103 @@ const LoginForm = ({ onLogin }) => {
     </div>
   );
 
+  const renderLandlordUnitTypes = () => (
+    <div>
+      <h2 className="text-2xl font-bold mb-2">Unit Types</h2>
+      <p className="text-gray-600 mb-6">Define the types of units you have across all your properties</p>
+      
+      <div className="space-y-6">
+        {landlordData.unitTypes.map((unitType, index) => (
+          <div key={unitType.id} className="p-4 border rounded-lg bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium">Unit Type {index + 1}</h3>
+              {index > 0 && (
+                <button
+                  onClick={() => removeUnitType(unitType.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+
+            <div className="grid gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Type Name *</label>
+                <input
+                  type="text"
+                  value={unitType.name}
+                  onChange={(e) => updateUnitTypeField(unitType.id, 'name', e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="e.g., Studio, 1 Bedroom, 2 Bedroom"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Monthly Rent (KES) *</label>
+                  <input
+                    type="number"
+                    value={unitType.rent}
+                    onChange={(e) => updateUnitTypeField(unitType.id, 'rent', e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="15000"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Deposit (KES) *</label>
+                  <input
+                    type="number"
+                    value={unitType.deposit}
+                    onChange={(e) => updateUnitTypeField(unitType.id, 'deposit', e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="15000"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={unitType.description}
+                  onChange={(e) => updateUnitTypeField(unitType.id, 'description', e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Describe the features of this unit type"
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={addUnitType}
+          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700"
+        >
+          + Add Another Unit Type
+        </button>
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={() => setCurrentStep(2)}
+          className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleLandlordNext}
+          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+        >
+          Continue to Properties
+        </button>
+      </div>
+    </div>
+  );
+
   const renderLandlordStep2 = () => (
     <div>
       <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
@@ -1630,7 +1829,25 @@ const LoginForm = ({ onLogin }) => {
                           <option value="1-bedroom">1 Bedroom</option>
                           <option value="2-bedroom">2 Bedroom</option>
                           <option value="3-bedroom">3 Bedroom</option>
+                          <option value="4-bedroom">4 Bedroom</option>
+                          <option value="5-bedroom">5 Bedroom</option>
+                          <option value="6-bedroom">6 Bedroom</option>
+                          <option value="7-bedroom">7 Bedroom</option>
+                          <option value="8-bedroom">8 Bedroom</option>
+                          <option value="custom">Custom Room Type</option>
                         </select>
+                        {bulkUnitMode[property.id]?.roomType === 'custom' && (
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded text-sm mt-2"
+                            placeholder="Enter custom room type"
+                            value={bulkUnitMode[property.id]?.customRoomType || ''}
+                            onChange={(e) => setBulkUnitMode(prev => ({
+                              ...prev,
+                              [property.id]: { ...prev[property.id], customRoomType: e.target.value, roomType: `custom-${e.target.value}` }
+                            }))}
+                          />
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Monthly Rent (KES) *</label>
@@ -1709,7 +1926,25 @@ const LoginForm = ({ onLogin }) => {
                             <option value="1-bedroom">1 Bedroom</option>
                             <option value="2-bedroom">2 Bedroom</option>
                             <option value="3-bedroom">3 Bedroom</option>
+                            <option value="4-bedroom">4 Bedroom</option>
+                            <option value="5-bedroom">5 Bedroom</option>
+                            <option value="6-bedroom">6 Bedroom</option>
+                            <option value="7-bedroom">7 Bedroom</option>
+                            <option value="8-bedroom">8 Bedroom</option>
+                            <option value="custom">Custom Room Type</option>
                           </select>
+                          {unit.roomType === 'custom' && (
+                            <input
+                              type="text"
+                              className="px-3 py-1 border rounded text-sm"
+                              placeholder="Custom room type"
+                              value={unit.customRoomType || ''}
+                              onChange={(e) => {
+                                updateUnitField(property.id, unit.id, 'customRoomType', e.target.value);
+                                updateUnitField(property.id, unit.id, 'roomType', `custom-${e.target.value}`);
+                              }}
+                            />
+                          )}
                           <input
                             type="number"
                             value={unit.monthlyRent}
@@ -1885,7 +2120,12 @@ const LoginForm = ({ onLogin }) => {
           <div className="p-6">
             <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
               <button
-                onClick={() => setAuthMode('login')}
+                onClick={() => {
+                  setAuthMode('login');
+                  setError('');
+                  setForgotError('');
+                  setForgotSuccess('');
+                }}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors ${
                   authMode === 'login'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -1895,7 +2135,12 @@ const LoginForm = ({ onLogin }) => {
                 Login
               </button>
               <button
-                onClick={() => setAuthMode('signup')}
+                onClick={() => {
+                  setAuthMode('signup');
+                  setError('');
+                  setForgotError('');
+                  setForgotSuccess('');
+                }}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors ${
                   authMode === 'signup'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -1934,63 +2179,122 @@ const LoginForm = ({ onLogin }) => {
 
             {/* Login Form */}
             {authMode === 'login' && (
-              <form onSubmit={handleLogin}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email Address</label>
+              <>
+                {!showForgotPassword ? (
+                  <form onSubmit={handleLogin}>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Email Address</label>
+                        <input
+                          type="email"
+                          value={loginData.email}
+                          onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          placeholder="your.email@example.com"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Password</label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={loginData.password}
+                            onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none pr-10"
+                            placeholder="Enter your password"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                        <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+                        <p className="text-sm text-red-700">{error}</p>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center justify-center"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Signing In...
+                        </>
+                      ) : (
+                        `Sign In as ${userType === 'tenant' ? 'Tenant' : 'Landlord'}`
+                      )}
+                    </button>
+                    <div className="mt-4 text-center">
+                      <button
+                        type="button"
+                        className="text-blue-600 hover:underline text-sm font-medium"
+                        onClick={() => setShowForgotPassword(true)}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <h2 className="text-xl font-bold mb-2 text-center">Reset Your Password</h2>
+                    <p className="text-gray-600 mb-4 text-center">Enter your email address and we'll send you a link to reset your password.</p>
                     <input
                       type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                      value={forgotEmail}
+                      onChange={e => setForgotEmail(e.target.value)}
                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="your.email@example.com"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={loginData.password}
-                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none pr-10"
-                        placeholder="Enter your password"
-                        required
-                      />
+                    {forgotError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{forgotError}</div>
+                    )}
+                    {forgotSuccess && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">{forgotSuccess}</div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center justify-center"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Reset Link'
+                      )}
+                    </button>
+                    <div className="mt-2 text-center">
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="text-gray-600 hover:underline text-sm font-medium"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setForgotError('');
+                          setForgotSuccess('');
+                        }}
                       >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        Back to Login
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
-                    <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
+                  </form>
                 )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Signing In...
-                    </>
-                  ) : (
-                    `Sign In as ${userType === 'tenant' ? 'Tenant' : 'Landlord'}`
-                  )}
-                </button>
-              </form>
+              </>
             )}
 
             {/* Signup Flow */}

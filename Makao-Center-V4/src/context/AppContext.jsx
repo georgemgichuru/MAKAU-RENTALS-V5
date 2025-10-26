@@ -2,6 +2,7 @@ import React from 'react'
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tenantsAPI, propertiesAPI, paymentsAPI, communicationAPI } from '../services/api';
+import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
 export const AppContext = createContext();
@@ -42,6 +43,7 @@ class ErrorBoundary extends React.Component {
 }
 
 const ContextProvider = (props) => {
+  const { userType } = useAuth?.() || {}; // gracefully handle if used outside provider
   // API data states
   const [tenants, setTenants] = useState([]);
   const [properties, setProperties] = useState([]);
@@ -301,11 +303,15 @@ const fetchReports = async () => {
       console.log('✅ Properties data received:', response.data);
       setProperties(response.data);
     } catch (error) {
-      console.error('❌ Error fetching properties:', error);
-      
-      if (error.response?.status === 401) {
+      // If user is a tenant, properties endpoint is forbidden by design; don't log as an error
+      if (error.response?.status === 403) {
+        console.warn('ℹ️ Skipping properties fetch for non-landlord user (403).');
+        setProperties([]);
+        setPropertiesError(null);
+      } else if (error.response?.status === 401) {
         setPropertiesError('Authentication required. Please log in again.');
       } else {
+        console.error('❌ Error fetching properties:', error);
         setPropertiesError(error.response?.data?.error || 'Failed to load properties');
       }
     } finally {
@@ -356,11 +362,14 @@ const fetchReports = async () => {
       console.log('✅ Transformed units:', transformedUnits.length);
       
     } catch (error) {
-      console.error('❌ Error fetching property units:', error);
-      
-      if (error.response?.status === 401) {
+      if (error.response?.status === 403) {
+        console.warn('ℹ️ Skipping units fetch for non-landlord user (403).');
+        setPropertyUnits([]);
+        setUnitsError(null);
+      } else if (error.response?.status === 401) {
         setUnitsError('Authentication required. Please log in again.');
       } else {
+        console.error('❌ Error fetching property units:', error);
         setUnitsError(error.response?.data?.error || 'Failed to load property units');
       }
     } finally {
@@ -451,17 +460,33 @@ const fetchReports = async () => {
     }
   };
 
-  // Fetch all data on component mount ONLY when user is authenticated - UPDATED
+  // Fetch data based on user type (avoid landlord-only endpoints for tenants)
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
+    if (!token) return;
+
+    if (userType === 'landlord') {
       fetchTenants();
       fetchProperties();
       fetchPropertyUnits();
       fetchTransactions();
       fetchReports();
+    } else if (userType === 'tenant') {
+      // Tenants should not hit landlord endpoints to avoid 403 spam
+      fetchTransactions();
+      fetchReports();
+      // Ensure landlord-only state is empty
+      setProperties([]);
+      setPropertyUnits([]);
+      setTenants([]);
+      setPropertiesError(null);
+      setUnitsError(null);
+      setTenantsError(null);
+    } else {
+      // Unknown type: fetch minimal safe data
+      fetchReports();
     }
-  }, []);
+  }, [userType]);
 
   // Selected property (so admin pages know which property is active)
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);

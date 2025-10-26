@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, AlertTriangle, X, CheckCircle } from 'lucide-react';
+import { communicationAPI, authAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const TenantReportIssue = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     category: '',
     priority: '',
@@ -14,7 +17,27 @@ const TenantReportIssue = () => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [tenantInfo, setTenantInfo] = useState(null);
+  const [isLoadingTenant, setIsLoadingTenant] = useState(true);
   const disclaimerRef = useRef(null);
+
+  // Fetch tenant information on component mount
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      try {
+        setIsLoadingTenant(true);
+        const response = await authAPI.getCurrentUser();
+        setTenantInfo(response.data);
+      } catch (error) {
+        console.error('Error fetching tenant info:', error);
+        showToast('Error loading tenant information', 'error');
+      } finally {
+        setIsLoadingTenant(false);
+      }
+    };
+
+    fetchTenantInfo();
+  }, []);
 
   // Show disclaimer after 2 seconds of loading the page
   useEffect(() => {
@@ -42,7 +65,17 @@ const TenantReportIssue = () => {
   };
 
   const showToast = (message, type) => {
-    alert(message);
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
+      type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
   };
 
   const handleSubmit = async (e) => {
@@ -54,30 +87,34 @@ const TenantReportIssue = () => {
       return;
     }
 
+    // Check if tenant has a unit assigned
+    if (!tenantInfo?.current_unit) {
+      showToast('You must have a unit assigned to report issues.', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
     
-    const whatsappMessage = `*New Maintenance Request*\n\nTenant: John Doe\nRoom: A101\nCategory: ${formData.category}\nPriority: ${formData.priority}\nTitle: ${formData.title}\nDescription: ${formData.description}`;
-    
-    const adminPhoneNumber = '+254722714334';
-    const whatsappUrl = `https://wa.me/${adminPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-    
+    // Map frontend field names to backend field names
+    // The backend will auto-set tenant and can auto-detect unit from tenant profile
     const payload = {
-      tenant_id: 1,
-      category: formData.category,
-      priority: formData.priority,
-      title: formData.title,
-      description: formData.description
+      issue_category: formData.category,
+      priority_level: formData.priority,
+      issue_title: formData.title,
+      description: formData.description,
+      unit: tenantInfo.current_unit.id // Explicitly pass unit ID for clarity
     };
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('🔄 Submitting report with payload:', payload);
+      console.log('🔄 Tenant info:', tenantInfo);
       
-      console.log('Report payload ready for backend:', payload);
+      const response = await communicationAPI.createReport(payload);
       
-      showToast('Report submitted successfully! Admin has been notified.', 'success');
+      console.log('✅ Report created successfully:', response.data);
+      showToast('Report submitted successfully! Your landlord has been notified.', 'success');
       
-      window.open(whatsappUrl, '_blank');
-      
+      // Reset form
       setFormData({
         category: '',
         priority: '',
@@ -85,26 +122,55 @@ const TenantReportIssue = () => {
         description: ''
       });
       
+      // Navigate back to tenant dashboard after a short delay
       setTimeout(() => {
         navigate('/tenant');
       }, 2000);
-      
     } catch (error) {
-      console.error('Error submitting report:', error);
-      showToast('Error submitting report. Please try again.', 'error');
+      console.error('❌ Error submitting report:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error data:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      
+      // Handle different types of errors
+      let errorMessage = 'Error submitting report. Please try again.';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        // Handle field-specific errors
+        if (typeof errorData === 'object' && !errorData.message && !errorData.detail) {
+          const fieldErrors = Object.entries(errorData)
+            .map(([field, errors]) => {
+              const errorList = Array.isArray(errors) ? errors : [errors];
+              return `${field}: ${errorList.join(', ')}`;
+            })
+            .join('\n');
+          errorMessage = fieldErrors || errorMessage;
+        } else {
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showToast(errorMessage, 'error');
+      console.error('📝 Final error message shown to user:', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const reportableCategories = [
-    { value: 'structural', label: 'Structural Issues (Roof, Walls, Foundation)' },
-    { value: 'plumbing_major', label: 'Major Plumbing (Water Supply, Sewage, Burst Pipes)' },
-    { value: 'electrical_major', label: 'Major Electrical (Power Failure, Exposed Wires)' },
-    { value: 'security', label: 'Security & Safety (Locks, Gates, Fire Hazards)' },
-    { value: 'common_areas', label: 'Common Areas (Stairs, Lifts, Walkways)' },
-    { value: 'building_pest', label: 'Building-wide Pest Infestation' },
-    { value: 'water_system', label: 'Building Water System (Tank, Pump)' },
+    { value: 'electrical', label: 'Major Electrical (Power Failure, Exposed Wires)' },
+    { value: 'plumbing', label: 'Major Plumbing (Water Supply, Sewage, Burst Pipes)' },
+    { value: 'safety', label: 'Safety & Violence (Fire Hazards, Security Issues)' },
+    { value: 'security', label: 'Security (Locks, Gates, Break-ins)' },
+    { value: 'maintenance', label: 'Structural & Maintenance (Roof, Walls, Foundation)' },
+    { value: 'pest', label: 'Building-wide Pest Infestation' },
+    { value: 'noise', label: 'Noise Disturbances' },
+    { value: 'wifi', label: 'WiFi/Internet Issues' },
+    { value: 'cleanliness', label: 'Cleanliness & Common Areas' },
     { value: 'other', label: 'Others' }
   ];
 
@@ -371,18 +437,38 @@ const TenantReportIssue = () => {
         <h2 className="text-xl font-semibold mb-4">Issue Details</h2>
         <p className="text-gray-600 mb-6">Report only issues that are the landlord's responsibility</p>
 
-        <div className="bg-blue-50 p-4 rounded-lg mb-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-blue-600 font-medium">Tenant:</span>
-              <p className="text-blue-900">John Doe</p>
-            </div>
-            <div>
-              <span className="text-blue-600 font-medium">Room:</span>
-              <p className="text-blue-900">A101</p>
+        {isLoadingTenant ? (
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <p className="text-blue-700">Loading tenant information...</p>
+          </div>
+        ) : tenantInfo?.current_unit ? (
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-blue-600 font-medium">Tenant:</span>
+                <p className="text-blue-900">{tenantInfo.full_name || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-blue-600 font-medium">Unit:</span>
+                <p className="text-blue-900">{tenantInfo.current_unit.unit_number || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-blue-600 font-medium">Property:</span>
+                <p className="text-blue-900">{tenantInfo.current_unit.property_name || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-blue-600 font-medium">Email:</span>
+                <p className="text-blue-900">{tenantInfo.email || 'N/A'}</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <p className="text-red-800 font-medium">
+              ⚠️ No unit assigned to your account. Please contact your landlord to assign you a unit before reporting issues.
+            </p>
+          </div>
+        )}
 
         {!disclaimerAccepted && (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
@@ -405,8 +491,8 @@ const TenantReportIssue = () => {
               required
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
-              disabled={!disclaimerAccepted}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={!disclaimerAccepted || isLoadingTenant || !tenantInfo?.current_unit}
             >
               <option value="">Select issue category</option>
               {reportableCategories.map(cat => (
@@ -421,8 +507,8 @@ const TenantReportIssue = () => {
               required
               value={formData.priority}
               onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
-              disabled={!disclaimerAccepted}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={!disclaimerAccepted || isLoadingTenant || !tenantInfo?.current_unit}
             >
               <option value="">Select priority level</option>
               <option value="urgent">Urgent - Life-threatening/Emergency</option>
@@ -439,9 +525,9 @@ const TenantReportIssue = () => {
               required
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Brief description of the issue"
-              disabled={!disclaimerAccepted}
+              disabled={!disclaimerAccepted || isLoadingTenant || !tenantInfo?.current_unit}
             />
           </div>
 
@@ -452,9 +538,9 @@ const TenantReportIssue = () => {
               rows={6}
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Please provide as much detail as possible about the issue, including when it started, what you've tried, and how it affects you."
-              disabled={!disclaimerAccepted}
+              disabled={!disclaimerAccepted || isLoadingTenant || !tenantInfo?.current_unit}
             />
           </div>
 
@@ -462,18 +548,24 @@ const TenantReportIssue = () => {
             <button
               type="button"
               onClick={() => navigate('/tenant')}
-              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300"
+              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !disclaimerAccepted}
-              className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || !disclaimerAccepted || !tenantInfo?.current_unit}
+              className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? (
-                <>Processing...</>
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </span>
               ) : (
                 <>
                   <Send className="w-5 h-5 mr-2" />

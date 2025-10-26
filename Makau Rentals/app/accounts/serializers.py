@@ -18,6 +18,7 @@ import uuid
 # accounts/serializers.py
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
+    user_type = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -36,14 +37,21 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not user.is_active:
             raise serializers.ValidationError("User account is disabled")
         
-        # If user_type is provided, validate it matches
-        if requested_user_type and user.user_type != requested_user_type:
-            raise serializers.ValidationError(
-                f"Invalid account type. This account is registered as a {user.user_type}, not a {requested_user_type}."
-            )
-        
-        # Use the actual user type from the database
+        # Get the actual user type from the database
         actual_user_type = user.user_type
+        
+        # If user_type is provided, validate it matches
+        if requested_user_type:
+            # Normalize user types for comparison
+            requested_type_normalized = requested_user_type.lower().strip()
+            actual_type_normalized = actual_user_type.lower().strip()
+            
+            if requested_type_normalized != actual_type_normalized:
+                # Provide clear error message about account type mismatch
+                raise serializers.ValidationError(
+                    f"Invalid credentials. This account is registered as a {actual_user_type.title()}, "
+                    f"not as a {requested_user_type.title()}. Please log in using the correct account type."
+                )
         
         # Add user_type to validated data
         attrs['user_type'] = actual_user_type
@@ -133,6 +141,8 @@ class TenantRegistrationSerializer(serializers.ModelSerializer):
         return tenant
 
 class UserSerializer(serializers.ModelSerializer):
+    current_unit = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
         fields = [
@@ -152,12 +162,26 @@ class UserSerializer(serializers.ModelSerializer):
             'emergency_contact',
             'reminder_mode',
             'reminder_value',
-            'password'
+            'password',
+            'current_unit'
         ]
         read_only_fields = ['id', 'date_joined', 'is_active', 'is_staff', 'is_superuser', 'landlord_code']
         extra_kwargs = {
             'password': {'write_only': True}
         }
+
+    def get_current_unit(self, obj):
+        if obj.user_type == 'tenant' and hasattr(obj, 'tenant_profile'):
+            current_unit = obj.tenant_profile.current_unit
+            if current_unit:
+                return {
+                    'id': current_unit.id,
+                    'unit_number': current_unit.unit_number,
+                    'property_name': current_unit.property_obj.name,
+                    'rent': current_unit.rent,
+                    'rent_remaining': current_unit.rent_remaining,
+                }
+        return None
 
     def create(self, validated_data):
         # Always use the manager to ensure password is hashed
@@ -271,6 +295,7 @@ class UnitNumberSerializer(serializers.ModelSerializer):
 # For reset password functionality
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    frontend_url = serializers.CharField(required=False, allow_blank=True)
 
     def validate_email(self, value):
         if not CustomUser.objects.filter(email=value).exists():
@@ -283,8 +308,10 @@ class PasswordResetSerializer(serializers.Serializer):
         user = CustomUser.objects.get(email=email)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        # Use the configurable frontend URL from settings
-        reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+        # Use frontend_url from request if provided, otherwise fall back to settings
+        frontend_base = self.validated_data.get('frontend_url') or settings.FRONTEND_URL
+        base = frontend_base.rstrip('/')
+        reset_link = f"{base}/reset-password/{uid}/{token}"
 
         send_mail(
             subject="Password Reset Request",

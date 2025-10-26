@@ -19,6 +19,7 @@ from .views import (
     InitiateDepositPaymentView,
     InitiateDepositPaymentRegistrationView,
     DepositPaymentStatusView,
+    RentPaymentStatusView,
     CleanupPendingPaymentsView,
     TestMpesaView,
 
@@ -45,6 +46,7 @@ urlpatterns = [
     # ------------------------------
     path("rent-payments/", PaymentListCreateView.as_view(), name="rent-payment-list-create"),
     path("rent-payments/<int:pk>/", PaymentDetailView.as_view(), name="rent-payment-detail"),
+    path('rent-status/<int:payment_id>/', RentPaymentStatusView.as_view(), name='rent-payment-status'),
 
     # ------------------------------
     # SUBSCRIPTION PAYMENTS (DRF)

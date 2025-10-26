@@ -1,32 +1,83 @@
-import React, { useContext } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  CreditCard, 
-  AlertTriangle, 
-  DollarSign,
-  AlertCircle,
-  User,
-  Phone,
-  CheckCircle
-} from 'lucide-react';
-import { AppContext } from '../../context/AppContext';
+import { Home, CreditCard, AlertTriangle, DollarSign, User, Phone, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { paymentsAPI, communicationAPI } from '../../services/api';
 
 const TenantDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { mockTenants } = useContext(AppContext);
+  const [rentSummary, setRentSummary] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // resolve tenant from context (fallback to placeholder)
-  const tenant = mockTenants?.find(t => String(t.id) === String(user?.id) || String(t.email) === String(user?.email)) || {
-    id: user?.id || '1',
-    name: user?.name || 'John Doe',
-    room: user?.room || 'A101',
-    bookingId: user?.bookingId || 'BK001',
-    rentAmount: 25000,
-    rentDue: 25000,
-    prepaidMonths: 0
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        console.log('🔵 TenantDashboard: Fetching rent summary...');
+        console.log('🔵 User ID:', user?.id);
+        console.log('🔵 User Type:', user?.user_type);
+        
+        // Get rent summary for current user (tenant-specific)
+        const rentRes = await paymentsAPI.getRentSummary();
+        console.log('✅ Rent Summary Response:', rentRes.data);
+        setRentSummary(rentRes.data);
+
+        // Get reports for current tenant
+        console.log('🔵 TenantDashboard: Fetching reports...');
+        const reportsRes = await communicationAPI.getReports();
+        console.log('✅ Reports Response:', reportsRes.data);
+        
+        // Filter reports for this tenant - check both tenant.id and tenant_id
+        const myReports = (reportsRes.data || []).filter(r => {
+          const reportTenantId = r.tenant?.id || r.tenant_id || r.tenant;
+          console.log(`📋 Report ID: ${r.id}, Tenant ID: ${reportTenantId}, User ID: ${user?.id}, Match: ${reportTenantId === user?.id}`);
+          return reportTenantId === user?.id;
+        });
+        
+        // Map backend field names to frontend field names
+        const transformedReports = myReports.map(r => ({
+          id: r.id,
+          title: r.issue_title || r.title || 'Untitled Report',
+          category: r.issue_category || r.category || 'general',
+          status: r.status || 'open',
+          priority: r.priority_level || r.priority || 'medium',
+          date: r.reported_date || r.date || new Date().toISOString(),
+          description: r.description || '',
+          // Keep original data for reference
+          ...r
+        }));
+        
+        console.log('✅ Transformed Reports:', transformedReports);
+        setReports(transformedReports);
+      } catch (err) {
+        console.error('❌ Error fetching dashboard data:', err);
+        console.error('❌ Error status:', err.response?.status);
+        console.error('❌ Error data:', err.response?.data);
+        // Don't block UI if API fails - use fallback from user context
+        setRentSummary(null);
+        setReports([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (user?.id) fetchData();
+  }, [user?.id]);
+
+  // Fallbacks if no backend data
+  const tenant = {
+    id: user?.id,
+    name: user?.full_name,
+    room: user?.current_unit?.unit_number || 'Not Assigned',
+    bookingId: user?.current_unit?.id || user?.id,
+    rentAmount: rentSummary?.monthly_rent || user?.current_unit?.rent || 0,
+    rentDue: rentSummary?.rent_due || user?.current_unit?.rent_remaining || 0,
+    prepaidMonths: rentSummary?.prepaid_months || 0,
+    email: user?.email,
+    phone: user?.phone_number,
+    rentStatus: rentSummary?.rent_status || user?.current_unit?.rent_status || 'unknown',
   };
 
   const paid = Math.max(0, (tenant.rentAmount || 0) - (tenant.rentDue || 0));
@@ -85,7 +136,6 @@ const TenantDashboard = () => {
             <div>
               <p className="text-sm text-slate-600">Prepaid Months</p>
               <p className="text-2xl font-bold text-slate-900">{tenant.prepaidMonths || 0}</p>
-
             </div>
             <CheckCircle className="w-8 h-8 text-slate-600" />
           </div>
@@ -95,7 +145,6 @@ const TenantDashboard = () => {
       <div className="bg-white p-6 rounded-lg border">
         <h2 className="text-xl font-semibold mb-4">Payment Status</h2>
         <p className="text-gray-600 mb-4">Your current rent payment status</p>
-        
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium">Rent Paid</span>
@@ -111,14 +160,12 @@ const TenantDashboard = () => {
             </span>
           </div>
         </div>
-    
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg border">
           <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
           <p className="text-gray-600 mb-4">Your registered details</p>
-          
           <div className="space-y-3">
             <div className="flex items-center">
               <Phone className="w-5 h-5 mr-3 text-gray-400" />
@@ -140,17 +187,25 @@ const TenantDashboard = () => {
         <div className="bg-white p-6 rounded-lg border">
           <h3 className="text-lg font-semibold mb-4">My Reports</h3>
           <p className="text-gray-600 mb-4">Your recent maintenance requests</p>
-          
           <div className="space-y-3">
-            <div className="p-3 bg-red-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <p className="font-medium">Power Outlet Not Working</p>
-                <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">open</span>
-              </div>
-              <p className="text-sm text-gray-600">electrical</p>
-            </div>
+            {loading ? (
+              <div className="text-center text-sm text-gray-400">Loading reports...</div>
+            ) : reports.length === 0 ? (
+              <div className="text-center text-sm text-gray-400">No reports found.</div>
+            ) : (
+              reports.map(report => (
+                <div key={report.id} className="p-3 rounded-lg" style={{background: report.status === 'open' ? '#fee2e2' : '#f3f4f6'}}>
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{report.title}</p>
+                    <span className={`px-2 py-1 ${report.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-slate-700'} text-xs rounded-full`}>
+                      {report.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">{report.category}</p>
+                </div>
+              ))
+            )}
           </div>
-          
           <button 
             onClick={() => navigate('/tenant/report')}
             className="w-full mt-4 text-slate-800 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 font-medium"

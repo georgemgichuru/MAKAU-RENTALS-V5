@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { subscriptionAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export const useSubscription = () => {
+  const { user } = useAuth();
   const [subscription, setSubscription] = useState(null);
   const [isActive, setIsActive] = useState(true);
   const [isExpired, setIsExpired] = useState(false);
@@ -10,11 +12,18 @@ export const useSubscription = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Only check subscription for landlords, not tenants
+    if (user?.user_type !== 'landlord') {
+      setLoading(false);
+      setIsActive(true); // Tenants don't need subscription check
+      return;
+    }
+
     checkSubscription();
     // Check subscription every 5 minutes
     const interval = setInterval(checkSubscription, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.user_type]);
 
   const checkSubscription = async () => {
     try {

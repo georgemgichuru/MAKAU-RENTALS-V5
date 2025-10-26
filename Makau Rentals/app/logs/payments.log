@@ -1299,3 +1299,410 @@ INFO 2025-10-26 18:19:25,985 autoreload 28496 17664 Watching for file changes wi
 INFO 2025-10-26 18:19:52,463 autoreload 28496 17664 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\serializers.py changed, reloading.
 INFO 2025-10-26 18:19:55,090 autoreload 26996 25976 Watching for file changes with StatReloader
 WARNING 2025-10-26 18:37:21,807 log 26996 23500 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 18:44:45,759 log 26996 11028 Bad Request: /api/accounts/token/
+INFO 2025-10-26 19:11:28,600 autoreload 26996 25976 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 19:11:31,597 autoreload 3724 30204 Watching for file changes with StatReloader
+INFO 2025-10-26 19:11:51,336 autoreload 3724 30204 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 19:11:54,364 autoreload 42768 34152 Watching for file changes with StatReloader
+INFO 2025-10-26 19:13:49,914 autoreload 42768 34152 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 19:13:53,304 autoreload 40064 45224 Watching for file changes with StatReloader
+INFO 2025-10-26 19:15:07,774 autoreload 40064 45224 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 19:15:10,544 autoreload 18544 16000 Watching for file changes with StatReloader
+INFO 2025-10-26 19:15:13,665 autoreload 18544 16000 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 19:15:16,194 autoreload 28528 21288 Watching for file changes with StatReloader
+WARNING 2025-10-26 19:20:34,597 log 28528 23716 Bad Request: /api/accounts/password/reset/
+INFO 2025-10-26 19:40:59,866 autoreload 28528 21288 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 19:41:02,644 autoreload 27584 37764 Watching for file changes with StatReloader
+INFO 2025-10-26 19:43:03,023 autoreload 27584 37764 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 19:43:05,545 autoreload 26032 36216 Watching for file changes with StatReloader
+INFO 2025-10-26 19:48:21,451 autoreload 26032 36216 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 19:48:24,452 autoreload 34292 40984 Watching for file changes with StatReloader
+INFO 2025-10-26 19:48:49,708 autoreload 34292 40984 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 19:48:52,290 autoreload 20456 45228 Watching for file changes with StatReloader
+WARNING 2025-10-26 20:09:01,676 log 20456 25884 Bad Request: /api/accounts/token/
+INFO 2025-10-26 20:15:10,178 autoreload 20456 45228 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 20:15:14,669 autoreload 36464 20792 Watching for file changes with StatReloader
+INFO 2025-10-26 20:15:20,056 autoreload 36464 20792 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 20:15:24,390 autoreload 9876 39356 Watching for file changes with StatReloader
+WARNING 2025-10-26 20:34:12,280 log 9876 22832 Bad Request: /api/accounts/token/
+INFO 2025-10-26 20:46:33,385 views 9876 41384 Subscription already exists for user 43
+INFO 2025-10-26 20:46:33,386 views 9876 41384 Welcome email prepared for test24400@example.com: Welcome to Makao Rentals - Your Landlord Account is Ready!
+WARNING 2025-10-26 20:52:24,513 log 9876 26172 Bad Request: /api/accounts/token/
+WARNING 2025-10-26 20:52:34,116 log 9876 26172 Bad Request: /api/accounts/token/
+WARNING 2025-10-26 20:53:15,257 log 9876 26172 Bad Request: /api/accounts/token/
+WARNING 2025-10-26 20:56:42,951 log 9876 35356 Bad Request: /api/accounts/token/
+WARNING 2025-10-26 20:58:43,929 log 9876 36088 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 20:58:44,426 log 9876 36088 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 20:59:01,937 log 9876 36088 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 20:59:02,450 log 9876 36088 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:04:34,332 log 9876 38496 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:04:34,562 log 9876 23752 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:04:35,188 log 9876 36088 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:04:35,520 log 9876 43544 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:04:36,416 log 9876 3268 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:04:36,936 log 9876 44372 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:08:14,181 log 9876 27324 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:08:14,758 log 9876 3268 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:08:15,361 log 9876 23444 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:08:15,722 log 9876 2772 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:08:16,200 log 9876 46104 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:08:17,034 log 9876 46104 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:09:31,974 log 9876 46104 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:09:32,694 log 9876 46104 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:10:49,944 log 9876 46104 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:10:50,413 log 9876 13132 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:10:50,545 log 9876 46104 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:10:50,956 log 9876 37272 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:10:52,232 log 9876 18016 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:10:53,075 log 9876 13132 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:14:28,648 log 9876 13136 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:14:28,788 log 9876 31616 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:14:29,763 log 9876 20096 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:14:29,785 log 9876 9008 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:14:29,975 log 9876 39832 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:14:30,960 log 9876 20096 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:18:57,911 log 9876 35464 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:18:57,917 log 9876 13020 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:18:59,100 log 9876 29364 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:18:59,101 log 9876 32688 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:18:59,137 log 9876 45816 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:19:00,647 log 9876 13020 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:19:22,404 log 9876 45964 Unauthorized: /api/accounts/users/
+INFO 2025-10-26 21:23:18,940 autoreload 9876 39356 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 21:23:25,188 autoreload 11504 29112 Watching for file changes with StatReloader
+INFO 2025-10-26 21:34:58,538 autoreload 11504 29112 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 21:35:03,856 autoreload 16004 39864 Watching for file changes with StatReloader
+INFO 2025-10-26 21:35:23,397 autoreload 16004 39864 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 21:41:43,419 autoreload 27756 27736 Watching for file changes with StatReloader
+WARNING 2025-10-26 21:41:50,914 log 27756 34968 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:41:50,918 log 27756 7048 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:41:51,474 log 27756 34968 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:41:51,597 log 27756 7048 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:41:51,671 log 27756 39164 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:41:53,051 log 27756 28832 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:51:11,799 log 27756 44116 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:51:12,156 log 27756 44116 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:51:38,219 log 27756 44116 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:51:39,072 log 27756 44116 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:51:41,761 log 27756 44116 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:28,250 log 27756 44116 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:28,655 log 27756 44116 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:33,915 log 27756 33620 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:52:34,016 log 27756 26160 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:52:34,329 log 27756 20320 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:35,698 log 27756 20320 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 21:52:35,703 log 27756 632 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:35,747 log 27756 25332 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:52:35,772 log 27756 42052 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 21:52:36,593 log 27756 20320 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 21:52:48,912 log 27756 25748 Unauthorized: /api/accounts/users/
+WARNING 2025-10-26 21:52:55,180 log 27756 28012 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:52:55,510 log 27756 28012 Forbidden: /api/accounts/subscription/status/
+WARNING 2025-10-26 21:52:57,459 log 27756 28012 Forbidden: /api/payments/rent-payments/summary/
+WARNING 2025-10-26 21:52:57,793 log 27756 28012 Forbidden: /api/payments/rent-payments/summary/
+INFO 2025-10-26 21:55:22,996 autoreload 27756 27736 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 21:55:27,227 autoreload 46684 19628 Watching for file changes with StatReloader
+INFO 2025-10-26 21:58:56,540 autoreload 46684 19628 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 21:59:00,495 autoreload 29884 31084 Watching for file changes with StatReloader
+WARNING 2025-10-26 21:59:23,875 log 29884 13464 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 22:02:59,972 log 29884 43160 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:02:59,997 log 29884 11716 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:03:00,772 log 29884 14528 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:03:00,899 log 29884 27100 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:03:01,023 log 29884 9124 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:03:01,685 log 29884 37076 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:06:30,931 log 29884 8352 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:06:30,938 log 29884 8320 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:06:31,626 log 29884 16912 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:06:31,628 log 29884 42412 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:06:32,276 log 29884 16912 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:06:32,748 log 29884 42412 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:06:37,700 log 29884 16912 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:06:37,888 log 29884 39568 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:06:38,017 log 29884 42412 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:06:38,337 log 29884 39568 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:06:38,347 log 29884 27088 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:06:38,684 log 29884 34696 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:08:07,678 log 29884 35820 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:08:08,297 log 29884 32080 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:08:08,663 log 29884 27088 Forbidden: /api/accounts/tenants/
+WARNING 2025-10-26 22:08:08,689 log 29884 14524 Forbidden: /api/accounts/users/
+WARNING 2025-10-26 22:08:09,437 log 29884 10644 Forbidden: /api/accounts/properties/
+WARNING 2025-10-26 22:08:09,607 log 29884 37660 Forbidden: /api/accounts/users/
+INFO 2025-10-26 22:24:47,520 autoreload 29884 31084 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 22:24:52,444 autoreload 44312 33680 Watching for file changes with StatReloader
+INFO 2025-10-26 22:25:01,141 autoreload 44312 33680 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\urls.py changed, reloading.
+INFO 2025-10-26 22:25:05,052 autoreload 35588 11736 Watching for file changes with StatReloader
+INFO 2025-10-26 22:25:09,287 autoreload 35588 11736 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\urls.py changed, reloading.
+INFO 2025-10-26 22:25:12,359 autoreload 32540 14688 Watching for file changes with StatReloader
+INFO 2025-10-26 22:26:46,518 autoreload 32540 14688 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 22:26:52,715 autoreload 41996 41512 Watching for file changes with StatReloader
+INFO 2025-10-26 22:36:41,408 views 41996 27528 Sending STK push to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-26 22:36:41,408 views 41996 27528 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI2MjIzNjQx', 'Timestamp': '20251026223641', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 12010, 'PartyA': '254791535488', 'PartyB': '174379', 'PhoneNumber': '254791535488', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/rent/', 'AccountReference': 'RENT-11-003-3BEE0694', 'TransactionDesc': 'Rent payment for 3'}
+INFO 2025-10-26 22:36:43,093 views 41996 27528 STK push response: {'MerchantRequestID': 'cbd0-4edb-b227-4837dafdaa629178', 'CheckoutRequestID': 'ws_CO_26102025223642448791535488', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+INFO 2025-10-26 22:36:43,114 views 41996 27528 STK push initiated successfully. Payment ID: 101, Cache Key: stk_ws_CO_26102025223642448791535488
+INFO 2025-10-26 22:37:00,611 views 41996 33504 Rent callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'cbd0-4edb-b227-4837dafdaa629178', 'CheckoutRequestID': 'ws_CO_26102025223642448791535488', 'ResultCode': 1037, 'ResultDesc': 'DS timeout user cannot be reached.'}}}
+INFO 2025-10-26 22:37:00,611 views 41996 33504 Rent callback - ResultCode: 1037, CheckoutRequestID: ws_CO_26102025223642448791535488
+ERROR 2025-10-26 22:37:00,612 views 41996 33504 Rent payment failed - ResultCode: 1037, Description: DS timeout user cannot be reached.
+INFO 2025-10-26 22:37:57,683 views 41996 44668 Sending STK push to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-26 22:37:57,684 views 41996 44668 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI2MjIzNzU3', 'Timestamp': '20251026223757', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 12010, 'PartyA': '254791535488', 'PartyB': '174379', 'PhoneNumber': '254791535488', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/rent/', 'AccountReference': 'RENT-11-003-3BEE0694', 'TransactionDesc': 'Rent payment for 3'}
+INFO 2025-10-26 22:38:01,911 views 41996 44668 STK push response: {'MerchantRequestID': 'cbd0-4edb-b227-4837dafdaa629185', 'CheckoutRequestID': 'ws_CO_26102025223801254791535488', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+INFO 2025-10-26 22:38:01,930 views 41996 44668 STK push initiated successfully. Payment ID: 102, Cache Key: stk_ws_CO_26102025223801254791535488
+INFO 2025-10-26 22:38:28,313 views 41996 45972 Rent callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'cbd0-4edb-b227-4837dafdaa629185', 'CheckoutRequestID': 'ws_CO_26102025223801254791535488', 'ResultCode': 1037, 'ResultDesc': 'No response from user.'}}}
+INFO 2025-10-26 22:38:28,315 views 41996 45972 Rent callback - ResultCode: 1037, CheckoutRequestID: ws_CO_26102025223801254791535488
+ERROR 2025-10-26 22:38:28,316 views 41996 45972 Rent payment failed - ResultCode: 1037, Description: No response from user.
+INFO 2025-10-26 22:38:56,656 views 41996 39344 Sending STK push to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-26 22:38:56,656 views 41996 39344 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI2MjIzODU2', 'Timestamp': '20251026223856', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 12010, 'PartyA': '254791535488', 'PartyB': '174379', 'PhoneNumber': '254791535488', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/rent/', 'AccountReference': 'RENT-11-003-3BEE0694', 'TransactionDesc': 'Rent payment for 3'}
+INFO 2025-10-26 22:38:58,298 views 41996 39344 STK push response: {'MerchantRequestID': 'bdf9-49a1-8fd7-afb07f067ed43317', 'CheckoutRequestID': 'ws_CO_26102025223857676791535488', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+INFO 2025-10-26 22:38:58,319 views 41996 39344 STK push initiated successfully. Payment ID: 103, Cache Key: stk_ws_CO_26102025223857676791535488
+INFO 2025-10-26 22:39:13,338 views 41996 30156 Rent callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'bdf9-49a1-8fd7-afb07f067ed43317', 'CheckoutRequestID': 'ws_CO_26102025223857676791535488', 'ResultCode': 1037, 'ResultDesc': 'DS timeout user cannot be reached.'}}}
+INFO 2025-10-26 22:39:13,339 views 41996 30156 Rent callback - ResultCode: 1037, CheckoutRequestID: ws_CO_26102025223857676791535488
+ERROR 2025-10-26 22:39:13,339 views 41996 30156 Rent payment failed - ResultCode: 1037, Description: DS timeout user cannot be reached.
+INFO 2025-10-26 22:39:41,952 views 41996 18244 Sending STK push to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-26 22:39:41,953 views 41996 18244 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI2MjIzOTQx', 'Timestamp': '20251026223941', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 12010, 'PartyA': '254791535488', 'PartyB': '174379', 'PhoneNumber': '254791535488', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/rent/', 'AccountReference': 'RENT-11-003-3BEE0694', 'TransactionDesc': 'Rent payment for 3'}
+INFO 2025-10-26 22:39:44,141 views 41996 18244 STK push response: {'MerchantRequestID': 'd924-4923-94a7-b1203ec77a3816878', 'CheckoutRequestID': 'ws_CO_26102025223943504791535488', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+INFO 2025-10-26 22:39:44,158 views 41996 18244 STK push initiated successfully. Payment ID: 104, Cache Key: stk_ws_CO_26102025223943504791535488
+INFO 2025-10-26 22:39:52,518 views 41996 30156 Rent callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'd924-4923-94a7-b1203ec77a3816878', 'CheckoutRequestID': 'ws_CO_26102025223943504791535488', 'ResultCode': 1037, 'ResultDesc': 'DS timeout user cannot be reached.'}}}
+INFO 2025-10-26 22:39:52,518 views 41996 30156 Rent callback - ResultCode: 1037, CheckoutRequestID: ws_CO_26102025223943504791535488
+ERROR 2025-10-26 22:39:52,519 views 41996 30156 Rent payment failed - ResultCode: 1037, Description: DS timeout user cannot be reached.
+INFO 2025-10-26 22:44:36,145 autoreload 41996 41512 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 22:44:39,511 autoreload 39312 7756 Watching for file changes with StatReloader
+INFO 2025-10-26 22:45:01,768 autoreload 39312 7756 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 22:45:06,492 autoreload 21792 31612 Watching for file changes with StatReloader
+INFO 2025-10-26 22:45:21,814 autoreload 21792 31612 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\permissions.py changed, reloading.
+INFO 2025-10-26 22:45:25,500 autoreload 22280 46440 Watching for file changes with StatReloader
+INFO 2025-10-26 22:49:41,845 autoreload 22280 46440 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\permissions.py changed, reloading.
+INFO 2025-10-26 22:49:47,427 autoreload 33320 14492 Watching for file changes with StatReloader
+ERROR 2025-10-26 22:53:52,435 redis 33320 33784 Connection to Redis lost: Retry (0/20) now.
+ERROR 2025-10-26 22:53:56,520 redis 33320 33784 Connection to Redis lost: Retry (1/20) in 1.00 second.
+ERROR 2025-10-26 22:54:01,589 redis 33320 33784 Connection to Redis lost: Retry (2/20) in 1.00 second.
+ERROR 2025-10-26 22:54:06,655 redis 33320 33784 Connection to Redis lost: Retry (3/20) in 1.00 second.
+ERROR 2025-10-26 22:54:11,697 redis 33320 33784 Connection to Redis lost: Retry (4/20) in 1.00 second.
+ERROR 2025-10-26 22:54:16,740 redis 33320 33784 Connection to Redis lost: Retry (5/20) in 1.00 second.
+ERROR 2025-10-26 22:54:21,805 redis 33320 33784 Connection to Redis lost: Retry (6/20) in 1.00 second.
+ERROR 2025-10-26 22:54:26,852 redis 33320 33784 Connection to Redis lost: Retry (7/20) in 1.00 second.
+ERROR 2025-10-26 22:54:31,909 redis 33320 33784 Connection to Redis lost: Retry (8/20) in 1.00 second.
+ERROR 2025-10-26 22:54:36,971 redis 33320 33784 Connection to Redis lost: Retry (9/20) in 1.00 second.
+ERROR 2025-10-26 22:54:42,027 redis 33320 33784 Connection to Redis lost: Retry (10/20) in 1.00 second.
+ERROR 2025-10-26 22:54:47,078 redis 33320 33784 Connection to Redis lost: Retry (11/20) in 1.00 second.
+ERROR 2025-10-26 22:54:52,141 redis 33320 33784 Connection to Redis lost: Retry (12/20) in 1.00 second.
+ERROR 2025-10-26 22:54:57,175 redis 33320 33784 Connection to Redis lost: Retry (13/20) in 1.00 second.
+ERROR 2025-10-26 22:55:02,254 redis 33320 33784 Connection to Redis lost: Retry (14/20) in 1.00 second.
+ERROR 2025-10-26 22:55:07,318 redis 33320 33784 Connection to Redis lost: Retry (15/20) in 1.00 second.
+ERROR 2025-10-26 22:55:12,353 redis 33320 33784 Connection to Redis lost: Retry (16/20) in 1.00 second.
+ERROR 2025-10-26 22:55:17,386 redis 33320 33784 Connection to Redis lost: Retry (17/20) in 1.00 second.
+ERROR 2025-10-26 22:55:22,415 redis 33320 33784 Connection to Redis lost: Retry (18/20) in 1.00 second.
+ERROR 2025-10-26 22:55:27,482 redis 33320 33784 Connection to Redis lost: Retry (19/20) in 1.00 second.
+CRITICAL 2025-10-26 22:55:32,543 redis 33320 33784 
+Retry limit exceeded while trying to reconnect to the Celery redis result store backend. The Celery application must be restarted.
+
+ERROR 2025-10-26 22:55:34,018 log 33320 33784 Internal Server Error: /api/communication/reports/create/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 276, in connect
+    sock = self.retry.call_with_retry(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\retry.py", line 46, in call_with_retry
+    return do()
+           ^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 277, in <lambda>
+    lambda: self._connect(), lambda error: self.disconnect(error)
+            ^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 639, in _connect
+    raise err
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 627, in _connect
+    sock.connect(socket_address)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 127, in reconnect_on_error
+    yield
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 177, in _consume_from
+    self._pubsub.subscribe(key)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\client.py", line 929, in subscribe
+    ret_val = self.execute_command("SUBSCRIBE", *new_channels.keys())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\client.py", line 758, in execute_command
+    self.connection = self.connection_pool.get_connection(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 1109, in get_connection
+    connection.connect()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 282, in connect
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 276, in connect
+    sock = self.retry.call_with_retry(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\retry.py", line 46, in call_with_retry
+    return do()
+           ^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 277, in <lambda>
+    lambda: self._connect(), lambda error: self.disconnect(error)
+            ^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 639, in _connect
+    raise err
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 627, in _connect
+    sock.connect(socket_address)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\kombu\connection.py", line 472, in _reraise_as_library_errors
+    yield
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\app\base.py", line 929, in send_task
+    self.backend.on_task_call(P, task_id)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 378, in on_task_call
+    self.result_consumer.consume_from(task_id)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 169, in consume_from
+    return self.start(task_id)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 147, in start
+    self._consume_from(initial_task_id)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 176, in _consume_from
+    with self.reconnect_on_error():
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 130, in reconnect_on_error
+    self._ensure(self._reconnect_pubsub, ())
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 389, in ensure
+    return retry_over_time(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\kombu\utils\functional.py", line 318, in retry_over_time
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\backends\redis.py", line 106, in _reconnect_pubsub
+    metas = self.backend.client.mget(self.subscribed_to)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\commands\core.py", line 2016, in mget
+    return self.execute_command("MGET", *args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\client.py", line 542, in execute_command
+    conn = self.connection or pool.get_connection(command_name, **options)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 1109, in get_connection
+    connection.connect()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\redis\connection.py", line 282, in connect
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\generics.py", line 190, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py", line 25, in perform_create
+    send_report_email_task.delay(report.id)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\app\task.py", line 444, in delay
+    return self.apply_async(args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\app\task.py", line 601, in apply_async
+    return app.send_task(
+           ^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\celery\app\base.py", line 927, in send_task
+    with P.connection._reraise_as_library_errors():
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\kombu\connection.py", line 476, in _reraise_as_library_errors
+    raise ConnectionError(str(exc)) from exc
+kombu.exceptions.OperationalError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2025-10-26 22:56:36,811 autoreload 33320 14492 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 22:56:42,549 autoreload 39860 41300 Watching for file changes with StatReloader
+INFO 2025-10-26 22:57:28,892 autoreload 39860 41300 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 22:57:33,216 autoreload 11752 29860 Watching for file changes with StatReloader
+INFO 2025-10-26 22:58:38,507 autoreload 11752 29860 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 22:58:42,333 autoreload 29636 27852 Watching for file changes with StatReloader
+WARNING 2025-10-26 23:00:23,608 log 29636 46328 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-26 23:03:40,017 views 29636 46328 Report 47 created successfully by tenant tenant2@test.com
+ERROR 2025-10-26 23:03:48,413 redis 29636 46328 Connection to Redis lost: Retry (0/20) now.
+ERROR 2025-10-26 23:03:52,452 redis 29636 46328 Connection to Redis lost: Retry (1/20) in 1.00 second.
+ERROR 2025-10-26 23:03:57,542 redis 29636 46328 Connection to Redis lost: Retry (2/20) in 1.00 second.
+ERROR 2025-10-26 23:04:02,580 redis 29636 46328 Connection to Redis lost: Retry (3/20) in 1.00 second.
+ERROR 2025-10-26 23:04:07,618 redis 29636 46328 Connection to Redis lost: Retry (4/20) in 1.00 second.
+ERROR 2025-10-26 23:04:12,686 redis 29636 46328 Connection to Redis lost: Retry (5/20) in 1.00 second.
+ERROR 2025-10-26 23:04:17,766 redis 29636 46328 Connection to Redis lost: Retry (6/20) in 1.00 second.
+ERROR 2025-10-26 23:04:22,815 redis 29636 46328 Connection to Redis lost: Retry (7/20) in 1.00 second.
+ERROR 2025-10-26 23:04:27,884 redis 29636 46328 Connection to Redis lost: Retry (8/20) in 1.00 second.
+ERROR 2025-10-26 23:04:32,939 redis 29636 46328 Connection to Redis lost: Retry (9/20) in 1.00 second.
+ERROR 2025-10-26 23:04:37,974 redis 29636 46328 Connection to Redis lost: Retry (10/20) in 1.00 second.
+ERROR 2025-10-26 23:04:43,004 redis 29636 46328 Connection to Redis lost: Retry (11/20) in 1.00 second.
+ERROR 2025-10-26 23:04:48,048 redis 29636 46328 Connection to Redis lost: Retry (12/20) in 1.00 second.
+ERROR 2025-10-26 23:04:53,107 redis 29636 46328 Connection to Redis lost: Retry (13/20) in 1.00 second.
+ERROR 2025-10-26 23:04:58,190 redis 29636 46328 Connection to Redis lost: Retry (14/20) in 1.00 second.
+ERROR 2025-10-26 23:05:03,222 redis 29636 46328 Connection to Redis lost: Retry (15/20) in 1.00 second.
+ERROR 2025-10-26 23:05:08,259 redis 29636 46328 Connection to Redis lost: Retry (16/20) in 1.00 second.
+ERROR 2025-10-26 23:05:13,294 redis 29636 46328 Connection to Redis lost: Retry (17/20) in 1.00 second.
+ERROR 2025-10-26 23:05:18,343 redis 29636 46328 Connection to Redis lost: Retry (18/20) in 1.00 second.
+ERROR 2025-10-26 23:05:23,400 redis 29636 46328 Connection to Redis lost: Retry (19/20) in 1.00 second.
+CRITICAL 2025-10-26 23:05:28,453 redis 29636 46328 
+Retry limit exceeded while trying to reconnect to the Celery redis result store backend. The Celery application must be restarted.
+
+WARNING 2025-10-26 23:05:28,453 views 29636 46328 Celery unavailable, falling back to sync email: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2025-10-26 23:05:32,287 views 29636 46328 Sent sync email for report 47
+INFO 2025-10-26 23:07:56,759 views 29636 13268 Report 48 created successfully by tenant tenant2@test.com
+ERROR 2025-10-26 23:08:04,942 redis 29636 13268 Connection to Redis lost: Retry (0/20) now.
+ERROR 2025-10-26 23:08:09,003 redis 29636 13268 Connection to Redis lost: Retry (1/20) in 1.00 second.
+ERROR 2025-10-26 23:08:14,051 redis 29636 13268 Connection to Redis lost: Retry (2/20) in 1.00 second.
+ERROR 2025-10-26 23:08:19,103 redis 29636 13268 Connection to Redis lost: Retry (3/20) in 1.00 second.
+ERROR 2025-10-26 23:08:24,149 redis 29636 13268 Connection to Redis lost: Retry (4/20) in 1.00 second.
+ERROR 2025-10-26 23:08:29,189 redis 29636 13268 Connection to Redis lost: Retry (5/20) in 1.00 second.
+ERROR 2025-10-26 23:08:34,231 redis 29636 13268 Connection to Redis lost: Retry (6/20) in 1.00 second.
+ERROR 2025-10-26 23:08:39,307 redis 29636 13268 Connection to Redis lost: Retry (7/20) in 1.00 second.
+ERROR 2025-10-26 23:08:44,352 redis 29636 13268 Connection to Redis lost: Retry (8/20) in 1.00 second.
+ERROR 2025-10-26 23:08:49,393 redis 29636 13268 Connection to Redis lost: Retry (9/20) in 1.00 second.
+ERROR 2025-10-26 23:08:54,474 redis 29636 13268 Connection to Redis lost: Retry (10/20) in 1.00 second.
+ERROR 2025-10-26 23:08:59,513 redis 29636 13268 Connection to Redis lost: Retry (11/20) in 1.00 second.
+ERROR 2025-10-26 23:09:04,566 redis 29636 13268 Connection to Redis lost: Retry (12/20) in 1.00 second.
+ERROR 2025-10-26 23:09:09,600 redis 29636 13268 Connection to Redis lost: Retry (13/20) in 1.00 second.
+ERROR 2025-10-26 23:09:14,645 redis 29636 13268 Connection to Redis lost: Retry (14/20) in 1.00 second.
+ERROR 2025-10-26 23:09:19,678 redis 29636 13268 Connection to Redis lost: Retry (15/20) in 1.00 second.
+ERROR 2025-10-26 23:09:24,720 redis 29636 13268 Connection to Redis lost: Retry (16/20) in 1.00 second.
+ERROR 2025-10-26 23:09:29,771 redis 29636 13268 Connection to Redis lost: Retry (17/20) in 1.00 second.
+ERROR 2025-10-26 23:09:34,807 redis 29636 13268 Connection to Redis lost: Retry (18/20) in 1.00 second.
+ERROR 2025-10-26 23:09:39,848 redis 29636 13268 Connection to Redis lost: Retry (19/20) in 1.00 second.
+CRITICAL 2025-10-26 23:09:44,909 redis 29636 13268 
+Retry limit exceeded while trying to reconnect to the Celery redis result store backend. The Celery application must be restarted.
+
+WARNING 2025-10-26 23:09:44,910 views 29636 13268 Celery unavailable, falling back to sync email: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2025-10-26 23:09:49,659 views 29636 13268 Sent sync email for report 48
+INFO 2025-10-26 23:11:05,028 autoreload 29636 27852 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 23:11:09,918 autoreload 15132 16828 Watching for file changes with StatReloader
+INFO 2025-10-26 23:11:34,479 autoreload 15132 16828 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 23:11:39,500 autoreload 29920 32296 Watching for file changes with StatReloader
+INFO 2025-10-26 23:16:40,194 autoreload 29920 32296 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 23:16:43,716 autoreload 35716 12516 Watching for file changes with StatReloader
+INFO 2025-10-26 23:20:51,021 views 35716 46648 Report 49 created successfully by tenant tenant2@test.com
+INFO 2025-10-26 23:20:51,974 views 35716 46648 Sent sync email for report 49
+WARNING 2025-10-26 23:35:58,241 log 35716 32548 Bad Request: /api/accounts/users/15/update/
+WARNING 2025-10-26 23:38:26,908 log 35716 41584 Bad Request: /api/accounts/users/15/update/
+WARNING 2025-10-26 23:39:13,050 log 35716 41584 Bad Request: /api/accounts/change-password/

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTenantToast } from "../../context/TenantToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { AppContext } from "../../context/AppContext";
+import { paymentsAPI } from "../../services/api";
 import {
   FaMobileAlt,
   FaCreditCard,
@@ -14,29 +15,24 @@ import {
 } from "react-icons/fa";
 import { CheckCircle, XCircle, CreditCard } from 'lucide-react';
 
-const localMockTenants = [
-  { id: '1', name: 'John Doe', email: 'john@email.com', room: 'A101', phone: '+254712345678', status: 'active', rentStatus: 'due', rentAmount: 25000, rentDue: 25000, bookingId: 'BK001' },
-  { id: '2', name: 'Jane Smith', email: 'jane@email.com', room: 'B205', phone: '+254723456789', status: 'active', rentStatus: 'paid', rentAmount: 35000, rentDue: 0, bookingId: 'BK002' },
-  { id: '3', name: 'Mike Johnson', email: 'mike@email.com', room: 'C301', phone: '+254734567890', status: 'active', rentStatus: 'overdue', rentAmount: 20000, rentDue: 40000, bookingId: 'BK003' }
-];
 
 const TenantPaymentCenter = () => {
   const navigate = useNavigate();
   const { showToast } = useTenantToast();
   const { user } = useAuth();
-  // get applyPayment from context (it will add transaction + update tenant)
-  const { mockTenants: contextTenants, transactions, applyPayment } = useContext(AppContext);
+  const { fetchTransactions } = useContext(AppContext);
 
   const [formData, setFormData] = useState({
     amount: "",
     phoneNumber: "",
-    months: 0 // optional: allow user to explicitly choose months
+    months: 0
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [currentTenant, setCurrentTenant] = useState(null);
   const [tenantPayments, setTenantPayments] = useState([]);
   const [errors, setErrors] = useState({});
+  const [pollingPaymentId, setPollingPaymentId] = useState(null);
 
   const getEffectiveRentDue = (tenant) => {
     if (!tenant) return 0;
@@ -45,31 +41,124 @@ const TenantPaymentCenter = () => {
     return tenant.rentAmount || 0;
   };
 
+  // Fetch tenant data and payment history
   useEffect(() => {
-    let tenant = null;
-    if (contextTenants && user) {
-      tenant = contextTenants.find(t => String(t.id) === String(user.id) || String(t.email) === String(user.email)) || null;
-    }
-    if (!tenant && user) {
-      tenant = localMockTenants.find(t => String(t.id) === String(user.id) || String(t.email) === String(user.email)) || null;
-    }
+    async function fetchTenantData() {
+      try {
+        // Build tenant info from user context
+        const tenant = {
+          id: user?.id,
+          name: user?.full_name,
+          room: user?.current_unit?.unit_number || 'Not Assigned',
+          unitId: user?.current_unit?.id,
+          rentAmount: user?.current_unit?.rent || 0,
+          rentDue: user?.current_unit?.rent_remaining || 0,
+          bookingId: user?.current_unit?.id || user?.id,
+          phone: user?.phone_number,
+          rentStatus: user?.current_unit?.rent_status || 'unknown',
+        };
+        setCurrentTenant(tenant);
 
-    setCurrentTenant(tenant);
+        // Fetch payment history from backend
+        const historyRes = await paymentsAPI.getPaymentHistory();
+        const payments = (historyRes.data || [])
+          .map(payment => ({
+            id: payment.id,
+            amount: payment.amount,
+            date: payment.date || payment.created_at,
+            status: payment.status_display || payment.status,
+            reference: payment.reference_number || payment.mpesa_receipt,
+            phone: payment.phone,
+            paymentMethod: 'M-PESA',
+            mpesa_receipt: payment.mpesa_receipt
+          }))
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setTenantPayments(payments);
 
-    if (tenant && transactions) {
-      const tenantTxns = (transactions || [])
-        .filter(tx => String(tx.tenantId) === String(tenant.id))
-        .sort((a,b) => new Date(b.date) - new Date(a.date));
-      setTenantPayments(tenantTxns);
-    } else {
-      setTenantPayments([]);
+        // Set default phone number
+        if (tenant?.phone && !formData.phoneNumber) {
+          setFormData(prev => ({ ...prev, phoneNumber: tenant.phone }));
+        }
+      } catch (err) {
+        console.error('Error fetching tenant data:', err);
+        showToast('Failed to load payment history', 'error');
+        setTenantPayments([]);
+      }
     }
+    
+    if (user?.id) {
+      fetchTenantData();
+    }
+  }, [user]);
 
-    if (tenant?.phone && !formData.phoneNumber) {
-      setFormData(prev => ({ ...prev, phoneNumber: tenant.phone }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, transactions, contextTenants]);
+  // Poll payment status
+  useEffect(() => {
+    if (!pollingPaymentId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await paymentsAPI.getRentPaymentStatus(pollingPaymentId);
+        const status = response.data.status;
+
+        if (status === 'completed' || status === 'Success') {
+          setPaymentStatus({
+            type: 'success',
+            message: 'Payment completed successfully!',
+            transactionId: response.data.mpesa_receipt || response.data.reference_number
+          });
+          showToast('Payment completed successfully!', 'success');
+          setPollingPaymentId(null);
+          
+          // Refresh payment history
+          const historyRes = await paymentsAPI.getPaymentHistory();
+          const payments = (historyRes.data || [])
+            .map(payment => ({
+              id: payment.id,
+              amount: payment.amount,
+              date: payment.date || payment.created_at,
+              status: payment.status_display || payment.status,
+              reference: payment.reference_number || payment.mpesa_receipt,
+              phone: payment.phone,
+              paymentMethod: 'M-PESA',
+              mpesa_receipt: payment.mpesa_receipt
+            }))
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+          setTenantPayments(payments);
+
+          // Refresh user data to update rent balance
+          if (fetchTransactions) {
+            fetchTransactions();
+          }
+        } else if (status === 'failed' || status === 'Failed' || status === 'cancelled') {
+          setPaymentStatus({
+            type: 'error',
+            message: response.data.failure_reason || 'Payment failed. Please try again.'
+          });
+          showToast('Payment failed', 'error');
+          setPollingPaymentId(null);
+        }
+      } catch (error) {
+        console.error('Error polling payment status:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Stop polling after 5 minutes
+    const timeout = setTimeout(() => {
+      setPollingPaymentId(null);
+      if (paymentStatus?.type !== 'success') {
+        setPaymentStatus({
+          type: 'error',
+          message: 'Payment verification timed out. Please check your payment history.'
+        });
+      }
+    }, 300000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeout);
+    };
+  }, [pollingPaymentId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -134,25 +223,15 @@ const TenantPaymentCenter = () => {
     return cleaned;
   };
 
-  const initiateMpesaPayment = async (amount, phoneNumber) => {
-    // simulated
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isSuccess = Math.random() > 0.3;
-        resolve({
-          success: isSuccess,
-          message: isSuccess ? "Payment request sent. Check your phone for the M-Pesa prompt." : "Payment request failed. Try again.",
-          transactionId: isSuccess ? `MPX${Date.now()}` : null,
-          checkoutRequestId: isSuccess ? `ws_CO_${Date.now()}` : null
-        });
-      }, 1400);
-    });
-  };
-
   const handlePayment = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast('Please fix the form errors before submitting.', 'error');
+      return;
+    }
+
+    if (!currentTenant?.unitId) {
+      showToast('Unit information not found. Please contact support.', 'error');
       return;
     }
 
@@ -162,53 +241,39 @@ const TenantPaymentCenter = () => {
 
     try {
       const formattedPhone = formatPhoneNumber(formData.phoneNumber);
-      const response = await initiateMpesaPayment(formData.amount, formattedPhone);
+      
+      // Call backend STK push endpoint
+      const response = await paymentsAPI.stkPush(currentTenant.unitId, {
+        phone_number: formattedPhone,
+        amount: parseFloat(formData.amount)
+      });
 
-      if (response.success) {
-        // compose transaction
-        const monthsText = Number(formData.months) > 0 ? ` - ${formData.months} month(s)` : '';
-        const newPayment = {
-          id: `TXN${Date.now()}`,
-          tenantId: currentTenant ? currentTenant.id : (user?.id || null),
-          date: new Date().toISOString().split('T')[0],
-          description: `Rent Payment${monthsText}`,
-          amount: parseFloat(formData.amount),
-          type: 'Payment',
-          status: 'pending',
-          reference: response.transactionId || null,
-          paymentMethod: 'M-PESA',
-          phone: formattedPhone,
-          months: Number(formData.months) || 0,
-          propertyId: currentTenant?.propertyId || null
-        };
+      if (response.data.success) {
+        const paymentId = response.data.payment_id;
+        const checkoutRequestId = response.data.checkout_request_id;
 
-        // applyPayment will record transaction and update tenant's prepaidMonths / rentDue / rentStatus
-        applyPayment(newPayment);
-
-        // backend integration (Django) - commented out until backend ready
-        /*
-        await fetch('/api/transactions/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(newPayment)
+        setPaymentStatus({
+          type: 'pending',
+          message: 'Payment request sent. Please check your phone for the M-Pesa prompt.',
+          transactionId: checkoutRequestId
         });
-        */
+        showToast('Payment request sent. Check your phone for M-Pesa prompt.', 'info');
 
-        setPaymentStatus({ type: 'success', message: response.message, transactionId: response.transactionId });
-        showToast('Payment request sent. Check your phone for M-Pesa prompt.', 'success');
+        // Start polling for payment status
+        setPollingPaymentId(paymentId);
 
+        // Reset form
         setFormData({ amount: "", phoneNumber: formattedPhone, months: 0 });
       } else {
-        setPaymentStatus({ type: 'error', message: response.message });
-        showToast(response.message || 'Payment failed. Please try again.', 'error');
+        const errorMsg = response.data.error || response.data.details || 'Payment failed. Please try again.';
+        setPaymentStatus({ type: 'error', message: errorMsg });
+        showToast(errorMsg, 'error');
       }
     } catch (error) {
       console.error('Payment error:', error);
-      setPaymentStatus({ type: 'error', message: 'An error occurred while processing your payment.' });
-      showToast('An error occurred while processing your payment. Please try again.', 'error');
+      const errorMsg = error.response?.data?.error || error.response?.data?.details || 'An error occurred while processing your payment.';
+      setPaymentStatus({ type: 'error', message: errorMsg });
+      showToast(errorMsg, 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -242,12 +307,29 @@ const TenantPaymentCenter = () => {
           </div>
           <div className="p-6 space-y-6">
             {paymentStatus && (
-              <div className={`p-3 rounded-md border ${paymentStatus.type === 'success' ? 'bg-green-50 border-green-100 text-green-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
+              <div className={`p-3 rounded-md border ${
+                paymentStatus.type === 'success' 
+                  ? 'bg-green-50 border-green-100 text-green-800' 
+                  : paymentStatus.type === 'pending'
+                  ? 'bg-blue-50 border-blue-100 text-blue-800'
+                  : 'bg-rose-50 border-rose-100 text-rose-800'
+              }`}>
                 <div className="flex items-start gap-3">
-                  {paymentStatus.type === 'success' ? <FaCheckCircle className="text-green-600 mt-1" /> : <FaTimes className="text-rose-600 mt-1" />}
+                  {paymentStatus.type === 'success' ? (
+                    <FaCheckCircle className="text-green-600 mt-1" />
+                  ) : paymentStatus.type === 'pending' ? (
+                    <FaSpinner className="text-blue-600 mt-1 animate-spin" />
+                  ) : (
+                    <FaTimes className="text-rose-600 mt-1" />
+                  )}
                   <div>
                     <p className="text-sm font-medium">{paymentStatus.message}</p>
-                    {paymentStatus.transactionId && <p className="text-xs text-slate-500 mt-1">Transaction ID: {paymentStatus.transactionId}</p>}
+                    {paymentStatus.transactionId && (
+                      <p className="text-xs text-slate-500 mt-1">Transaction ID: {paymentStatus.transactionId}</p>
+                    )}
+                    {paymentStatus.type === 'pending' && (
+                      <p className="text-xs text-slate-500 mt-1">Verifying payment... This may take a moment.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -344,16 +426,38 @@ const TenantPaymentCenter = () => {
                 <div className="flex items-center gap-3">
                   <button
                     type="submit"
-                    disabled={isProcessing || (effectiveRentDue === 0 && Number(formData.months) === 0)}
+                    disabled={isProcessing || pollingPaymentId || (effectiveRentDue === 0 && Number(formData.months) === 0)}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-white bg-slate-700 hover:bg-slate-800 text-sm disabled:opacity-50"
                   >
-                    {isProcessing ? (<><FaSpinner className="animate-spin" /> Processing</>) : (<><FaCreditCard /> Pay with M-Pesa</>)}
+                    {isProcessing ? (
+                      <>
+                        <FaSpinner className="animate-spin" /> Processing
+                      </>
+                    ) : pollingPaymentId ? (
+                      <>
+                        <FaSpinner className="animate-spin" /> Verifying
+                      </>
+                    ) : (
+                      <>
+                        <FaCreditCard /> Pay with M-Pesa
+                      </>
+                    )}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => { setFormData({ amount: '', phoneNumber: formData.phoneNumber, months: 0 }); setErrors({}); }}
-                    className="px-4 py-2 rounded-md border text-sm text-slate-700 bg-white hover:bg-gray-50"
+                    onClick={() => { 
+                      const currentPhone = formData.phoneNumber || currentTenant?.phone || '';
+                      setFormData({ 
+                        amount: '', 
+                        phoneNumber: currentPhone, 
+                        months: 0 
+                      }); 
+                      setErrors({}); 
+                      setPaymentStatus(null);
+                    }}
+                    className="px-4 py-2 rounded-md border text-sm text-slate-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isProcessing || pollingPaymentId}
                   >
                     Reset
                   </button>
@@ -390,15 +494,32 @@ const TenantPaymentCenter = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm font-medium text-slate-800">KSh {Number(payment.amount).toLocaleString()}</p>
-                    <p className="text-xs text-slate-500">{payment.date}</p>
+                    <p className="text-xs text-slate-500">{new Date(payment.date).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs ${payment.status === 'completed' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-slate-700'}`}>
-                      {payment.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                      {payment.status === 'completed' ? 'Completed' : (payment.status || 'Pending')}
+                    <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs ${
+                      payment.status === 'completed' || payment.status === 'Success'
+                        ? 'bg-green-50 text-green-700' 
+                        : payment.status === 'pending' || payment.status === 'Pending'
+                        ? 'bg-yellow-50 text-yellow-700'
+                        : 'bg-gray-100 text-slate-700'
+                    }`}>
+                      {payment.status === 'completed' || payment.status === 'Success' ? (
+                        <CheckCircle className="w-3 h-3" />
+                      ) : (
+                        <XCircle className="w-3 h-3" />
+                      )}
+                      {payment.status}
                     </span>
-                    <p className="text-xs text-slate-500 mt-1">ID: {payment.reference || payment.id}</p>
-                    <p className="text-xs text-slate-500">{payment.phone || currentTenant.phone || ''} • {payment.paymentMethod || payment.method || 'M-PESA'}</p>
+                    {payment.reference && (
+                      <p className="text-xs text-slate-500 mt-1">ID: {payment.reference}</p>
+                    )}
+                    {payment.mpesa_receipt && (
+                      <p className="text-xs text-slate-500">Receipt: {payment.mpesa_receipt}</p>
+                    )}
+                    {payment.phone && (
+                      <p className="text-xs text-slate-500">{payment.phone} • {payment.paymentMethod || 'M-PESA'}</p>
+                    )}
                   </div>
                 </div>
               </div>

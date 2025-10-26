@@ -84,10 +84,9 @@ const AdminPayments = () => {
       setUnitsLoading(true);
       try {
         const response = await propertiesAPI.getUnits();
-        console.log('✅ Units fetched:', response.data);
-        
-        // Transform backend data to match component format
-        const transformedUnits = response.data.map(unit => ({
+        // Defensive: handle array or object response
+        const unitsData = Array.isArray(response.data) ? response.data : response.data.results || response.data.units || [];
+        const transformedUnits = unitsData.map(unit => ({
           id: unit.id,
           unitNumber: unit.unit_number || 'N/A',
           type: unit.unit_type?.name || unit.unit_type || 'N/A',
@@ -97,9 +96,9 @@ const AdminPayments = () => {
           isAvailable: Boolean(unit.is_available),
           propertyId: unit.property_obj?.id?.toString() || unit.property?.toString() || 'unknown',
         }));
-        
         setUnits(transformedUnits);
       } catch (error) {
+        setUnits([]);
         console.error('❌ Failed to load units:', error);
       } finally {
         setUnitsLoading(false);
@@ -206,15 +205,26 @@ const AdminPayments = () => {
     try {
       // Update backend
       await paymentsAPI.updateUnitRent(unitId, { rent: parseFloat(newPrice) });
-      
-      // Update local state
-      setUnits(units.map(unit => 
-        unit.id === unitId ? { ...unit, rent: parseFloat(newPrice) } : unit
-      ));
+      // Refresh units from backend after update
+      setUnitsLoading(true);
+      const response = await propertiesAPI.getUnits();
+      const unitsData = Array.isArray(response.data) ? response.data : response.data.results || response.data.units || [];
+      const transformedUnits = unitsData.map(unit => ({
+        id: unit.id,
+        unitNumber: unit.unit_number || 'N/A',
+        type: unit.unit_type?.name || unit.unit_type || 'N/A',
+        rent: parseFloat(unit.rent) || 0,
+        size: unit.size || 'N/A',
+        tenant: unit.tenant?.full_name || unit.tenant?.name || null,
+        isAvailable: Boolean(unit.is_available),
+        propertyId: unit.property_obj?.id?.toString() || unit.property?.toString() || 'unknown',
+      }));
+      setUnits(transformedUnits);
       setEditingUnit(null);
-      
-      console.log('✅ Unit rent updated successfully');
+      setUnitsLoading(false);
+      console.log('✅ Unit rent updated and units refreshed');
     } catch (error) {
+      setUnitsLoading(false);
       console.error('❌ Failed to update unit rent:', error);
       alert('Failed to update unit rent. Please try again.');
     }
@@ -240,18 +250,24 @@ const AdminPayments = () => {
           ? parseFloat(percentageIncrease) 
           : parseFloat(fixedAmount),
         unit_type_filter: selectedRoomType,
+        property_id: selectedPropertyId, // Ensure property_id is sent
         preview_only: false // Actual update, not preview
       };
 
-      console.log('🔄 Sending bulk update request:', requestData);
-
       // Call backend API
       const response = await paymentsAPI.bulkRentUpdate(requestData);
-      console.log('✅ Bulk update response:', response.data);
+
+      // Defensive: handle success and error
+      let message = 'Bulk update completed.';
+      if (response.data) {
+        message = response.data.message || response.data.detail || `Successfully updated ${response.data.units_updated || ''} units`;
+      }
+      setBulkUpdateSuccess(message);
 
       // Refresh units from backend to get updated data
       const unitsResponse = await propertiesAPI.getUnits();
-      const transformedUnits = unitsResponse.data.map(unit => ({
+      const unitsData = Array.isArray(unitsResponse.data) ? unitsResponse.data : unitsResponse.data.results || unitsResponse.data.units || [];
+      const transformedUnits = unitsData.map(unit => ({
         id: unit.id,
         unitNumber: unit.unit_number || 'N/A',
         type: unit.unit_type?.name || unit.unit_type || 'N/A',
@@ -263,23 +279,19 @@ const AdminPayments = () => {
       }));
       setUnits(transformedUnits);
 
-      // Show success message
-      const message = response.data.message || `Successfully updated ${response.data.units_updated} units`;
-      setBulkUpdateSuccess(message);
-      
       // Reset form
       setPercentageIncrease('');
       setFixedAmount('');
-      
+
       // Auto-hide success message after 5 seconds
       setTimeout(() => setBulkUpdateSuccess(null), 5000);
 
     } catch (error) {
-      console.error('❌ Bulk update failed:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to update rents. Please try again.';
+      let errorMessage = 'Failed to update rents. Please try again.';
+      if (error.response && error.response.data) {
+        errorMessage = error.response.data.error || error.response.data.detail || errorMessage;
+      }
       setBulkUpdateError(errorMessage);
-      
-      // Auto-hide error message after 5 seconds
       setTimeout(() => setBulkUpdateError(null), 5000);
     } finally {
       setBulkUpdateLoading(false);

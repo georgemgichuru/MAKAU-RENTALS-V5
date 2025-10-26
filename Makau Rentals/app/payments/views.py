@@ -923,6 +923,41 @@ def mpesa_b2c_callback(request):
     except Exception as e:
         logger.error(f"B2C callback error: {str(e)}")
         return JsonResponse({"ResultCode": 1, "ResultDesc": "Error"})
+
+
+class RentPaymentStatusView(APIView):
+    """
+    Check rent payment status by payment ID
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, payment_id):
+        try:
+            payment = Payment.objects.get(id=payment_id, payment_type='rent')
+            
+            # Check if user has permission to view this payment
+            if request.user.user_type == 'tenant' and payment.tenant != request.user:
+                return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+            if request.user.user_type == 'landlord' and payment.unit.property_obj.landlord != request.user:
+                return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+            return Response({
+                "id": payment.id,
+                "payment_id": payment.id,
+                "status": payment.status,
+                "amount": float(payment.amount),
+                "mpesa_receipt": payment.mpesa_receipt,
+                "created_at": payment.created_at,
+                "unit_id": payment.unit.id,
+                "unit_number": payment.unit.unit_number,
+                "failure_reason": payment.failure_reason,
+                "reference_number": payment.reference_number
+            })
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
 class DepositPaymentStatusView(APIView):
     """
     Check deposit payment status - FIXED VERSION
@@ -1036,34 +1071,69 @@ class SubscriptionPaymentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class RentSummaryView(APIView):
     """
-    Get rent summary for landlord
+    Get rent summary - for both landlords and tenants
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        if user.user_type != 'landlord':
-            return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Tenant: Get their own rent summary
+        if user.user_type == 'tenant':
+            try:
+                # Get tenant's assigned unit
+                unit = Unit.objects.filter(tenant=user).first()
+                if not unit:
+                    return Response({
+                        "monthly_rent": 0,
+                        "rent_due": 0,
+                        "rent_paid": 0,
+                        "prepaid_months": 0,
+                        "rent_status": "not_assigned"
+                    })
+                
+                rent_paid = Payment.objects.filter(
+                    unit=unit,
+                    status='Success'
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                return Response({
+                    "monthly_rent": float(unit.rent or 0),
+                    "rent_due": float(unit.rent_remaining or 0),
+                    "rent_paid": float(rent_paid),
+                    "prepaid_months": 0,
+                    "rent_status": "due" if unit.rent_remaining > 0 else "paid"
+                })
+            except Exception as e:
+                logger.error(f"Error fetching tenant rent summary: {str(e)}")
+                return Response({
+                    "error": "Unable to fetch rent summary"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Landlord: Get overall summary
+        elif user.user_type == 'landlord':
+            # Calculate total collected and outstanding rent
+            properties = Property.objects.filter(landlord=user)
+            units = Unit.objects.filter(property_obj__in=properties)
 
-        # Calculate total collected and outstanding rent
-        properties = Property.objects.filter(landlord=user)
-        units = Unit.objects.filter(property_obj__in=properties)
+            total_collected = Payment.objects.filter(
+                unit__in=units,
+                status='Success'
+            ).aggregate(total=Sum('amount'))['total'] or 0
 
-        total_collected = Payment.objects.filter(
-            unit__in=units,
-            status='Success'
-        ).aggregate(total=Sum('amount'))['total'] or 0
+            total_outstanding = units.aggregate(
+                outstanding=Sum('rent_remaining')
+            )['outstanding'] or 0
 
-        total_outstanding = units.aggregate(
-            outstanding=Sum('rent_remaining')
-        )['outstanding'] or 0
-
-        return Response({
-            "total_collected": total_collected,
-            "total_outstanding": total_outstanding,
-            "properties_count": properties.count(),
-            "units_count": units.count()
-        })
+            return Response({
+                "total_collected": total_collected,
+                "total_outstanding": total_outstanding,
+                "properties_count": properties.count(),
+                "units_count": units.count()
+            })
+        
+        else:
+            return Response({"error": "Invalid user type"}, status=status.HTTP_403_FORBIDDEN)
 
 
 class UnitTypeListView(generics.ListAPIView):

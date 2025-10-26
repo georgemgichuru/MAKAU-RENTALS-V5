@@ -19,10 +19,46 @@ class CreateReportView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsTenantWithUnit]
 
     def perform_create(self, serializer):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         report = serializer.save()
-        # Import here to avoid circular imports
-        from app.tasks import send_report_email_task
-        send_report_email_task.delay(report.id)
+        logger.info(f"Report {report.id} created successfully by tenant {report.tenant.email}")
+        
+        # Send email notification to landlord
+        email_async = getattr(settings, 'EMAIL_ASYNC_ENABLED', False)
+
+        # If SMTP backend is selected but credentials are missing, skip sending to avoid blocking
+        backend = getattr(settings, 'EMAIL_BACKEND', '')
+        using_smtp = 'smtp' in backend
+        if using_smtp and (not getattr(settings, 'EMAIL_HOST_USER', '') or not getattr(settings, 'EMAIL_HOST_PASSWORD', '')):
+            logger.warning('Email backend is SMTP but credentials are missing; skipping email send for report %s', report.id)
+            return
+        
+        if email_async:
+            # Try async email via Celery
+            try:
+                from app.tasks import send_report_email_task
+                send_report_email_task.apply_async(args=[report.id], countdown=0)
+                logger.info(f"Queued async email for report {report.id}")
+            except Exception as celery_error:
+                # Fallback to synchronous email if Celery is not available
+                logger.warning(f"Celery unavailable, falling back to sync email: {celery_error}")
+                try:
+                    from .messaging import send_report_email
+                    send_report_email(report)
+                    logger.info(f"Sent sync email for report {report.id}")
+                except Exception as email_error:
+                    logger.error(f"Failed to send report email: {email_error}")
+        else:
+            # Send synchronously
+            try:
+                from .messaging import send_report_email
+                send_report_email(report)
+                logger.info(f"Sent sync email for report {report.id}")
+            except Exception as email_error:
+                logger.error(f"Failed to send report email: {email_error}")
+                # Report is still created, just email failed
 
 class ReportListView(generics.ListAPIView):
     serializer_class = ReportSerializer
