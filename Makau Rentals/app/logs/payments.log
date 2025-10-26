@@ -1195,3 +1195,9 @@ django.db.utils.OperationalError: no such table: communication_remindersetting
 WARNING 2025-10-26 16:36:14,169 log 19800 45976 Unauthorized: /api/communication/reports/open/
 WARNING 2025-10-26 17:35:10,574 log 19800 35644 Not Found: /api/payments/rent-payments/csv/
 WARNING 2025-10-26 17:36:23,745 log 19800 35644 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 17:38:54,271 log 19800 20168 Not Found: /api/payments/rent-payments/csv/
+WARNING 2025-10-26 17:38:55,469 log 19800 20168 Not Found: /api/payments/rent-payments/csv/
+INFO 2025-10-26 17:40:28,710 autoreload 19800 44568 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 17:40:39,660 autoreload 7800 37644 Watching for file changes with StatReloader
+INFO 2025-10-26 17:40:49,684 autoreload 7800 37644 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\urls.py changed, reloading.
+INFO 2025-10-26 17:40:54,271 autoreload 23320 43752 Watching for file changes with StatReloader

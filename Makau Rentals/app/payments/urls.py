@@ -25,6 +25,7 @@ from .views import (
     # CSV reports
     LandLordCSVView as landlord_csv,
     TenantCSVView as tenant_csv,
+    RentPaymentsCSVView as rent_payments_csv,
 )
 from django.views.decorators.csrf import csrf_exempt
 
@@ -68,6 +69,7 @@ urlpatterns = [
     # ------------------------------
     path("landlord-csv/<int:property_id>/", landlord_csv.as_view(), name="landlord-csv"),
     path("tenant-csv/<int:unit_id>/", tenant_csv.as_view(), name="tenant-csv"),
+    path("rent-payments/csv/", rent_payments_csv.as_view(), name="rent-payments-csv"),
 
     # ------------------------------
     # CLEANUP AND SIMULATION ENDPOINTS

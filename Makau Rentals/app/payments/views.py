@@ -1180,6 +1180,43 @@ class TenantCSVView(APIView):
         return response
 
 
+class RentPaymentsCSVView(APIView):
+    """
+    Export all rent payments data as CSV for landlord
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.user_type != 'landlord':
+            return Response({"error": "Only landlords can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Get all payments for landlord's properties
+        properties = Property.objects.filter(landlord=user)
+        units = Unit.objects.filter(property_obj__in=properties)
+        payments = Payment.objects.filter(unit__in=units, status='Success').select_related('unit', 'tenant').order_by('-transaction_date')
+
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rent_payments.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Unit Number', 'Tenant', 'Amount', 'Payment Type', 'M-Pesa Receipt', 'Property'])
+
+        for payment in payments:
+            writer.writerow([
+                payment.transaction_date.strftime('%Y-%m-%d %H:%M:%S'),
+                payment.unit.unit_number,
+                payment.tenant.full_name if payment.tenant else 'N/A',
+                payment.amount,
+                payment.payment_type,
+                payment.mpesa_receipt or '',
+                payment.unit.property_obj.name if payment.unit.property_obj else 'N/A'
+            ])
+
+        return response
+
+
 class TestMpesaView(APIView):
     """
     Test endpoint for M-Pesa integration
