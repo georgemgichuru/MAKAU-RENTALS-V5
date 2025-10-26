@@ -18,6 +18,10 @@ const AdminReports = () => {
     category: 'all'
   });
 
+  // Helpers: normalize values for robust filtering
+  const normalize = (v) => (v ?? '').toString().trim().toLowerCase();
+  const keyify = (v) => normalize(v).replace(/[^a-z0-9]/g, '');
+
   useEffect(() => {
     fetchReports();
   }, [filters, selectedPropertyId]);
@@ -26,25 +30,32 @@ const AdminReports = () => {
     setLoading(true);
     try {
       let response;
-      
-      if (filters.status === 'open') {
+      const statusKey = normalize(filters.status);
+
+      if (statusKey === 'open') {
         response = await communicationAPI.getOpenReports();
-      } else if (filters.status === 'closed') {
+      } else if (statusKey === 'closed' || statusKey === 'resolved') {
         response = await communicationAPI.getResolvedReports();
       } else {
         response = await communicationAPI.getReports();
       }
-      
-      let filteredReports = response.data;
+
+      // Support both array and paginated responses
+      let filteredReports = Array.isArray(response?.data)
+        ? response.data
+        : (response?.data?.results ?? []);
+
       if (selectedPropertyId) {
-        filteredReports = response.data.filter(report => 
-          report.unit?.property_obj?.id?.toString() === selectedPropertyId
-        );
+        const pid = selectedPropertyId.toString();
+        filteredReports = filteredReports.filter(report => {
+          const rid = (report?.property_id ?? report?.unit?.property_obj?.id ?? report?.unit?.property_obj);
+          return rid?.toString() === pid;
+        });
       }
       
-      if (filters.category !== 'all') {
+      if (filters.category && filters.category !== 'all') {
         filteredReports = filteredReports.filter(report => 
-          report.issue_category === filters.category
+          keyify(report.issue_category) === keyify(filters.category)
         );
       }
       
@@ -98,8 +109,8 @@ const AdminReports = () => {
     }
   };
 
-  const openReportsCount = reports.filter(r => r.status === 'open').length;
-  const resolvedReportsCount = reports.filter(r => r.status === 'resolved' || r.status === 'closed').length;
+  const openReportsCount = reports.filter(r => ['open', 'pending'].includes(normalize(r.status))).length;
+  const resolvedReportsCount = reports.filter(r => ['resolved', 'closed'].includes(normalize(r.status))).length;
 
   return (
     <div className="space-y-6">
@@ -139,85 +150,105 @@ const AdminReports = () => {
       <div className="flex space-x-4 mb-4">
         <select
           value={filters.status}
-          onChange={(e) => setFilters({...filters, status: e.target.value})}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
           className="px-3 py-2 border rounded-lg"
         >
-          <option>All Status</option>
-          <option>Open</option>
-          <option>Closed</option>
+          <option value="all">All Status</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
         </select>
         <select
           value={filters.category}
-          onChange={(e) => setFilters({...filters, category: e.target.value})}
+          onChange={(e) => setFilters({ ...filters, category: e.target.value })}
           className="px-3 py-2 border rounded-lg"
         >
-          <option>All Categories</option>
-          <option>Electrical</option>
-          <option>Plumbing</option>
-          <option>Noise</option>
-          <option>Safety/Violence</option>
-          <option>WiFi</option>
-          <option>Maintenance</option>
+          <option value="all">All Categories</option>
+          <option value="electrical">Electrical</option>
+          <option value="plumbing">Plumbing</option>
+          <option value="noise">Noise</option>
+          <option value="safetyviolence">Safety/Violence</option>
+          <option value="wifi">WiFi</option>
+          <option value="maintenance">Maintenance</option>
         </select>
       </div>
 
-      <div className="space-y-4">
-        {reports.map(report => (
-          <div key={report.id} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-lg font-semibold">{report.issue_title}</h3>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    report.priority_level === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {report.priority_level}
-                  </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    report.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {report.status === 'open' ? 'Open' : 'Closed'}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-4 mb-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Tenant: {report.tenant_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Room: {report.unit_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Reported: {new Date(report.reported_date).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                
-                <p className="text-gray-700">{report.description}</p>
-              </div>
-              
-              <div className="flex items-center space-x-2 ml-4">
-                {report.status === 'open' ? (
-                  <button 
-                    onClick={() => markAsResolved(report.id)}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Mark as Resolved
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => markAsUnresolved(report.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center"
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Mark as Unresolved
-                  </button>
-                )}
-              </div>
+      {loading ? (
+        <div className="bg-white p-6 rounded-lg shadow text-gray-600">Loading reports…</div>
+      ) : (
+        <div className="space-y-4">
+          {reports.length === 0 ? (
+            <div className="bg-white p-6 rounded-lg shadow text-gray-600">
+              No reports found for the selected filters.
             </div>
-          </div>
-        ))}
-      </div>
+          ) : (
+            reports.map(report => {
+              const statusK = normalize(report.status);
+              const isOpen = statusK === 'open' || statusK === 'pending';
+              const statusClass = isOpen
+                ? 'bg-red-100 text-red-800'
+                : (statusK === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
+              const statusText = statusK === 'open' ? 'Open' : (statusK === 'pending' ? 'Pending' : (statusK === 'resolved' ? 'Resolved' : 'Closed'));
+              const priorityK = normalize(report.priority_level);
+              const priorityClass = priorityK === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+
+              return (
+                <div key={report.id} className="bg-white p-6 rounded-lg shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h3 className="text-lg font-semibold">{report.issue_title || report.title}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${priorityClass}`}>
+                          {report.priority_level || 'normal'}
+                        </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${statusClass}`}>
+                          {statusText}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 mb-3">
+                        <div>
+                          <p className="text-sm text-gray-600">Tenant: {report.tenant_name || report.tenant?.full_name || report.reporter_name || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Room: {report.unit_number || report.unit?.unit_number || report.unit?.number || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Reported: {(() => {
+                            const d = report.reported_date || report.created_at || report.timestamp;
+                            try { return d ? new Date(d).toLocaleDateString() : '—'; } catch { return '—'; }
+                          })()}</p>
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-700">{report.description || report.details || 'No description provided.'}</p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      {isOpen ? (
+                        <button 
+                          onClick={() => markAsResolved(report.id)}
+                          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Mark as Resolved
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => markAsUnresolved(report.id)}
+                          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center"
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Mark as Unresolved
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 };

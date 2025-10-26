@@ -29,7 +29,9 @@ import TenantDetails from "./components/Admin/TenantDetailsPage"
 
 // NEW: Subscription and SMS pages
 import SubscriptionPage from "./components/Admin/SubscriptionPage"
+import SubscriptionPaymentPage from "./components/Admin/SubscriptionPaymentPage"
 import SMSPurchasePage from "./components/Admin/SMSPurchasePage"
+import SubscriptionGuard from "./components/SubscriptionGuard"
 
 // tenant pages
 import TenantDashboard from "./components/Tenant/TenantDashboard"
@@ -178,17 +180,48 @@ function AppContent() {
           <Route index element={<AdminOrganisation />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="add-property" element={<AddPropertyForm />} />
-          <Route path="tenants" element={<AdminTenants />} />
-          <Route path="tenants/:tenantId/transactions" element={<TenantTransactions />} />
-          <Route path="tenants/:tenantId/details" element={<TenantDetails />} />
-          <Route path="help" element={<AdminHelp />} />
-          <Route path="reports" element={<AdminReports />} />
-          <Route path="payments" element={<AdminPayments />} />
-          <Route path="settings" element={<AdminSettings />} />
-          <Route path="organisation" element={<AdminOrganisation />} />
           
-          {/* NEW ROUTES: Subscription and SMS Purchase */}
+          {/* Protected routes that require active subscription */}
+          <Route path="tenants" element={
+            <SubscriptionGuard requireActive={true}>
+              <AdminTenants />
+            </SubscriptionGuard>
+          } />
+          <Route path="tenants/:tenantId/transactions" element={
+            <SubscriptionGuard requireActive={true}>
+              <TenantTransactions />
+            </SubscriptionGuard>
+          } />
+          <Route path="tenants/:tenantId/details" element={
+            <SubscriptionGuard requireActive={true}>
+              <TenantDetails />
+            </SubscriptionGuard>
+          } />
+          
+          <Route path="help" element={<AdminHelp />} />
+          
+          <Route path="reports" element={
+            <SubscriptionGuard requireActive={true}>
+              <AdminReports />
+            </SubscriptionGuard>
+          } />
+          <Route path="payments" element={
+            <SubscriptionGuard requireActive={true}>
+              <AdminPayments />
+            </SubscriptionGuard>
+          } />
+          
+          <Route path="settings" element={<AdminSettings />} />
+          
+          <Route path="organisation" element={
+            <SubscriptionGuard requireActive={true}>
+              <AdminOrganisation />
+            </SubscriptionGuard>
+          } />
+          
+          {/* NEW ROUTES: Subscription and SMS Purchase - Always accessible */}
           <Route path="subscription" element={<SubscriptionPage />} />
+          <Route path="subscription/payment" element={<SubscriptionPaymentPage />} />
           <Route path="sms-purchase" element={<SMSPurchasePage />} />
         </Route>
 
@@ -204,7 +237,11 @@ function AppContent() {
           }
         >
           <Route index element={<TenantDashboard />} />
-          <Route path="payments" element={<TenantPaymentCenter />} />
+          <Route path="payments" element={
+            <SubscriptionGuard requireActive={true}>
+              <TenantPaymentCenter />
+            </SubscriptionGuard>
+          } />
           <Route path="report" element={<TenantReportIssue />} />
           <Route path="settings" element={<TenantSettings />} />
         </Route>

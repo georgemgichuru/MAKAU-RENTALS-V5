@@ -2,13 +2,15 @@ from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Report
-from .serializers import ReportSerializer, UpdateReportStatusSerializer, SendEmailSerializer
+from .models import Report, ReminderSetting
+from .serializers import ReportSerializer, UpdateReportStatusSerializer, SendEmailSerializer, ReminderSettingSerializer
 from .permissions import IsTenantWithUnit, IsLandlordWithActiveSubscription
 from accounts.permissions import CanAccessReport
 from accounts.models import CustomUser, Unit
 from .messaging import send_landlord_email
 from rest_framework.permissions import IsAuthenticated
+from app.tasks import send_landlord_email_task
+from django.conf import settings
 
 
 class CreateReportView(generics.CreateAPIView):
@@ -100,19 +102,30 @@ class SendEmailView(APIView):
             subject = serializer.validated_data['subject']
             message = serializer.validated_data['message']
             send_to_all = serializer.validated_data['send_to_all']
+            property_id = serializer.validated_data.get('property_id')
 
             if send_to_all:
-                # Get all tenants of the landlord
+                # Get all tenants of the landlord, optionally scoped to a single property
                 landlord_properties = request.user.property_set.all()
-                tenants = CustomUser.objects.filter(
+                if property_id:
+                    landlord_properties = landlord_properties.filter(id=property_id)
+                tenants_qs = CustomUser.objects.filter(
                     user_type='tenant',
                     unit__property_obj__in=landlord_properties
                 ).distinct()
+                tenant_ids = list(tenants_qs.values_list('id', flat=True))
             else:
-                tenants = serializer.validated_data['tenants']
+                tenant_ids = [t.id for t in serializer.validated_data['tenants']]
 
-            send_landlord_email(subject, message, tenants)
-            return Response({"message": "Emails sent successfully."}, status=status.HTTP_200_OK)
+            if getattr(settings, 'EMAIL_ASYNC_ENABLED', True):
+                # Send asynchronously via Celery
+                send_landlord_email_task.delay(subject, message, tenant_ids)
+                return Response({"message": "Emails queued for delivery."}, status=status.HTTP_202_ACCEPTED)
+            else:
+                # Synchronous fallback (useful when Celery isn't running)
+                tenants_qs = CustomUser.objects.filter(id__in=tenant_ids, user_type='tenant')
+                send_landlord_email(subject, message, tenants_qs)
+                return Response({"message": "Emails sent successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ReportStatisticsView(APIView):
@@ -142,3 +155,36 @@ class ReportStatisticsView(APIView):
             
         total_days = sum((r.resolved_date - r.reported_date).days for r in resolved_reports)
         return total_days / resolved_reports.count()
+
+
+class ReminderSettingView(APIView):
+    """
+    Retrieve and update landlord monthly payment reminder settings.
+    GET returns current settings; PUT/PATCH updates them.
+    """
+    permission_classes = [IsAuthenticated, IsLandlordWithActiveSubscription]
+
+    def get_object(self, user):
+        setting, _ = ReminderSetting.objects.get_or_create(landlord=user)
+        return setting
+
+    def get(self, request):
+        setting = self.get_object(request.user)
+        serializer = ReminderSettingSerializer(setting)
+        return Response(serializer.data)
+
+    def put(self, request):
+        setting = self.get_object(request.user)
+        serializer = ReminderSettingSerializer(setting, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        setting = self.get_object(request.user)
+        serializer = ReminderSettingSerializer(setting, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -20,6 +20,10 @@ import { propertiesAPI, communicationAPI, tenantsAPI } from '../../services/api'
 const ConfirmationDialog = ({ isOpen, onClose, onConfirm, room }) => {
   if (!isOpen) return null;
 
+  const hasTenant = room?.hasTenant || room?.tenant;
+  const currentStatus = hasTenant ? 'occupied' : (room?.isAvailable ? 'available' : 'unavailable');
+  const newStatus = room?.isAvailable ? 'unavailable' : 'available';
+
   return (
     <div className="fixed inset-0 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -48,24 +52,24 @@ const ConfirmationDialog = ({ isOpen, onClose, onConfirm, room }) => {
               <div className="font-medium text-gray-600">Current Status:</div>
               <div>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  room?.status === 'available' 
+                  currentStatus === 'available' 
                     ? 'bg-green-100 text-green-800' 
-                    : room?.status === 'occupied'
+                    : currentStatus === 'occupied'
                     ? 'bg-red-100 text-red-800'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {room?.status}
+                  {currentStatus}
                 </span>
               </div>
               
               <div className="font-medium text-gray-600">New Status:</div>
               <div>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  room?.isAvailable 
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-green-100 text-green-800'
+                  newStatus === 'available'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {room?.isAvailable ? 'occupied' : 'available'}
+                  {newStatus}
                 </span>
               </div>
             </div>
@@ -93,17 +97,45 @@ const ConfirmationDialog = ({ isOpen, onClose, onConfirm, room }) => {
 
 // Add Room Type Dialog
 const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
-  const [roomType, setRoomType] = useState({ name: '', baseRent: '' });
+  const [roomType, setRoomType] = useState({
+    name: '',
+    baseRent: '',
+    description: ''
+  });
 
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!roomType.name || !roomType.baseRent) {
-      alert('Please fill in all fields');
+      alert('Please provide both name and base rent.');
       return;
     }
-    onAdd(roomType);
-    setRoomType({ name: '', baseRent: '' });
+    // Prepare payload for backend - match Django model fields
+    const payload = {
+      name: roomType.name,
+      rent: Number(roomType.baseRent),  // Backend expects 'rent', not 'base_rent'
+      deposit: 0,  // Required field with default
+      description: roomType.description || '',
+      number_of_units: 0  // Required field with default
+    };
+    
+    console.log('🚀 Creating unit type with payload:', payload);
+    
+    try {
+      const { propertiesAPI } = await import('../../services/api');
+      const response = await propertiesAPI.createUnitType(payload);
+      console.log('✅ Unit type created successfully:', response.data);
+      
+      if (onAdd) onAdd(response.data);
+      setRoomType({ name: '', baseRent: '', description: '' });
+      onClose();
+      
+      // Refresh the page to show the new room type
+      window.location.reload();
+    } catch (error) {
+      console.error('❌ Failed to create unit type:', error.response?.data || error);
+      alert(`Failed to add room type: ${error.response?.data?.error || error.message || 'Unknown error'}`);
+    }
   };
 
   return (
@@ -115,7 +147,6 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-        
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -124,7 +155,7 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
             <input
               type="text"
               value={roomType.name}
-              onChange={(e) => setRoomType({...roomType, name: e.target.value})}
+              onChange={(e) => setRoomType({ ...roomType, name: e.target.value })}
               placeholder="e.g., Studio, 1 Bedroom"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
@@ -136,13 +167,24 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
             <input
               type="number"
               value={roomType.baseRent}
-              onChange={(e) => setRoomType({...roomType, baseRent: e.target.value})}
+              onChange={(e) => setRoomType({ ...roomType, baseRent: e.target.value })}
               placeholder="25000"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <input
+              type="text"
+              value={roomType.description}
+              onChange={(e) => setRoomType({ ...roomType, description: e.target.value })}
+              placeholder="Short description of room type"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-
         <div className="flex gap-3 p-6 border-t bg-gray-50">
           <button
             onClick={onClose}
@@ -299,6 +341,7 @@ const AdminOrganisation = () => {
   const [apiPropertyUnits, setApiPropertyUnits] = useState([]);
   const [apiPropertyTenants, setApiPropertyTenants] = useState([]);
   const [apiPropertyReports, setApiPropertyReports] = useState([]);
+  const [apiRoomTypes, setApiRoomTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [totalTenants, setTotalTenants] = useState(0);
@@ -334,10 +377,34 @@ const AdminOrganisation = () => {
   }, [allPropertyUnits, selectedPropertyId]);
 
   const propertyReports = useMemo(() => {
+    console.log('🔍 Filtering context reports:', {
+      totalReports: reports?.length,
+      selectedPropertyId,
+      sampleReport: reports?.[0]
+    });
+    
     return (reports || []).filter(report => {
-      const reportPropertyId = report?.propertyId?.toString();
+      // Try multiple ways to get the property ID from the report
+      const reportPropertyId = report?.unit?.property_obj?.id?.toString() ||
+                              report?.unit?.property?.toString() ||
+                              report?.property?.toString() ||
+                              report?.propertyId?.toString() ||
+                              report?.property_id?.toString();
       const selectedId = selectedPropertyId?.toString();
-      return reportPropertyId === selectedId;
+      
+      const matches = reportPropertyId === selectedId;
+      
+      if (reports?.length <= 3) { // Only log for first few to avoid spam
+        console.log('📋 Context report filter:', {
+          reportId: report?.id,
+          reportPropertyId,
+          selectedId,
+          matches,
+          report
+        });
+      }
+      
+      return matches;
     });
   }, [reports, selectedPropertyId]);
 
@@ -372,26 +439,53 @@ const AdminOrganisation = () => {
       const property = properties.find(p => p?.id?.toString() === selectedPropertyId.toString());
       setCurrentProperty(property);
 
-      const [unitsResponse, tenantsResponse, reportsResponse] = await Promise.allSettled([
+      const [unitsResponse, tenantsResponse, reportsResponse, roomTypesResponse] = await Promise.allSettled([
         propertiesAPI.getPropertyUnits(selectedPropertyId),
         tenantsAPI.getTenants(),
-        communicationAPI.getReports()
+        communicationAPI.getReports(),
+        propertiesAPI.getUnitTypes()
       ]);
 
       // Process units data
       if (unitsResponse.status === 'fulfilled') {
-        const unitsWithStatus = (unitsResponse.value.data || []).map(unit => ({
-          ...unit,
-          status: unit.is_available ? 'available' : 'occupied',
-          isAvailable: unit.is_available,
-          unitNumber: unit.unit_number || unit.unitNumber || 'N/A',
-          type: unit.unit_type?.name || unit.type || 'N/A',
-          rent: unit.rent || unit.baseRent || 0,
-          propertyId: unit.property_obj?.id?.toString() || selectedPropertyId,
-          tenant: unit.tenant_obj ? 
-            `${unit.tenant_obj.first_name || ''} ${unit.tenant_obj.last_name || ''}`.trim() : 
-            unit.tenant || null
-        }));
+        console.log('🏠 Raw units from API:', unitsResponse.value.data);
+        
+        const unitsWithStatus = (unitsResponse.value.data || []).map(unit => {
+          console.log('🔍 Processing unit:', {
+            unit_number: unit.unit_number,
+            tenant: unit.tenant,
+            tenant_obj: unit.tenant_obj,
+            is_available: unit.is_available
+          });
+          
+          // Determine if unit is occupied based on tenant presence
+          const hasTenant = unit.tenant !== null && unit.tenant !== undefined;
+          const actuallyAvailable = !hasTenant && unit.is_available;
+          
+          // Format tenant name
+          let tenantName = null;
+          if (unit.tenant_obj) {
+            tenantName = `${unit.tenant_obj.first_name || ''} ${unit.tenant_obj.last_name || ''}`.trim();
+            console.log('✅ Tenant name from tenant_obj:', tenantName);
+          } else if (unit.tenant) {
+            console.log('⚠️ Tenant exists but no tenant_obj, tenant value:', unit.tenant);
+          }
+          
+          return {
+            ...unit,
+            status: hasTenant ? 'occupied' : (actuallyAvailable ? 'available' : 'unavailable'),
+            isAvailable: actuallyAvailable,
+            unitNumber: unit.unit_number || unit.unitNumber || 'N/A',
+            type: unit.unit_type?.name || unit.type || 'N/A',
+            rent: unit.rent || unit.baseRent || 0,
+            propertyId: unit.property_obj?.id?.toString() || selectedPropertyId,
+            tenant: tenantName || unit.tenant || null,
+            tenant_obj: unit.tenant_obj,
+            hasTenant: hasTenant
+          };
+        });
+        
+        console.log('📦 Processed units:', unitsWithStatus);
         setApiPropertyUnits(unitsWithStatus);
       }
 
@@ -403,12 +497,37 @@ const AdminOrganisation = () => {
 
       // Process reports data
       if (reportsResponse.status === 'fulfilled') {
+        console.log('📋 Raw reports from API:', reportsResponse.value.data);
+        console.log('🔍 Sample report structure:', reportsResponse.value.data[0]);
+        console.log('🏠 Selected property ID:', selectedPropertyId);
+        
         const filteredReports = (reportsResponse.value.data || []).filter(report => {
+          // Try multiple ways to get the property ID from the report
           const reportPropertyId = report.unit?.property_obj?.id?.toString() || 
-                                  report.propertyId?.toString();
+                                  report.unit?.property?.toString() ||
+                                  report.property?.toString() ||
+                                  report.propertyId?.toString() ||
+                                  report.property_id?.toString();
+          
+          console.log('📋 Report filtering:', {
+            reportId: report.id,
+            reportPropertyId,
+            selectedPropertyId: selectedPropertyId.toString(),
+            matches: reportPropertyId === selectedPropertyId.toString(),
+            reportObject: report
+          });
+          
           return reportPropertyId === selectedPropertyId.toString();
         });
+        
+        console.log('✅ Filtered reports for property:', filteredReports);
         setApiPropertyReports(filteredReports);
+      }
+
+      // Process room types data
+      if (roomTypesResponse.status === 'fulfilled') {
+        console.log('🏷️ Room types from API:', roomTypesResponse.value.data);
+        setApiRoomTypes(roomTypesResponse.value.data || []);
       }
 
     } catch (error) {
@@ -424,9 +543,7 @@ const AdminOrganisation = () => {
   useEffect(() => {
     const displayUnits = apiPropertyUnits.length > 0 ? apiPropertyUnits : propertyUnits;
     const tenantCount = displayUnits.filter(unit => 
-      unit?.status === 'occupied' || 
-      unit?.isAvailable === false ||
-      unit?.is_available === false
+      unit?.hasTenant || unit?.tenant !== null && unit?.tenant !== undefined
     ).length;
     
     setTotalTenants(tenantCount);
@@ -436,41 +553,121 @@ const AdminOrganisation = () => {
   const displayUnits = apiPropertyUnits.length > 0 ? apiPropertyUnits : propertyUnits;
   const totalUnits = displayUnits.length;
   const occupiedUnits = displayUnits.filter(unit => 
-    unit?.status === 'occupied' || 
-    unit?.isAvailable === false ||
-    unit?.is_available === false
+    unit?.hasTenant || unit?.tenant !== null && unit?.tenant !== undefined
   ).length;
   const availableUnits = displayUnits.filter(unit => 
-    unit?.status === 'available' || 
-    unit?.isAvailable === true ||
-    unit?.is_available === true
+    !unit?.hasTenant && !unit?.tenant && unit?.isAvailable
   ).length;
 
   const totalRevenue = displayUnits
-    .filter(unit => unit?.status === 'occupied' || !unit?.isAvailable)
+    .filter(unit => unit?.hasTenant || unit?.tenant)
     .reduce((sum, unit) => sum + (Number(unit?.rent) || 0), 0);
 
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
-  const displayReports = apiPropertyReports.length > 0 ? apiPropertyReports : propertyReports;
+  // Map reports to expected structure for display
+  const displayReportsRaw = apiPropertyReports.length > 0 ? apiPropertyReports : propertyReports;
+  
+  // Debug: Log the raw reports data
+  console.log('🔍 Raw reports data:', {
+    apiPropertyReports,
+    propertyReports,
+    displayReportsRaw,
+    selectedPropertyId
+  });
+  
+  const displayReports = (displayReportsRaw || []).map(report => {
+    // Try to get title, tenant, room, priority from various possible fields
+    let title = report.title || report.subject || report.issue || report.description || 'Untitled Report';
+    let tenant = report.tenant || report.tenant_name || (report.tenant_obj ? `${report.tenant_obj.first_name || ''} ${report.tenant_obj.last_name || ''}`.trim() : '');
+    let room = report.room || report.unitNumber || (report.unit && (report.unit.unit_number || report.unit.unitNumber)) || (report.unit_obj && report.unit_obj.unit_number) || '';
+    let priority = report.priority || report.severity || 'normal';
+    
+    console.log('📋 Mapped report:', { original: report, mapped: { title, tenant, room, priority } });
+    
+    return {
+      ...report,
+      title,
+      tenant,
+      room,
+      priority
+    };
+  });
+  
+  console.log('✅ Final displayReports:', displayReports);
+  
   const openReportsCount = displayReports.filter(report => 
     report.status === 'open' || report.status === 'Open' || report.status === 'pending'
   ).length;
 
   // Get tenants from occupied units for display
   const propertyTenantsFromUnits = useMemo(() => {
+    console.log('🔍 Building tenant list from units:', {
+      displayUnitsCount: displayUnits.length,
+      apiPropertyTenantsCount: apiPropertyTenants.length,
+      sampleUnit: displayUnits[0],
+      sampleApiTenant: apiPropertyTenants[0]
+    });
+
     return displayUnits
-      .filter(unit => unit?.status === 'occupied' || !unit?.isAvailable)
-      .map(unit => ({
-        id: unit.id,
-        name: unit.tenant || 'Unknown Tenant',
-        email: unit.tenant_email || 'No email',
-        unitNumber: unit.unitNumber
-      }));
-  }, [displayUnits]);
+      .filter(unit => unit?.hasTenant || unit?.tenant)
+      .map(unit => {
+        console.log('📦 Processing unit for tenant display:', {
+          unitId: unit.id,
+          unitNumber: unit.unitNumber,
+          tenant: unit.tenant,
+          tenant_obj: unit.tenant_obj,
+          hasTenant: unit.hasTenant
+        });
+
+        // The tenant field is just an ID, so we need to find the actual tenant data
+        let tenantName = 'Unknown Tenant';
+        let tenantEmail = 'No email';
+        
+        // Try to find tenant in apiPropertyTenants by ID
+        const tenantId = unit.tenant_obj?.id || unit.tenant;
+        const tenantData = apiPropertyTenants.find(t => 
+          t.id === tenantId || t.id?.toString() === tenantId?.toString()
+        );
+        
+        console.log('🔍 Looking for tenant ID:', tenantId, 'Found:', tenantData);
+        
+        if (tenantData) {
+          // Build name from tenant data - API provides full_name directly!
+          tenantName = tenantData.full_name || 
+                      `${tenantData.first_name || ''} ${tenantData.last_name || ''}`.trim() ||
+                      tenantData.user?.username || 
+                      'Unknown Tenant';
+          tenantEmail = tenantData.email || tenantData.user?.email || 'No email';
+          console.log('✅ Tenant found:', tenantName);
+        } else if (unit.tenant_obj) {
+          // Fallback to tenant_obj if available
+          tenantName = `${unit.tenant_obj.first_name || ''} ${unit.tenant_obj.last_name || ''}`.trim() || 'Unknown Tenant';
+          tenantEmail = unit.tenant_obj.email || 'No email';
+        } else if (typeof unit.tenant === 'string' && unit.tenant && isNaN(unit.tenant)) {
+          // If tenant is already a string name (not a number)
+          tenantName = unit.tenant;
+        }
+        
+        console.log('✅ Tenant name resolved:', tenantName);
+        
+        return {
+          id: unit.id,
+          tenantId: tenantId,
+          name: tenantName,
+          email: tenantEmail,
+          unitNumber: unit.unitNumber
+        };
+      });
+  }, [displayUnits, apiPropertyTenants]);
 
   // Open confirmation dialog
   const openConfirmDialog = (room) => {
+    // Don't allow changing availability if room has a tenant
+    if (room.hasTenant || room.tenant) {
+      showToast('Cannot change availability - unit has an assigned tenant. Remove tenant first.', 'error', 3000);
+      return;
+    }
     setConfirmDialog({ isOpen: true, room: room });
   };
 
@@ -560,7 +757,12 @@ const AdminOrganisation = () => {
     }
   };
 
-  const roomTypes = contextCurrentProperty?.unit_types || contextCurrentProperty?.roomTypes || [];
+  // Use API room types if available, otherwise fall back to context
+  const roomTypes = apiRoomTypes.length > 0 
+    ? apiRoomTypes 
+    : (contextCurrentProperty?.unit_types || contextCurrentProperty?.roomTypes || []);
+
+  console.log('🏷️ Room types to display:', roomTypes);
 
   // Show loading state
   if (loading) {
@@ -815,38 +1017,48 @@ const AdminOrganisation = () => {
               </tr>
             </thead>
             <tbody>
-              {displayUnits.map(room => (
-                <tr key={room.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium">{room.unitNumber}</td>
-                  <td className="py-3 px-4">{room.type}</td>
-                  <td className="py-3 px-4">{room.rent?.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600">{room.tenant || '-'}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      room.status === 'available' 
-                        ? 'bg-green-100 text-green-800' 
-                        : room.status === 'occupied'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {room.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button 
-                      onClick={() => openConfirmDialog(room)} 
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        room.isAvailable ? 'bg-green-500' : 'bg-gray-300'
-                      }`} 
-                      title="Click to change availability"
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        room.isAvailable ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {displayUnits.map(room => {
+                const hasTenant = room.hasTenant || room.tenant;
+                const isActuallyAvailable = !hasTenant && room.isAvailable;
+                
+                return (
+                  <tr key={room.id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4 font-medium">{room.unitNumber}</td>
+                    <td className="py-3 px-4">{room.type}</td>
+                    <td className="py-3 px-4">{room.rent?.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{room.tenant || '-'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        hasTenant
+                          ? 'bg-red-100 text-red-800'
+                          : isActuallyAvailable 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {hasTenant ? 'occupied' : (isActuallyAvailable ? 'available' : 'unavailable')}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button 
+                        onClick={() => openConfirmDialog(room)} 
+                        disabled={hasTenant}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          hasTenant 
+                            ? 'bg-gray-300 cursor-not-allowed opacity-50' 
+                            : isActuallyAvailable 
+                            ? 'bg-green-500' 
+                            : 'bg-gray-300'
+                        }`} 
+                        title={hasTenant ? 'Remove tenant first to change availability' : 'Click to change availability'}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isActuallyAvailable ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           
@@ -866,10 +1078,10 @@ const AdminOrganisation = () => {
           <h3 className="text-lg font-semibold mb-4">Recent Reports</h3>
           <div className="space-y-3">
             {displayReports.slice(0, 3).map(report => (
-              <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={report.id || report._id || Math.random()} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{report.title}</p>
-                  <p className="text-sm text-gray-600">{report.tenant} - Room {report.room}</p>
+                  <p className="text-sm text-gray-600">{report.tenant || 'Unknown'} - Room {report.room || 'N/A'}</p>
                 </div>
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   report.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
@@ -878,7 +1090,6 @@ const AdminOrganisation = () => {
                 </span>
               </div>
             ))}
-            
             {displayReports.length === 0 && (
               <p className="text-center py-8 text-gray-500">No reports for this property</p>
             )}

@@ -119,6 +119,7 @@ export const paymentsAPI = {
   
   // Subscription payments
   stkPushSubscription: (data) => api.post('/payments/stk-push-subscription/', data),
+  getSubscriptionPaymentStatus: (paymentId) => api.get(`/payments/subscription-payments/${paymentId}/`),
   
   // Payment history
   getPaymentHistory: () => api.get('/payments/rent-payments/'),
@@ -128,6 +129,16 @@ export const paymentsAPI = {
 
   // Test connection
   testConnection: () => api.get('/payments/test-connection/'),
+
+  // Bulk rent update
+  bulkRentUpdate: (data) => api.post('/payments/bulk-rent-update/', data),
+
+  // Individual unit rent update
+  updateUnitRent: (unitId, data) => api.put(`/payments/unit-rent-update/${unitId}/`, data),
+
+  // Download payments CSV (for landlord, all payments)
+  downloadPaymentsCSV: (config = {}) =>
+    api.get('/payments/rent-payments/csv/', { ...config, responseType: 'blob' }),
 };
 
 // Properties API endpoints
@@ -280,7 +291,10 @@ export const communicationAPI = {
       // Fallback: get all reports and filter
       try {
         const response = await api.get('/communication/reports/');
-        const openReports = response.data.filter(report => report.status === 'open');
+        const openReports = response.data.filter(report => {
+          const s = (report?.status ?? '').toString().toLowerCase();
+          return s === 'open' || s === 'pending';
+        });
         return { data: openReports };
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError);
@@ -298,9 +312,10 @@ export const communicationAPI = {
       // Fallback: get all reports and filter
       try {
         const response = await api.get('/communication/reports/');
-        const resolvedReports = response.data.filter(report => 
-          report.status === 'resolved' || report.status === 'closed'
-        );
+        const resolvedReports = response.data.filter(report => {
+          const s = (report?.status ?? '').toString().toLowerCase();
+          return s === 'resolved' || s === 'closed';
+        });
         return { data: resolvedReports };
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError);
@@ -313,6 +328,10 @@ export const communicationAPI = {
   
   // ADDED: Send email function
   sendEmail: (data) => api.post('/communication/reports/send-email/', data),
+
+  // Reminder settings
+  getReminderSettings: () => api.get('/communication/reminders/settings/'),
+  updateReminderSettings: (data) => api.put('/communication/reminders/settings/', data),
 };
 
 export default api;

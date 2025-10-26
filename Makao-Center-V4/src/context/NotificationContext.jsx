@@ -61,6 +61,7 @@ export const NotificationProvider = ({ children }) => {
       reports: {
         ...prev.reports,
         hasNew: false,
+        count: 0,
         lastChecked: new Date()
       }
     }));

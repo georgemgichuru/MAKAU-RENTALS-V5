@@ -18,6 +18,7 @@ from accounts.serializers import (
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
+from django.core.mail import send_mail
 from .models import Property, Unit, CustomUser, Subscription, UnitType,TenantProfile
 from payments.models import Payment
 from django.shortcuts import get_object_or_404
@@ -979,9 +980,61 @@ class PasswordResetConfirmView(APIView):
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            # Send confirmation email
+            try:
+                send_mail(
+                    subject="Password Reset Confirmation",
+                    message=f"Hello {user.full_name},\n\nYour password has been successfully reset.\n\nIf you did not make this change, please contact support immediately.\n\nBest regards,\nMakao Center",
+                    from_email=None,
+                    recipient_list=[user.email],
+                )
+            except Exception as e:
+                logger.error(f"Failed to send password reset confirmation email: {e}")
             return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Change password view for authenticated users
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        enable_2fa = request.data.get('enable_2fa', False)
+
+        if not current_password or not new_password:
+            return Response({"error": "Current password and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify current password
+        if not user.check_password(current_password):
+            return Response({"error": "Current password is incorrect."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate new password
+        try:
+            from django.contrib.auth.password_validation import validate_password
+            validate_password(new_password, user)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+
+        # Send confirmation email
+        try:
+            send_mail(
+                subject="Password Changed Successfully",
+                message=f"Hello {user.full_name},\n\nYour password has been successfully changed.\n\nIf you did not make this change, please contact support immediately.\n\nBest regards,\nMakao Center",
+                from_email=None,
+                recipient_list=[user.email],
+            )
+        except Exception as e:
+            logger.error(f"Failed to send password change confirmation email: {e}")
+
+        return Response({"message": "Password has been changed successfully. A confirmation email has been sent."}, status=status.HTTP_200_OK)
 
 
 # View to list available units for landlords to share with tenants
@@ -1208,6 +1261,17 @@ class TenantRegistrationStepView(APIView):
                             'status': 'failed'
                         }, status=400)
             
+            # STEP 4: Validate and save document
+            if step == 4:
+                id_document = data.get('id_document')
+                if not id_document:
+                    return Response({
+                        'error': 'ID document is required',
+                        'status': 'failed'
+                    }, status=400)
+                
+                logger.info(f"Document uploaded for session {session_id}: {data.get('id_document_name', 'unknown')}")
+            
             # Store step data in cache
             cache_key = f"tenant_registration_{session_id}_step_{step}"
             cache.set(cache_key, data, timeout=3600)  # 1 hour expiry
@@ -1315,6 +1379,28 @@ class CompleteTenantRegistrationView(APIView):
                 national_id=all_data.get('national_id'),
                 emergency_contact=all_data.get('emergency_contact')
             )
+
+            # Handle ID document if provided (base64 encoded)
+            id_document_base64 = all_data.get('id_document')
+            if id_document_base64:
+                try:
+                    import base64
+                    from django.core.files.base import ContentFile
+                    
+                    # Decode base64 and save document
+                    format, imgstr = id_document_base64.split(';base64,')
+                    ext = format.split('/')[-1]
+                    document_name = f"{user.id}_{user.full_name.replace(' ', '_')}_id.{ext}"
+                    
+                    user.id_document.save(
+                        document_name,
+                        ContentFile(base64.b64decode(imgstr)),
+                        save=True
+                    )
+                    logger.info(f"✅ ID document saved for tenant {user.full_name}")
+                except Exception as doc_error:
+                    logger.error(f"Failed to save ID document: {str(doc_error)}")
+                    # Don't fail registration if document save fails
 
             # Create tenant profile linked to landlord (REQUIRED)
             TenantProfile.objects.create(

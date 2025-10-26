@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import { 
-  Smartphone,
-  Monitor,
-  Tablet,
   Calendar,
   ChevronRight
 } from 'lucide-react';
@@ -13,8 +11,27 @@ const AdminSettings = () => {
   const [selectedReminderDates, setSelectedReminderDates] = useState([]);
   const [reminderTemplate, setReminderTemplate] = useState({
     subject: 'Rent Reminder',
-    message: `Dear tenant,\n\nThis is a reminder that your rent is due soon.\n\nPlease pay by the due date to avoid penalties.\n\nThank you,\nMakao Center`
+    message: `Dear tenant,
+
+This is a reminder that your rent is due soon.
+
+Please pay by the due date to avoid penalties.
+
+Thank you,
+Makao Center`
   });
+  const [reminderLoading, setReminderLoading] = useState(false);
+  const [reminderError, setReminderError] = useState('');
+  const [reminderSuccess, setReminderSuccess] = useState('');
+
+  // Security settings state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [enable2FA, setEnable2FA] = useState(false);
+  const [securityLoading, setSecurityLoading] = useState(false);
+  const [securityError, setSecurityError] = useState("");
+  const [securitySuccess, setSecuritySuccess] = useState("");
 
   const reminderDates = [
     { value: '1', label: '1st' },
@@ -37,18 +54,119 @@ const AdminSettings = () => {
   };
 
   const handleSaveReminders = () => {
+    setReminderError('');
+    setReminderSuccess('');
     if (selectedReminderDates.length === 0) {
-      alert('Please select at least one reminder date.');
+      setReminderError('Please select at least one reminder date.');
+      return;
+    }
+
+    const payload = {
+      days_of_month: selectedReminderDates.map((d) => parseInt(d, 10)).filter((n) => !isNaN(n)),
+      subject: reminderTemplate.subject,
+      message: reminderTemplate.message,
+      send_email: true,
+      active: true,
+    };
+
+    setReminderLoading(true);
+    api
+      .put('/communication/reminders/settings/', payload)
+      .then((res) => {
+        setReminderSuccess('Reminder settings saved successfully.');
+        // Auto-clear
+        setTimeout(() => setReminderSuccess(''), 4000);
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.error || err.response?.data || err.message || 'Failed to save reminder settings.';
+        setReminderError(typeof msg === 'string' ? msg : 'Failed to save reminder settings.');
+      })
+      .finally(() => setReminderLoading(false));
+  };
+
+  const handleSaveSecuritySettings = async () => {
+    setSecurityError("");
+    setSecuritySuccess("");
+    
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      setSecurityError("Please fill in all password fields.");
       return;
     }
     
-    console.log('Saving reminder settings:', {
-      dates: selectedReminderDates,
-      template: reminderTemplate
-    });
+    if (newPassword !== confirmNewPassword) {
+      setSecurityError("New passwords do not match.");
+      return;
+    }
     
-    alert(`Reminder settings saved successfully!\n\nSelected dates: ${selectedReminderDates.join(', ')}\nTemplate will be sent automatically on these dates.`);
+    if (newPassword.length < 8) {
+      setSecurityError("New password must be at least 8 characters long.");
+      return;
+    }
+    
+    setSecurityLoading(true);
+    
+    try {
+      // Call backend API to change password using the api service
+      const response = await api.put('/accounts/change-password/', {
+        current_password: currentPassword,
+        new_password: newPassword,
+        enable_2fa: enable2FA,
+      });
+      
+      const data = response.data;
+      
+      setSecuritySuccess(data.message || "Security settings updated successfully! A confirmation email has been sent.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      
+      // Auto-clear success message after 5 seconds
+      setTimeout(() => {
+        setSecuritySuccess("");
+      }, 5000);
+      
+    } catch (err) {
+      setSecurityError(err.response?.data?.error || err.response?.data?.message || err.message || "An error occurred while updating security settings.");
+    } finally {
+      setSecurityLoading(false);
+    }
   };
+
+  // Load existing reminder settings on mount
+  useEffect(() => {
+    let isMounted = true;
+    setReminderLoading(true);
+    api
+      .get('/communication/reminders/settings/')
+      .then((res) => {
+        if (!isMounted) return;
+        const data = res.data || {};
+        const days = Array.isArray(data.days_of_month) ? data.days_of_month : [];
+        setSelectedReminderDates(days.map((d) => String(d)));
+        setReminderTemplate({
+          subject: data.subject || 'Rent Reminder',
+          message:
+            data.message || `Dear tenant,
+
+This is a reminder that your rent is due soon.
+
+Please pay by the due date to avoid penalties.
+
+Thank you,
+Makao Center`,
+        });
+      })
+      .catch((err) => {
+        // If 404 or other, silently keep defaults
+        console.warn('Failed to load reminder settings:', err?.message || err);
+      })
+      .finally(() => {
+        if (isMounted) setReminderLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -110,6 +228,11 @@ const AdminSettings = () => {
         <p className="text-gray-600 text-sm mb-4">Choose date(s) to automatically remind tenants about rent payments</p>
         
         <div className="space-y-4">
+          {(reminderError || reminderSuccess) && (
+            <div className={`p-3 border rounded text-sm ${reminderError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+              {reminderError || reminderSuccess}
+            </div>
+          )}
           {/* Date Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Select Reminder Dates</label>
@@ -121,6 +244,7 @@ const AdminSettings = () => {
                     checked={selectedReminderDates.includes(date.value)}
                     onChange={() => handleDateToggle(date.value)}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    disabled={reminderLoading}
                   />
                   <span className="text-sm text-gray-700">{date.label}</span>
                 </label>
@@ -141,6 +265,7 @@ const AdminSettings = () => {
                 onChange={(e) => setReminderTemplate(prev => ({ ...prev, subject: e.target.value }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Email subject"
+                disabled={reminderLoading}
               />
             </div>
 
@@ -153,6 +278,7 @@ const AdminSettings = () => {
                 rows={8}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Type your reminder message here..."
+                disabled={reminderLoading}
               />
             </div>
 
@@ -176,9 +302,10 @@ const AdminSettings = () => {
           <div className="flex justify-end pt-2 border-t">
             <button
               onClick={handleSaveReminders}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
+              disabled={reminderLoading}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Reminder Settings
+              {reminderLoading ? 'Saving…' : 'Save Reminder Settings'}
             </button>
           </div>
         </div>
@@ -188,110 +315,70 @@ const AdminSettings = () => {
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Change Password</h2>
         <div className="space-y-4">
+          {securityError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              {securityError}
+            </div>
+          )}
+          {securitySuccess && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+              {securitySuccess}
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
             <input
               type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your current password"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
             <input
               type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter new password (min. 8 characters)"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
             <input
               type="password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Confirm new password"
             />
           </div>
+          
           <div className="flex items-center">
-            <input type="checkbox" className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 mr-2" />
+            <input 
+              type="checkbox" 
+              checked={enable2FA}
+              onChange={(e) => setEnable2FA(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 mr-2" 
+            />
             <label className="text-sm text-gray-700">Enable Two-Factor Authentication</label>
           </div>
+          
           <div className="flex justify-end">
             <button
               type="button"
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
+              onClick={handleSaveSecuritySettings}
+              disabled={securityLoading}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Security Settings
+              {securityLoading ? "Saving..." : "Save Security Settings"}
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Login History & Active Sessions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Login History</h3>
-          <p className="text-gray-600 text-sm mb-4">Recent login activities on your account</p>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <div>
-                <p className="font-medium text-sm">2025-10-17 14:30 UTC</p>
-                <p className="text-xs text-gray-600">192.168.1.1</p>
-              </div>
-              <span className="text-xs text-gray-500">Nairobi, KE</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <div>
-                <p className="font-medium text-sm">2025-10-16 09:15 UTC</p>
-                <p className="text-xs text-gray-600">10.0.0.1</p>
-              </div>
-              <span className="text-xs text-gray-500">Nairobi, KE</span>
-            </div>
-            <div className="flex justify-between items-center py-3">
-              <div>
-                <p className="font-medium text-sm">2025-10-15 22:45 UTC</p>
-                <p className="text-xs text-gray-600">172.16.0.1</p>
-              </div>
-              <span className="text-xs text-gray-500">Mombasa, KE</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Active Sessions</h3>
-          <p className="text-gray-600 text-sm mb-4">Currently active sessions on your account</p>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <Monitor className="w-5 h-5 mr-3 text-gray-600" />
-                <div>
-                  <p className="font-medium text-sm">Laptop</p>
-                  <p className="text-xs text-gray-600">Chrome</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">Windows 11</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <Smartphone className="w-5 h-5 mr-3 text-gray-600" />
-                <div>
-                  <p className="font-medium text-sm">Smartphone</p>
-                  <p className="text-xs text-gray-600">Safari</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">iOS 16</span>
-            </div>
-            <div className="flex justify-between items-center py-3">
-              <div className="flex items-center">
-                <Tablet className="w-5 h-5 mr-3 text-gray-600" />
-                <div>
-                  <p className="font-medium text-sm">Tablet</p>
-                  <p className="text-xs text-gray-600">Firefox</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">Android 13</span>
-            </div>
-          </div>
-          <button className="w-full mt-4 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 text-sm font-medium">
-            Log Out All Other Sessions
-          </button>
         </div>
       </div>
     </div>

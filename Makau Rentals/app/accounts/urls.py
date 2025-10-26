@@ -7,6 +7,7 @@ from .views import (
     UserCreateView,
     PasswordResetView,
     PasswordResetConfirmView,
+    ChangePasswordView,
     UpdateUserView,
     MeView,
     LandlordDashboardStatsView,
@@ -59,6 +60,9 @@ urlpatterns = [
     path('password/reset/', PasswordResetView.as_view(), name='password-reset'),
     path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     
+    # Password change
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    
     # Property management
     path('properties/', LandlordPropertiesView.as_view(), name='property-list'),
     path('properties/create/', CreatePropertyView.as_view(), name='property-create'),
@@ -91,14 +95,15 @@ urlpatterns = [
     # Available units
     path('available-units/', LandlordAvailableUnitsView.as_view(), name='available-units'),
     
-    # Tenants & Landlords
-    path('tenants/', UserListView.as_view(), name='tenant-list'),
+    # Tenants & Landlords  
+    # ✅ FIXED: Use LandlordTenantsView which includes deposit_paid and rent_status
+    path('tenants/', LandlordTenantsView.as_view(), name='tenant-list'),
     path('landlords/profile/', LandlordProfileView.as_view(), name='landlord-profile'),
     
     # ✅ NEW: Tenant registration with landlord code
     path('register/tenant/', TenantRegistrationView.as_view(), name='tenant-registration'),
     
-    # ✅ NEW: Get tenants by landlord
+    # ✅ NEW: Get tenants by landlord (same view as above, different URL for clarity)
     path('landlord/tenants/', LandlordTenantsView.as_view(), name='landlord-tenants'),
     
     # Landlord validation for tenant signup

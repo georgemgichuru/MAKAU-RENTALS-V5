@@ -22,11 +22,16 @@ import { AppContext } from '../../context/AppContext';
 const TenantDetails = () => {
   const { tenantId } = useParams();
   const navigate = useNavigate();
-  const { mockTenants } = useContext(AppContext);
+  const { mockTenants, tenants, tenantsLoading } = useContext(AppContext);
   const [documentPreview, setDocumentPreview] = useState(null);
 
-  // Find the tenant by ID
-  const tenant = mockTenants?.find(t => String(t.id) === String(tenantId));
+  // Find the tenant by ID - check both mockTenants and tenants from API
+  const allTenants = mockTenants || tenants || [];
+  const tenant = allTenants?.find(t => String(t.id) === String(tenantId));
+  
+  console.log('🔍 TenantDetails - tenantId:', tenantId);
+  console.log('🔍 TenantDetails - allTenants:', allTenants.length);
+  console.log('🔍 TenantDetails - found tenant:', tenant);
 
   // Mock detailed tenant data (in real app, this would come from backend)
   const detailedTenantData = {
@@ -107,6 +112,18 @@ const TenantDetails = () => {
     }
   };
 
+  // Show loading state while tenants are being fetched
+  if (tenantsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading tenant details...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!tenant) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -126,6 +143,20 @@ const TenantDetails = () => {
   }
 
   const details = detailedTenantData[tenantId] || {};
+  
+  // Get tenant name safely
+  const tenantName = tenant.full_name || tenant.name || 'Unknown Tenant';
+  const tenantEmail = tenant.email || 'no-email@example.com';
+  const tenantPhone = tenant.phone_number || tenant.phone || 'N/A';
+  
+  // Get unit info safely
+  const unit = tenant.current_unit || tenant.unit_data || tenant.unit;
+  const roomNumber = unit?.unit_number || unit?.number || tenant.room || 'N/A';
+  const rentAmount = unit?.rent || unit?.rent_amount || tenant.rentAmount || 0;
+  
+  // Get status safely
+  const tenantStatus = tenant.status || (tenant.deposit_paid ? 'active' : 'inactive');
+  const rentStatus = tenant.rent_status || tenant.rentStatus || 'due';
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -217,17 +248,17 @@ const TenantDetails = () => {
                   <User className="w-8 h-8 text-blue-600" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-1">{tenant.name}</h1>
-                  <p className="text-blue-100">Tenant ID: {tenant.bookingId}</p>
+                  <h1 className="text-3xl font-bold text-white mb-1">{tenantName}</h1>
+                  <p className="text-blue-100">Tenant ID: {tenant.bookingId || tenant.id}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  tenant.status === 'active' ? 'bg-green-100 text-green-800' :
-                  tenant.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  tenantStatus === 'active' ? 'bg-green-100 text-green-800' :
+                  tenantStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {tenant.status === 'active' ? 'Active' : tenant.status === 'pending' ? 'Pending' : 'Inactive'}
+                  {tenantStatus === 'active' ? 'Active' : tenantStatus === 'pending' ? 'Pending' : 'Inactive'}
                 </span>
               </div>
             </div>
@@ -242,14 +273,14 @@ const TenantDetails = () => {
                   <Mail className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{tenant.email}</p>
+                    <p className="font-medium text-gray-900">{tenantEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium text-gray-900">{tenant.phone || 'N/A'}</p>
+                    <p className="font-medium text-gray-900">{tenantPhone}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -269,14 +300,14 @@ const TenantDetails = () => {
                   <Home className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Room Number</p>
-                    <p className="font-medium text-gray-900">{tenant.room}</p>
+                    <p className="font-medium text-gray-900">{roomNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <DollarSign className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Monthly Rent</p>
-                    <p className="font-medium text-gray-900">KSh {Number(tenant.rentAmount || 0).toLocaleString()}</p>
+                    <p className="font-medium text-gray-900">KSh {Number(rentAmount).toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -311,12 +342,12 @@ const TenantDetails = () => {
                   <div>
                     <p className="text-sm text-gray-500">Rent Status</p>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      tenant.rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                      tenant.rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
+                      rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                      rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {tenant.rentStatus === 'paid' ? 'Paid' : 
-                       tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
+                      {rentStatus === 'paid' ? 'Paid' : 
+                       rentStatus === 'due' ? 'Due' : 'Overdue'}
                     </span>
                   </div>
                 </div>

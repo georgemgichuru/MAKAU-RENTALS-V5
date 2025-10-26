@@ -908,3 +908,288 @@ WARNING 2025-10-26 10:34:28,050 log 25232 35272 Unauthorized: /api/accounts/tena
 WARNING 2025-10-26 11:25:35,778 log 25232 21672 Unauthorized: /api/communication/reports/
 WARNING 2025-10-26 12:27:17,362 log 25232 41504 Unauthorized: /api/communication/reports/
 WARNING 2025-10-26 12:27:17,465 log 25232 39004 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-26 12:43:21,429 autoreload 35820 26716 Watching for file changes with StatReloader
+WARNING 2025-10-26 12:57:59,924 log 35820 23112 Not Found: /api//payments/rent-payments/
+WARNING 2025-10-26 12:58:06,128 log 35820 23112 Unauthorized: /api/payments/rent-payments/
+INFO 2025-10-26 13:11:15,171 views 35820 14608 Bulk rent update completed by test309@example.com. Units updated: 2
+INFO 2025-10-26 13:18:13,146 views 35820 41576 CreatePropertyView: User 6 attempting to create property
+INFO 2025-10-26 13:18:13,148 views 35820 41576 Subscription found: free
+INFO 2025-10-26 13:18:13,149 views 35820 41576 Current properties count: 1, max: 2
+INFO 2025-10-26 13:18:13,150 views 35820 41576 Serializer valid, saving property for user 6
+INFO 2025-10-26 13:18:13,188 views 35820 41576 Cache cleared for user 6
+INFO 2025-10-26 13:18:13,189 views 35820 41576 Property created successfully: 3
+WARNING 2025-10-26 13:27:18,699 log 35820 9940 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-26 13:29:22,386 autoreload 35820 26716 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 13:29:25,966 autoreload 36544 45624 Watching for file changes with StatReloader
+INFO 2025-10-26 13:29:52,354 autoreload 36544 45624 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 13:29:54,782 autoreload 42968 28320 Watching for file changes with StatReloader
+INFO 2025-10-26 13:30:12,272 autoreload 42968 28320 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 13:30:15,267 autoreload 40596 31520 Watching for file changes with StatReloader
+WARNING 2025-10-26 13:33:48,711 log 40596 30620 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 13:33:49,297 log 40596 30620 Unauthorized: /api/accounts/token/refresh/
+WARNING 2025-10-26 13:33:49,875 log 40596 30620 Unauthorized: /api/communication/reports/
+INFO 2025-10-26 13:45:33,133 autoreload 40596 31520 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 13:45:36,573 autoreload 27536 44472 Watching for file changes with StatReloader
+INFO 2025-10-26 13:46:00,486 autoreload 27536 44472 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 13:46:02,842 autoreload 26320 42240 Watching for file changes with StatReloader
+INFO 2025-10-26 14:02:59,333 autoreload 26320 42240 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 14:03:02,293 autoreload 11576 27372 Watching for file changes with StatReloader
+INFO 2025-10-26 14:06:06,364 autoreload 11576 27372 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 14:06:10,209 autoreload 25208 36468 Watching for file changes with StatReloader
+WARNING 2025-10-26 14:06:31,810 log 25208 10488 Bad Request: /api/payments/stk-push-subscription/
+INFO 2025-10-26 14:09:05,031 autoreload 25208 36468 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 14:09:07,430 autoreload 21280 15124 Watching for file changes with StatReloader
+INFO 2025-10-26 14:11:07,251 autoreload 21280 15124 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views.py changed, reloading.
+INFO 2025-10-26 14:11:09,776 autoreload 19932 22008 Watching for file changes with StatReloader
+INFO 2025-10-26 14:11:50,163 views 19932 42568 Subscription callback received: {'Body': {'stkCallback': {'MerchantRequestID': '1d98-42f3-9cf7-c3703adb52e318643', 'CheckoutRequestID': 'ws_CO_26102025141133998722714334', 'ResultCode': 1037, 'ResultDesc': 'DS timeout user cannot be reached.'}}}
+INFO 2025-10-26 14:11:50,163 views 19932 42568 Subscription callback - ResultCode: 1037, CheckoutRequestID: ws_CO_26102025141133998722714334
+ERROR 2025-10-26 14:11:50,164 views 19932 42568 Subscription payment failed - ResultCode: 1037, Description: DS timeout user cannot be reached.
+INFO 2025-10-26 14:17:59,890 autoreload 19932 22008 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\permissions.py changed, reloading.
+INFO 2025-10-26 14:18:02,090 autoreload 37996 37416 Watching for file changes with StatReloader
+INFO 2025-10-26 14:19:23,939 autoreload 37996 37416 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\permissions.py changed, reloading.
+INFO 2025-10-26 14:19:26,863 autoreload 31976 32916 Watching for file changes with StatReloader
+ERROR 2025-10-26 14:27:23,075 log 31976 21204 Internal Server Error: /api/accounts/unit-types/
+WARNING 2025-10-26 14:35:55,450 log 31976 36912 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 14:35:55,808 log 31976 19200 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 14:35:55,817 log 31976 16580 Unauthorized: /api/communication/reports/
+INFO 2025-10-26 14:51:12,010 autoreload 31976 32916 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 14:51:15,893 autoreload 19428 29620 Watching for file changes with StatReloader
+INFO 2025-10-26 14:52:05,478 autoreload 19428 29620 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 14:52:10,064 autoreload 28532 24792 Watching for file changes with StatReloader
+INFO 2025-10-26 15:01:33,223 autoreload 28532 24792 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 15:01:36,158 autoreload 11268 27220 Watching for file changes with StatReloader
+INFO 2025-10-26 15:01:45,553 autoreload 11268 27220 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 15:01:48,807 autoreload 33552 16992 Watching for file changes with StatReloader
+INFO 2025-10-26 15:02:26,312 autoreload 33552 16992 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\tasks.py changed, reloading.
+INFO 2025-10-26 15:02:33,644 autoreload 2952 7692 Watching for file changes with StatReloader
+INFO 2025-10-26 15:04:08,405 autoreload 2952 7692 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 15:04:17,672 autoreload 23404 17432 Watching for file changes with StatReloader
+INFO 2025-10-26 15:04:25,148 autoreload 23404 17432 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 15:04:28,511 autoreload 38828 19904 Watching for file changes with StatReloader
+INFO 2025-10-26 15:04:57,736 autoreload 38828 19904 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 15:05:02,583 autoreload 27048 16240 Watching for file changes with StatReloader
+INFO 2025-10-26 15:05:30,073 autoreload 27048 16240 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 15:05:34,886 autoreload 31588 37248 Watching for file changes with StatReloader
+INFO 2025-10-26 15:24:27,533 autoreload 31588 37248 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 15:24:32,730 autoreload 22920 40356 Watching for file changes with StatReloader
+INFO 2025-10-26 15:24:48,577 autoreload 22920 40356 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-26 15:24:51,695 autoreload 12868 43928 Watching for file changes with StatReloader
+INFO 2025-10-26 15:24:55,944 autoreload 12868 43928 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-26 15:24:58,855 autoreload 41908 40716 Watching for file changes with StatReloader
+INFO 2025-10-26 15:25:03,460 autoreload 41908 40716 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-26 15:25:06,867 autoreload 32716 24492 Watching for file changes with StatReloader
+INFO 2025-10-26 15:25:50,147 autoreload 32716 24492 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 15:25:55,196 autoreload 26544 3572 Watching for file changes with StatReloader
+INFO 2025-10-26 15:26:18,025 autoreload 26544 3572 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-26 15:26:26,602 autoreload 26708 21540 Watching for file changes with StatReloader
+WARNING 2025-10-26 15:36:01,292 log 26708 38672 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 15:36:01,297 log 26708 30320 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 15:36:01,558 log 26708 1752 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 15:36:01,582 log 26708 40408 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 15:36:01,596 log 26708 15112 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 15:36:01,612 log 26708 46724 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 15:36:01,887 log 26708 40504 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 15:36:02,053 log 26708 30320 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 15:36:02,394 log 26708 38672 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 15:36:02,477 log 26708 15112 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 15:36:02,746 log 26708 38672 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 15:36:02,750 log 26708 30320 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 15:36:02,754 log 26708 46724 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 15:36:02,869 log 26708 3768 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 15:36:05,585 log 26708 22904 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 15:36:05,805 log 26708 28636 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 15:36:05,818 log 26708 10992 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 15:36:05,831 log 26708 37984 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 15:36:05,871 log 26708 42180 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 15:36:05,891 log 26708 44872 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 15:36:05,908 log 26708 40448 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-26 15:36:08,698 log 26708 41360 Unauthorized: /api/payments/rent-payments/
+WARNING 2025-10-26 15:36:08,701 log 26708 24532 Unauthorized: /api/accounts/units/
+WARNING 2025-10-26 15:36:08,717 log 26708 20108 Unauthorized: /api/accounts/tenants/
+WARNING 2025-10-26 15:36:08,723 log 26708 37504 Unauthorized: /api/accounts/me/
+WARNING 2025-10-26 15:36:08,735 log 26708 19740 Unauthorized: /api/communication/reports/
+WARNING 2025-10-26 15:36:09,455 log 26708 45860 Unauthorized: /api/accounts/properties/
+WARNING 2025-10-26 15:36:09,464 log 26708 44324 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-26 15:47:30,316 autoreload 26708 21540 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 15:47:37,360 autoreload 15216 15644 Watching for file changes with StatReloader
+INFO 2025-10-26 15:47:54,590 autoreload 15216 15644 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-26 15:47:58,139 autoreload 46500 15924 Watching for file changes with StatReloader
+INFO 2025-10-26 15:57:58,731 autoreload 46500 15924 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-26 15:58:02,750 autoreload 25500 23600 Watching for file changes with StatReloader
+INFO 2025-10-26 15:58:07,698 autoreload 25500 23600 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-26 15:58:10,572 autoreload 46484 21372 Watching for file changes with StatReloader
+INFO 2025-10-26 16:06:53,887 autoreload 46484 21372 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\models.py changed, reloading.
+INFO 2025-10-26 16:06:58,236 autoreload 41796 20476 Watching for file changes with StatReloader
+INFO 2025-10-26 16:07:03,846 autoreload 41796 20476 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\serializers.py changed, reloading.
+INFO 2025-10-26 16:07:07,651 autoreload 17400 18908 Watching for file changes with StatReloader
+INFO 2025-10-26 16:07:22,260 autoreload 17400 18908 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py changed, reloading.
+INFO 2025-10-26 16:07:25,281 autoreload 34680 16808 Watching for file changes with StatReloader
+INFO 2025-10-26 16:07:37,701 autoreload 34680 16808 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\urls.py changed, reloading.
+INFO 2025-10-26 16:07:41,974 autoreload 18136 21648 Watching for file changes with StatReloader
+INFO 2025-10-26 16:07:56,404 autoreload 18136 21648 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\tasks.py changed, reloading.
+INFO 2025-10-26 16:08:00,546 autoreload 19052 22644 Watching for file changes with StatReloader
+INFO 2025-10-26 16:08:15,408 autoreload 19052 22644 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 16:08:18,688 autoreload 30108 27416 Watching for file changes with StatReloader
+INFO 2025-10-26 16:08:26,936 autoreload 30108 27416 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-26 16:08:34,151 autoreload 19800 44568 Watching for file changes with StatReloader
+ERROR 2025-10-26 16:13:10,440 log 19800 12772 Internal Server Error: /api/communication/reminders/settings/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: communication_remindersetting
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py", line 172, in get
+    setting = self.get_object(request.user)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py", line 168, in get_object
+    setting, _ = ReminderSetting.objects.get_or_create(landlord=user)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 916, in get_or_create
+    return self.get(**kwargs), False
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: communication_remindersetting
+ERROR 2025-10-26 16:13:12,350 log 19800 7984 Internal Server Error: /api/communication/reminders/settings/
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: communication_remindersetting
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py", line 172, in get
+    setting = self.get_object(request.user)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\views.py", line 168, in get_object
+    setting, _ = ReminderSetting.objects.get_or_create(landlord=user)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 916, in get_or_create
+    return self.get(**kwargs), False
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\backends\sqlite3\base.py", line 328, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: communication_remindersetting
+WARNING 2025-10-26 16:36:14,169 log 19800 45976 Unauthorized: /api/communication/reports/open/

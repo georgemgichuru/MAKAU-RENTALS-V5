@@ -345,12 +345,14 @@ class TenantWithUnitSerializer(serializers.ModelSerializer):
     current_unit = serializers.SerializerMethodField()
     unit_data = serializers.SerializerMethodField()
     rent_status = serializers.SerializerMethodField()
+    deposit_paid = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomUser
         fields = [
             'id', 'email', 'full_name', 'phone_number', 'emergency_contact',
-            'national_id', 'date_joined', 'current_unit', 'unit_data', 'rent_status'
+            'national_id', 'date_joined', 'current_unit', 'unit_data', 
+            'rent_status', 'deposit_paid'
         ]
     
     def get_current_unit(self, obj):
@@ -375,6 +377,16 @@ class TenantWithUnitSerializer(serializers.ModelSerializer):
         if unit:
             return UnitSerializer(unit).data
         return None
+    
+    def get_deposit_paid(self, obj):
+        """Check if tenant has paid deposit"""
+        from payments.models import Payment
+        deposit_payments = Payment.objects.filter(
+            tenant=obj,
+            payment_type='deposit',
+            status='completed'
+        )
+        return deposit_payments.exists()
     
     def get_rent_status(self, obj):
         """Calculate rent status for the tenant"""

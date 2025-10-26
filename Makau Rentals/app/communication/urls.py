@@ -7,6 +7,7 @@ from .views import (
     ResolvedReportsView,
     UpdateReportStatusView,
     SendEmailView,ReportListView,
+    ReminderSettingView,
 )
 
 urlpatterns = [
@@ -32,4 +33,7 @@ urlpatterns = [
 
     # Send email to tenants (POST)
     path('reports/send-email/', SendEmailView.as_view(), name='send-email'),  # Added /reports/ prefix
+    
+    # Reminder settings (GET/PUT/PATCH)
+    path('reminders/settings/', ReminderSettingView.as_view(), name='reminder-settings'),
 ]

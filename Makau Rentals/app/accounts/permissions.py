@@ -16,23 +16,56 @@ class IsSuperuser(permissions.BasePermission):
         return request.user.is_authenticated and request.user.is_superuser
 
 class HasActiveSubscription(permissions.BasePermission):
+    """
+    Permission check for landlord having an active subscription.
+    Also checks if tenant's landlord has active subscription.
+    """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated or request.user.user_type != 'landlord':
+        if not request.user.is_authenticated:
             return False
         
-        # Use cache to avoid repeated database queries
-        cache_key = f"subscription_status:{request.user.id}"
-        has_active_sub = cache.get(cache_key)
+        # For landlords, check their own subscription
+        if request.user.user_type == 'landlord':
+            cache_key = f"subscription_status:{request.user.id}"
+            has_active_sub = cache.get(cache_key)
+            
+            if has_active_sub is None:
+                try:
+                    subscription = Subscription.objects.get(user=request.user)
+                    has_active_sub = subscription.is_active()
+                except Subscription.DoesNotExist:
+                    has_active_sub = False
+                cache.set(cache_key, has_active_sub, timeout=300)  # Cache for 5 minutes
+            
+            return has_active_sub
         
-        if has_active_sub is None:
+        # For tenants, check their landlord's subscription
+        elif request.user.user_type == 'tenant':
             try:
-                subscription = Subscription.objects.get(user=request.user)
-                has_active_sub = subscription.is_active()
-            except Subscription.DoesNotExist:
-                has_active_sub = False
-            cache.set(cache_key, has_active_sub, timeout=300)  # Cache for 5 minutes
+                # Get tenant's landlord through tenant profile
+                tenant_profile = request.user.tenant_profile
+                if tenant_profile and tenant_profile.landlord:
+                    landlord = tenant_profile.landlord
+                    cache_key = f"subscription_status:{landlord.id}"
+                    has_active_sub = cache.get(cache_key)
+                    
+                    if has_active_sub is None:
+                        try:
+                            subscription = Subscription.objects.get(user=landlord)
+                            has_active_sub = subscription.is_active()
+                        except Subscription.DoesNotExist:
+                            has_active_sub = False
+                        cache.set(cache_key, has_active_sub, timeout=300)
+                    
+                    return has_active_sub
+                else:
+                    # No landlord assigned, allow access
+                    return True
+            except Exception:
+                # If we can't check, allow access (fail open)
+                return True
         
-        return has_active_sub
+        return False
 
 # Remove the problematic IsTenantWithActivePayment permission if it exists
 # as it causes circular imports with Payment model

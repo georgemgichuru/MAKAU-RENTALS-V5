@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react'
 import {AppContext} from '../../context/AppContext';
+import { paymentsAPI, propertiesAPI } from '../../services/api';
 import { 
   Home, 
   BarChart3, 
@@ -45,69 +46,170 @@ import {
 const AdminPayments = () => {
   const {mockTenants, mockReports, propertyUnits} = useContext(AppContext);
 
-  // Example payments data (replace with your actual payments data)
-  const payments = [
-    {
-      id: 'PAY-001',
-      client: 'John Doe',
-      amount: 25000,
-      date: '2024-03-15',
-      method: 'M-Pesa',
-      status: 'Completed'
-    },
-    {
-      id: 'PAY-002',
-      client: 'Jane Smith',
-      amount: 35000,
-      date: '2024-03-10',
-      method: 'Bank Transfer',
-      status: 'Processing'
-    }
-    // ...add all payments here or fetch from context/state
-  ];
+  // Payments state
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState(null);
 
+  // Units state
   const [editingUnit, setEditingUnit] = useState(null);
-  const [units, setUnits] = useState(propertyUnits || []);
+  const [units, setUnits] = useState([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  
+  // Bulk update state
   const [bulkUpdateType, setBulkUpdateType] = useState('percentage');
   const [selectedRoomType, setSelectedRoomType] = useState('all');
   const [percentageIncrease, setPercentageIncrease] = useState('');
   const [fixedAmount, setFixedAmount] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
+  const [bulkUpdateError, setBulkUpdateError] = useState(null);
+  const [bulkUpdateSuccess, setBulkUpdateSuccess] = useState(null);
 
-  const handlePriceUpdate = (unitId, newPrice) => {
-    setUnits(units.map(unit => 
-      unit.id === unitId ? { ...unit, rent: parseFloat(newPrice) } : unit
-    ));
-    setEditingUnit(null);
+  // Fetch units from backend
+  React.useEffect(() => {
+    const fetchUnits = async () => {
+      setUnitsLoading(true);
+      try {
+        const response = await propertiesAPI.getUnits();
+        console.log('✅ Units fetched:', response.data);
+        
+        // Transform backend data to match component format
+        const transformedUnits = response.data.map(unit => ({
+          id: unit.id,
+          unitNumber: unit.unit_number || 'N/A',
+          type: unit.unit_type?.name || unit.unit_type || 'N/A',
+          rent: parseFloat(unit.rent) || 0,
+          size: unit.size || 'N/A',
+          tenant: unit.tenant?.full_name || unit.tenant?.name || null,
+          isAvailable: Boolean(unit.is_available),
+          propertyId: unit.property_obj?.id?.toString() || unit.property?.toString() || 'unknown',
+        }));
+        
+        setUnits(transformedUnits);
+      } catch (error) {
+        console.error('❌ Failed to load units:', error);
+      } finally {
+        setUnitsLoading(false);
+      }
+    };
+    fetchUnits();
+  }, []);
+
+  // Fetch payments from backend
+  React.useEffect(() => {
+    const fetchPayments = async () => {
+      setPaymentsLoading(true);
+      setPaymentsError(null);
+      try {
+        // Get payments for current landlord
+  const response = await paymentsAPI.getPaymentHistory();
+        console.log('🔄 Payments API raw response:', response);
+        // Try to handle different response formats
+        let data = [];
+        if (Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response.data && Array.isArray(response.data.results)) {
+          data = response.data.results;
+        } else if (response.data && typeof response.data === 'object') {
+          // Try to find payments array in object
+          data = response.data.payments || response.data.data || [];
+        }
+        console.log('✅ Payments processed data:', data);
+        setPayments(data);
+      } catch (error) {
+        console.error('❌ Failed to load payments:', error);
+        setPaymentsError('Failed to load payments.');
+      } finally {
+        setPaymentsLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
+
+  // Individual unit price update
+  const handlePriceUpdate = async (unitId, newPrice) => {
+    try {
+      // Update backend
+      await paymentsAPI.updateUnitRent(unitId, { rent: parseFloat(newPrice) });
+      
+      // Update local state
+      setUnits(units.map(unit => 
+        unit.id === unitId ? { ...unit, rent: parseFloat(newPrice) } : unit
+      ));
+      setEditingUnit(null);
+      
+      console.log('✅ Unit rent updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update unit rent:', error);
+      alert('Failed to update unit rent. Please try again.');
+    }
   };
 
   const getRoomTypes = () => {
-    const types = [...new Set(units.map(unit => unit.type))];
-    return types;
-  };
+  if (!units || units.length === 0) return [];
+  const types = [...new Set(units.map(unit => unit.type).filter(Boolean))];
+  return types.length > 0 ? types : ['No types available'];
+};
 
-  const handleBulkUpdate = () => {
-    if (bulkUpdateType === 'percentage' && percentageIncrease) {
-      const increase = parseFloat(percentageIncrease) / 100;
-      setUnits(units.map(unit => {
-        if (selectedRoomType === 'all' || unit.type === selectedRoomType) {
-          return { ...unit, rent: Math.round(unit.rent * (1 + increase)) };
-        }
-        return unit;
+  // Backend-integrated bulk update
+  const handleBulkUpdate = async () => {
+    try {
+      setBulkUpdateLoading(true);
+      setBulkUpdateError(null);
+      setBulkUpdateSuccess(null);
+
+      // Prepare request data matching backend expectations
+      const requestData = {
+        update_type: bulkUpdateType,
+        amount: bulkUpdateType === 'percentage' 
+          ? parseFloat(percentageIncrease) 
+          : parseFloat(fixedAmount),
+        unit_type_filter: selectedRoomType,
+        preview_only: false // Actual update, not preview
+      };
+
+      console.log('🔄 Sending bulk update request:', requestData);
+
+      // Call backend API
+      const response = await paymentsAPI.bulkRentUpdate(requestData);
+      console.log('✅ Bulk update response:', response.data);
+
+      // Refresh units from backend to get updated data
+      const unitsResponse = await propertiesAPI.getUnits();
+      const transformedUnits = unitsResponse.data.map(unit => ({
+        id: unit.id,
+        unitNumber: unit.unit_number || 'N/A',
+        type: unit.unit_type?.name || unit.unit_type || 'N/A',
+        rent: parseFloat(unit.rent) || 0,
+        size: unit.size || 'N/A',
+        tenant: unit.tenant?.full_name || unit.tenant?.name || null,
+        isAvailable: Boolean(unit.is_available),
+        propertyId: unit.property_obj?.id?.toString() || unit.property?.toString() || 'unknown',
       }));
-    } else if (bulkUpdateType === 'fixed' && fixedAmount) {
-      const amount = parseFloat(fixedAmount);
-      setUnits(units.map(unit => {
-        if (selectedRoomType === 'all' || unit.type === selectedRoomType) {
-          return { ...unit, rent: Math.round(unit.rent + amount) };
-        }
-        return unit;
-      }));
+      setUnits(transformedUnits);
+
+      // Show success message
+      const message = response.data.message || `Successfully updated ${response.data.units_updated} units`;
+      setBulkUpdateSuccess(message);
+      
+      // Reset form
+      setPercentageIncrease('');
+      setFixedAmount('');
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setBulkUpdateSuccess(null), 5000);
+
+    } catch (error) {
+      console.error('❌ Bulk update failed:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to update rents. Please try again.';
+      setBulkUpdateError(errorMessage);
+      
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => setBulkUpdateError(null), 5000);
+    } finally {
+      setBulkUpdateLoading(false);
     }
-    
-    // Reset form
-    setPercentageIncrease('');
-    setFixedAmount('');
   };
 
   const previewBulkUpdate = () => {
@@ -134,36 +236,50 @@ const AdminPayments = () => {
 
   const previewData = previewBulkUpdate();
 
-  // Download all payments as CSV
-  const handleDownloadPaymentsCSV = () => {
-    const headers = ['Payment ID', 'Client', 'Amount (KSh)', 'Date', 'Method', 'Status'];
-    const csvRows = [
-      headers.join(','),
-      ...payments.map(p =>
-        `${p.id},${p.client},${p.amount},${p.date},${p.method},${p.status}`
-      )
-    ];
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'all_payments.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
-
-  // Modified bulk update handler
-  const handleBulkUpdateClick = () => {
-    setShowDisclaimer(true);
+  // Download payments CSV for landlord (uses selectedPropertyId)
+  const handleDownloadPaymentsCSV = async () => {
+    setPaymentsLoading(true);
+    setPaymentsError(null);
+    try {
+      // Get selected property ID from context
+      const propertyId = selectedPropertyId;
+      if (!propertyId) {
+        setPaymentsError('No property selected.');
+        setPaymentsLoading(false);
+        return;
+      }
+      // Call correct backend endpoint for landlord CSV
+      const token = localStorage.getItem('accessToken');
+      const response = await paymentsAPI.downloadPaymentsCSV({
+        url: `/payments/landlord-csv/${propertyId}/`,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        responseType: 'blob',
+      });
+      const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: 'text/csv' });
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, `landlord_payments_${propertyId}.csv`);
+      } else {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `landlord_payments_${propertyId}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('❌ CSV download failed:', error);
+      setPaymentsError('Failed to download CSV.');
+    } finally {
+      setPaymentsLoading(false);
+    }
   };
 
   // Confirm and apply bulk update
   const handleConfirmBulkUpdate = () => {
-    handleBulkUpdate();
     setShowDisclaimer(false);
+    handleBulkUpdate();
   };
 
   // Cancel disclaimer
@@ -171,8 +287,35 @@ const AdminPayments = () => {
     setShowDisclaimer(false);
   };
 
+  // Trigger disclaimer modal before bulk update
+  const handleBulkUpdateClick = () => {
+    setShowDisclaimer(true);
+  };
+
   return (
     <div className="space-y-6 relative">
+      {/* Success Notification */}
+      {bulkUpdateSuccess && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
+          <CheckCircle className="w-6 h-6" />
+          <span>{bulkUpdateSuccess}</span>
+          <button onClick={() => setBulkUpdateSuccess(null)} className="ml-2">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {bulkUpdateError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
+          <AlertCircle className="w-6 h-6" />
+          <span>{bulkUpdateError}</span>
+          <button onClick={() => setBulkUpdateError(null)} className="ml-2">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Disclaimer Modal */}
       {showDisclaimer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40 backdrop-blur-sm">
@@ -230,23 +373,45 @@ const AdminPayments = () => {
               </tr>
             </thead>
             <tbody>
-              {payments.map((p) => (
-                <tr key={p.id} className="border-b">
-                  <td className="py-3 px-4">{p.id}</td>
-                  <td className="py-3 px-4">{p.client}</td>
-                  <td className="py-3 px-4">KSh {p.amount.toLocaleString()}</td>
-                  <td className="py-3 px-4">{p.date}</td>
-                  <td className="py-3 px-4">{p.method}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      p.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                      p.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>{p.status}</span>
-                  </td>
-                
-                </tr>
-              ))}
+              {paymentsLoading ? (
+                <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading payments...</td></tr>
+              ) : paymentsError ? (
+                <tr><td colSpan={6} className="py-4 text-center text-red-500">{paymentsError}</td></tr>
+              ) : payments.length === 0 ? (
+                <tr><td colSpan={6} className="py-4 text-center text-gray-400">No payments found.</td></tr>
+              ) : (
+                payments.map((p) => (
+                  <tr key={p.id || p.payment_id} className="border-b">
+                    <td className="py-3 px-4">{p.id || p.payment_id}</td>
+                    <td className="py-3 px-4">{p.client || p.tenant_name || p.tenant || p.payer_name}</td>
+                    <td className="py-3 px-4">KSh {Number(p.amount || p.amount_paid || 0).toLocaleString()}</td>
+                    <td className="py-3 px-4">{p.date || p.payment_date || p.created_at}</td>
+                    <td className="py-3 px-4">{
+  p.method ||
+  p.payment_method ||
+  p.channel ||
+  p.mode ||
+  p.type ||
+  p.paymentType ||
+  p.payment_mode ||
+  p.paymentChannel ||
+  p.payment_type ||
+  p.paymentMethod ||
+  p.payment_mode_name ||
+  'N/A'
+}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        (p.status || p.payment_status) === 'Completed' ? 'bg-green-100 text-green-800' :
+                        (p.status || p.payment_status) === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {p.status || p.payment_status || 'Unknown'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -381,11 +546,24 @@ const AdminPayments = () => {
 
             <button
               onClick={handleBulkUpdateClick}
-              disabled={(!percentageIncrease && bulkUpdateType === 'percentage') || (!fixedAmount && bulkUpdateType === 'fixed')}
+              disabled={
+                bulkUpdateLoading || 
+                (!percentageIncrease && bulkUpdateType === 'percentage') || 
+                (!fixedAmount && bulkUpdateType === 'fixed')
+              }
               className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Apply Bulk Update
+              {bulkUpdateLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Apply Bulk Update
+                </>
+              )}
             </button>
           </div>
 

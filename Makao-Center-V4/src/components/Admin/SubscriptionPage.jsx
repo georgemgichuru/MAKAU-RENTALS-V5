@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Check,
   Crown,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 const SubscriptionPage = () => {
+  const navigate = useNavigate();
   const [currentPlan] = useState('onetime');
 
   // unified features for monthly subscription tiers
@@ -33,7 +35,7 @@ const SubscriptionPage = () => {
       id: 'tier1',
       min: 1, 
       max: 10, 
-      price: 2000, 
+      price: 2000,  // Updated to match backend
       label: '1-10 Units',
       billingPeriod: 'month',
       features: commonFeatures
@@ -42,7 +44,7 @@ const SubscriptionPage = () => {
       id: 'tier2',
       min: 11, 
       max: 20, 
-      price: 2500, 
+      price: 2500,  // Updated to match backend
       label: '11-20 Units',
       billingPeriod: 'month',
       features: commonFeatures
@@ -51,7 +53,7 @@ const SubscriptionPage = () => {
       id: 'tier3',
       min: 21, 
       max: 50, 
-      price: 4500, 
+      price: 4500,  // Updated to match backend
       label: '21-50 Units',
       billingPeriod: 'month',
       features: commonFeatures
@@ -60,7 +62,7 @@ const SubscriptionPage = () => {
       id: 'tier4',
       min: 51, 
       max: 100, 
-      price: 7500, 
+      price: 7500,  // Updated to match backend
       label: '51-100 Units',
       billingPeriod: 'month',
       features: commonFeatures
@@ -113,11 +115,55 @@ const SubscriptionPage = () => {
 
   const handleSelectPlan = (planId) => {
     console.log('Selected plan:', planId);
-    alert(`You selected: ${planId}. This will redirect to payment processing.`);
+    
+    // Map frontend plan IDs to backend plan names
+    const planMapping = {
+      'tier1': 'starter',   // 1-10 units -> starter
+      'tier2': 'basic',     // 11-20 units -> basic
+      'tier3': 'basic',     // 21-50 units -> basic (higher tier)
+      'tier4': 'professional', // 51-100 units -> professional
+      'onetime': 'onetime'  // Keep as is
+    };
+    
+    // Find the plan details
+    let planDetails = null;
+    
+    if (planId === 'onetime') {
+      planDetails = {
+        id: planMapping[planId] || planId,
+        backendPlan: 'onetime',
+        name: oneTimePlan.name,
+        description: 'One-time payment, lifetime access',
+        price: oneTimePlan.price,
+        billingPeriod: 'one-time',
+        features: oneTimePlan.features
+      };
+    } else {
+      const tier = pricingTiers.find(t => t.id === planId);
+      if (tier) {
+        planDetails = {
+          id: tier.id,
+          backendPlan: planMapping[planId] || planId,
+          name: tier.label,
+          description: `Monthly subscription for ${tier.label.toLowerCase()}`,
+          price: tier.price,
+          billingPeriod: 'per month',
+          features: tier.features
+        };
+      }
+    }
+    
+    if (planDetails) {
+      console.log('Plan details with backend mapping:', planDetails);
+      // Navigate to payment page with plan details
+      navigate('/admin/subscription/payment', { 
+        state: { planDetails } 
+      });
+    }
   };
 
   const handleContactSales = () => {
-    window.location.href = 'mailto:sales@makao.com?subject=Enterprise%20Plan%20Inquiry';
+    window.location.href = 'mailto:makaorentalmanagementsystem@gmail.com?subject=Enterprise%20Plan%20Inquiry';
   };
 
   return (
@@ -299,14 +345,14 @@ const SubscriptionPage = () => {
               className="flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 transition-colors"
             >
               <Mail className="w-5 h-5" />
-              <span>support@makao.com</span>
+              <span>makaorentalsmanagementsystem@gmail.com</span>
             </a>
             <a 
-              href="tel:+254700000000" 
+              href="tel:+254722714334" 
               className="flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 transition-colors"
             >
               <Phone className="w-5 h-5" />
-              <span>+254 700 000 000</span>
+              <span>+254 722 714 334</span>
             </a>
           </div>
         </div>

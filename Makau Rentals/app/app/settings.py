@@ -47,6 +47,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "app.tasks.deadline_reminder_task",
         "schedule": crontab(hour=10, minute=0),
     },
+    # Landlord-configured monthly reminders check at 8 AM daily
+    "monthly-payment-reminders": {
+        "task": "app.tasks.send_monthly_payment_reminders_task",
+        "schedule": crontab(hour=8, minute=0),
+    },
 }
 
 
@@ -264,14 +269,21 @@ LOGGING = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-# TODO: Use environment variables or Django decouple to manage sensitive info
-# TODO: Creaete a dedicated email for the application
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+# Default to console backend for local development; override with env to send real email
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
+# Common SMTP settings (used when EMAIL_BACKEND is SMTP)
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'no-reply@example.com')
+SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
+
+# Control whether emails are sent asynchronously via Celery
+EMAIL_ASYNC_ENABLED = config('EMAIL_ASYNC_ENABLED', default=True, cast=bool)
 
 # Mpesa Configuration
 # TODO: Update these settings with your actual Mpesa credentials

@@ -58,7 +58,7 @@ const TenantReportIssue = () => {
     
     const whatsappMessage = `*New Maintenance Request*\n\nTenant: John Doe\nRoom: A101\nCategory: ${formData.category}\nPriority: ${formData.priority}\nTitle: ${formData.title}\nDescription: ${formData.description}`;
     
-    const adminPhoneNumber = '+254712345678';
+    const adminPhoneNumber = '+254722714334';
     const whatsappUrl = `https://wa.me/${adminPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
     
     const payload = {

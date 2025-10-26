@@ -400,6 +400,19 @@ const LoginForm = ({ onLogin }) => {
         setError('Please upload your ID document');
         return;
       }
+
+      // Save document to backend
+      try {
+        await authAPI.registerTenantStep(4, {
+          session_id: currentSessionId,
+          id_document: tenantData.idDocument.base64,
+          id_document_name: tenantData.idDocument.name
+        });
+      } catch (err) {
+        console.error('Error saving document:', err);
+        setError(err.response?.data?.error || 'Failed to upload document. Please try again.');
+        return;
+      }
     }
 
     // Step 5: Deposit Payment
@@ -1509,8 +1522,8 @@ const LoginForm = ({ onLogin }) => {
   const renderLandlordStep3 = () => (
     <div>
       <h2 className="text-2xl font-bold mb-2">Property Management</h2>
-      <p className="text-gray-600 mb-6">Add your properties and units</p>
-      
+      <p className="text-gray-600 mb-6">Add your properties and units below. You can add multiple properties and units in bulk or individually.</p>
+
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
           <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
@@ -1518,197 +1531,222 @@ const LoginForm = ({ onLogin }) => {
         </div>
       )}
 
-      <div className="space-y-6">
-        {landlordData.properties.map((property, propertyIndex) => (
-          <div key={property.id} className="border rounded-lg p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold">Property {propertyIndex + 1}</h3>
-              {landlordData.properties.length > 1 && (
-                <button
-                  onClick={() => removeProperty(property.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X size={20} />
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Property Name *</label>
-                <input
-                  type="text"
-                  value={property.propertyName}
-                  onChange={(e) => updatePropertyField(property.id, 'propertyName', e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="e.g., Greenview Apartments"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Property Address *</label>
-                <input
-                  type="text"
-                  value={property.propertyAddress}
-                  onChange={(e) => updatePropertyField(property.id, 'propertyAddress', e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="e.g., 123 Main Street, Nairobi"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium">Units ({property.units.length})</h4>
-                <div className="flex gap-2">
+      <div className="space-y-8">
+        {landlordData.properties.map((property, propertyIndex) => {
+          // Inline validation for property fields
+          const propertyNameError = !property.propertyName ? "Property name required" : "";
+          const propertyAddressError = !property.propertyAddress ? "Property address required" : "";
+          return (
+            <div key={property.id} className="border rounded-lg p-4 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">Property {propertyIndex + 1}</h3>
+                {landlordData.properties.length > 1 && (
                   <button
-                    onClick={() => setBulkUnitMode(prev => ({ ...prev, [property.id]: {} }))}
-                    className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                    onClick={() => removeProperty(property.id)}
+                    className="text-red-500 hover:text-red-700 px-2 py-1 rounded border border-red-200 bg-red-50"
                   >
-                    Bulk Add
+                    <X size={18} /> Remove
                   </button>
-                  <button
-                    onClick={() => addUnit(property.id)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                  >
-                    Add Unit
-                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Property Name *</label>
+                  <input
+                    type="text"
+                    value={property.propertyName}
+                    onChange={(e) => updatePropertyField(property.id, 'propertyName', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${propertyNameError ? 'border-red-400' : ''}`}
+                    placeholder="e.g., Greenview Apartments"
+                    required
+                  />
+                  {propertyNameError && <span className="text-xs text-red-500">{propertyNameError}</span>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Property Address *</label>
+                  <input
+                    type="text"
+                    value={property.propertyAddress}
+                    onChange={(e) => updatePropertyField(property.id, 'propertyAddress', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${propertyAddressError ? 'border-red-400' : ''}`}
+                    placeholder="e.g., 123 Main Street, Nairobi"
+                    required
+                  />
+                  {propertyAddressError && <span className="text-xs text-red-500">{propertyAddressError}</span>}
                 </div>
               </div>
 
-              {bulkUnitMode[property.id] && (
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <h5 className="font-medium mb-2">Bulk Add Units</h5>
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Number of Units</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        className="w-full px-3 py-2 border rounded text-sm"
-                        placeholder="e.g., 10"
-                        onChange={(e) => setBulkUnitMode(prev => ({
-                          ...prev,
-                          [property.id]: { ...prev[property.id], count: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Room Type</label>
-                      <select
-                        className="w-full px-3 py-2 border rounded text-sm"
-                        onChange={(e) => setBulkUnitMode(prev => ({
-                          ...prev,
-                          [property.id]: { ...prev[property.id], roomType: e.target.value }
-                        }))}
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="1-bedroom">1 Bedroom</option>
-                        <option value="2-bedroom">2 Bedroom</option>
-                        <option value="3-bedroom">3 Bedroom</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Monthly Rent (KES)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 border rounded text-sm"
-                        placeholder="e.g., 15000"
-                        onChange={(e) => setBulkUnitMode(prev => ({
-                          ...prev,
-                          [property.id]: { ...prev[property.id], rentAmount: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Start Number (Optional)</label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-2 border rounded text-sm"
-                        placeholder="e.g., A"
-                        onChange={(e) => setBulkUnitMode(prev => ({
-                          ...prev,
-                          [property.id]: { ...prev[property.id], startNumber: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </div>
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium">Units <span className="text-xs text-gray-500">({property.units.length})</span></h4>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => addBulkUnits(property.id, bulkUnitMode[property.id])}
-                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                      onClick={() => setBulkUnitMode(prev => ({ ...prev, [property.id]: {} }))}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm border border-gray-300"
                     >
-                      Add Units
+                      Bulk Add Units
                     </button>
                     <button
-                      onClick={() => setBulkUnitMode(prev => ({ ...prev, [property.id]: null }))}
-                      className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                      onClick={() => addUnit(property.id)}
+                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm border border-blue-700"
                     >
-                      Cancel
+                      + Add Unit
                     </button>
                   </div>
                 </div>
-              )}
 
-              {property.units.length > 0 ? (
-                <div className="space-y-2">
-                  {property.units.map((unit) => (
-                    <div key={unit.id} className="flex items-center gap-2 p-2 border rounded">
-                      <input
-                        type="text"
-                        value={unit.unitNumber}
-                        onChange={(e) => updateUnitField(property.id, unit.id, 'unitNumber', e.target.value)}
-                        className="flex-1 px-3 py-1 border rounded text-sm"
-                        placeholder="Unit number"
-                        required
-                      />
-                      <select
-                        value={unit.roomType}
-                        onChange={(e) => updateUnitField(property.id, unit.id, 'roomType', e.target.value)}
-                        className="px-3 py-1 border rounded text-sm"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="1-bedroom">1 Bedroom</option>
-                        <option value="2-bedroom">2 Bedroom</option>
-                        <option value="3-bedroom">3 Bedroom</option>
-                      </select>
-                      <input
-                        type="number"
-                        value={unit.monthlyRent}
-                        onChange={(e) => updateUnitField(property.id, unit.id, 'monthlyRent', e.target.value)}
-                        className="w-24 px-3 py-1 border rounded text-sm"
-                        placeholder="Rent"
-                        min="0"
-                        required
-                      />
+                {bulkUnitMode[property.id] && (
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-blue-100">
+                    <h5 className="font-medium mb-2">Bulk Add Units</h5>
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Number of Units *</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          placeholder="e.g., 10"
+                          value={bulkUnitMode[property.id]?.count || ''}
+                          onChange={(e) => setBulkUnitMode(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], count: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Room Type *</label>
+                        <select
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          value={bulkUnitMode[property.id]?.roomType || ''}
+                          onChange={(e) => setBulkUnitMode(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], roomType: e.target.value }
+                          }))}
+                        >
+                          <option value="">Select type</option>
+                          <option value="studio">Studio</option>
+                          <option value="1-bedroom">1 Bedroom</option>
+                          <option value="2-bedroom">2 Bedroom</option>
+                          <option value="3-bedroom">3 Bedroom</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Monthly Rent (KES) *</label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          placeholder="e.g., 15000"
+                          value={bulkUnitMode[property.id]?.rentAmount || ''}
+                          onChange={(e) => setBulkUnitMode(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], rentAmount: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Start Number (Optional)</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          placeholder="e.g., A"
+                          value={bulkUnitMode[property.id]?.startNumber || ''}
+                          onChange={(e) => setBulkUnitMode(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], startNumber: e.target.value }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-2">
                       <button
-                        onClick={() => removeUnit(property.id, unit.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        onClick={() => addBulkUnits(property.id, bulkUnitMode[property.id])}
+                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                        disabled={
+                          !bulkUnitMode[property.id]?.count ||
+                          !bulkUnitMode[property.id]?.roomType ||
+                          !bulkUnitMode[property.id]?.rentAmount
+                        }
                       >
-                        <X size={16} />
+                        Add Units
+                      </button>
+                      <button
+                        onClick={() => setBulkUnitMode(prev => ({ ...prev, [property.id]: null }))}
+                        className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                      >
+                        Cancel
                       </button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No units added yet</p>
-              )}
+                  </div>
+                )}
+
+                {property.units.length > 0 ? (
+                  <div className="space-y-2">
+                    {property.units.map((unit, unitIndex) => {
+                      // Inline validation for unit fields
+                      const unitNumberError = !unit.unitNumber ? "Unit number required" : "";
+                      const unitRentError = !unit.monthlyRent ? "Rent required" : "";
+                      return (
+                        <div key={unit.id} className="flex items-center gap-2 p-2 border rounded bg-white">
+                          <span className="text-xs text-gray-400">#{unitIndex + 1}</span>
+                          <input
+                            type="text"
+                            value={unit.unitNumber}
+                            onChange={(e) => updateUnitField(property.id, unit.id, 'unitNumber', e.target.value)}
+                            className={`flex-1 px-3 py-1 border rounded text-sm ${unitNumberError ? 'border-red-400' : ''}`}
+                            placeholder="Unit number"
+                            required
+                          />
+                          {unitNumberError && <span className="text-xs text-red-500">{unitNumberError}</span>}
+                          <select
+                            value={unit.roomType}
+                            onChange={(e) => updateUnitField(property.id, unit.id, 'roomType', e.target.value)}
+                            className="px-3 py-1 border rounded text-sm"
+                          >
+                            <option value="studio">Studio</option>
+                            <option value="1-bedroom">1 Bedroom</option>
+                            <option value="2-bedroom">2 Bedroom</option>
+                            <option value="3-bedroom">3 Bedroom</option>
+                          </select>
+                          <input
+                            type="number"
+                            value={unit.monthlyRent}
+                            onChange={(e) => updateUnitField(property.id, unit.id, 'monthlyRent', e.target.value)}
+                            className={`w-24 px-3 py-1 border rounded text-sm ${unitRentError ? 'border-red-400' : ''}`}
+                            placeholder="Rent"
+                            min="0"
+                            required
+                          />
+                          {unitRentError && <span className="text-xs text-red-500">{unitRentError}</span>}
+                          <button
+                            onClick={() => removeUnit(property.id, unit.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No units added yet</p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <button
           onClick={addProperty}
-          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700"
+          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 mt-2"
         >
           + Add Another Property
         </button>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div className="flex items-start">
             <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />

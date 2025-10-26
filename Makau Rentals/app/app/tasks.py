@@ -17,6 +17,7 @@ from payments.models import Payment
 from communication.messaging import send_bulk_emails
 from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 
 @shared_task
@@ -145,3 +146,98 @@ def deadline_reminder_task():
     from communication.messaging import send_deadline_reminders
     send_deadline_reminders()
     return "Deadline reminders sent"
+
+
+@shared_task
+def send_landlord_email_task(subject: str, message: str, tenant_ids: list[int]):
+    """
+    Asynchronously send a custom email from a landlord to a list of tenants.
+    Uses BCC and chunks recipients to avoid provider limits and PII exposure.
+    """
+    from accounts.models import CustomUser
+
+    # Fetch recipient emails
+    recipients = list(
+        CustomUser.objects.filter(id__in=tenant_ids, user_type='tenant')
+        .values_list('email', flat=True)
+    )
+    # Remove empties/dupes
+    recipients = [e for e in recipients if e]
+    recipients = list(dict.fromkeys(recipients))
+
+    if not recipients:
+        return "No recipients to email"
+
+    # Chunk recipients (e.g., 50 per email to be safe)
+    chunk_size = 50
+    total_sent = 0
+    for i in range(0, len(recipients), chunk_size):
+        chunk = recipients[i:i+chunk_size]
+        try:
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER),
+                to=[],  # Empty TO to avoid disclosing recipients
+                bcc=chunk,
+            )
+            email.send(fail_silently=False)
+            total_sent += len(chunk)
+        except Exception as e:
+            print(f"Failed sending chunk {i//chunk_size + 1}: {e}")
+
+    return f"Sent to {total_sent} recipients in {((len(recipients)-1)//chunk_size)+1} batch(es)"
+
+
+@shared_task
+def send_monthly_payment_reminders_task():
+    """
+    Daily task that checks landlord reminder settings and sends emails
+    on matching days of the month.
+    """
+    from django.utils import timezone
+    from accounts.models import CustomUser
+    from communication.models import ReminderSetting
+
+    today = timezone.now().date()
+    today_day = today.day
+
+    # Iterate over active settings
+    settings_qs = ReminderSetting.objects.filter(active=True, send_email=True)
+    sent_count = 0
+    for setting in settings_qs:
+        days = setting.days_of_month or []
+        # Normalize to ints
+        try:
+            days = [int(d) for d in days]
+        except Exception:
+            continue
+
+        if today_day not in days:
+            continue
+
+        # Optional: avoid double-send if beat runs twice in a day
+        if setting.last_run_date == today:
+            continue
+
+        # Collect tenant recipients for this landlord
+        tenant_ids = list(
+            CustomUser.objects.filter(
+                user_type='tenant',
+                unit__property_obj__landlord=setting.landlord
+            ).distinct().values_list('id', flat=True)
+        )
+
+        if not tenant_ids:
+            # Still mark run date to avoid repeated checks
+            setting.last_run_date = today
+            setting.save(update_fields=['last_run_date'])
+            continue
+
+        # Queue send via existing async email task
+        send_landlord_email_task.delay(setting.subject, setting.message, tenant_ids)
+        setting.last_run_date = today
+        setting.save(update_fields=['last_run_date'])
+        sent_count += len(tenant_ids)
+
+    return f"Queued monthly reminders for {sent_count} tenant(s)"

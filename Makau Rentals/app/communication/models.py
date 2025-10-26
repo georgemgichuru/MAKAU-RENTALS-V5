@@ -102,3 +102,41 @@ class Report(models.Model):
 
     def __str__(self):
         return f"Report #{self.id} - {self.issue_title} ({self.tenant.full_name})"
+
+
+class ReminderSetting(models.Model):
+    """
+    Per-landlord monthly payment reminder settings.
+    Stores selected days of month and message template.
+    """
+    landlord = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='reminder_setting',
+        limit_choices_to={'user_type': 'landlord'}
+    )
+    # List of day numbers (1-31) when reminders should be sent
+    days_of_month = models.JSONField(default=list)
+    subject = models.CharField(max_length=255, default='Rent Reminder')
+    message = models.TextField(
+        default=(
+            "Dear tenant,\n\n"
+            "This is a reminder that your rent is due soon.\n\n"
+            "Please pay by the due date to avoid penalties.\n\n"
+            "Thank you,\nMakao Center"
+        )
+    )
+    send_email = models.BooleanField(default=True)
+    send_sms = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    last_run_date = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Reminder Setting'
+        verbose_name_plural = 'Reminder Settings'
+
+    def __str__(self):
+        return f"ReminderSetting for {self.landlord.email} (days: {self.days_of_month})"

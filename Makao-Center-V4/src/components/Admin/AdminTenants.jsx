@@ -57,6 +57,115 @@ const AdminTenants = () => {
     transactions = []
   } = useContext(AppContext);
 
+  // Log to debug data structure
+  console.log('🔍 mockTenants data:', mockTenants);
+  console.log('🔍 First tenant sample:', mockTenants[0]);
+  console.log('🔍 Transactions:', transactions);
+  console.log('🔍 Transactions count:', transactions?.length || 0);
+  
+  // Log deposit and rent type transactions for debugging
+  const depositTransactions = (transactions || []).filter(t => t.type === 'deposit');
+  const rentTransactions = (transactions || []).filter(t => t.type === 'rent');
+  console.log('💰 Deposit transactions:', depositTransactions.length);
+  console.log('🏠 Rent transactions:', rentTransactions.length);
+  console.log('📊 Pending rent transactions:', rentTransactions.filter(t => t.status === 'pending' || t.status === 'Pending').length);
+  
+  // Helper function to check if tenant has paid deposit
+  const hasDepositPaid = (tenant) => {
+    // First check if API provides deposit_paid field
+    if (typeof tenant.deposit_paid === 'boolean') {
+      console.log(`💰 Deposit status from API for ${tenant.full_name || tenant.name}:`, tenant.deposit_paid);
+      return tenant.deposit_paid;
+    }
+    
+    // Otherwise check from transactions
+    const depositPayments = (transactions || []).filter(t => 
+      String(t.tenantId) === String(tenant.id) && 
+      t.type === 'deposit' && 
+      (t.status === 'completed' || t.status === 'Success')
+    );
+    console.log(`💰 Deposit from transactions for tenant ${tenant.id}:`, depositPayments.length > 0);
+    return depositPayments.length > 0;
+  };
+  
+  // Helper function to determine rent status based on transactions (like dashboard)
+  const getRentStatus = (tenant) => {
+    // First check if API provides rent_status field
+    if (tenant.rent_status && tenant.rent_status !== 'no_unit') {
+      console.log(`🏠 Rent status from API for ${tenant.full_name || tenant.name}:`, tenant.rent_status);
+      return tenant.rent_status;
+    }
+    
+    // Check from current_unit data
+    const unit = tenant.current_unit || tenant.unit_data || tenant.unit;
+    if (unit) {
+      if (unit.rent_remaining === 0) {
+        return 'paid';
+      } else if (unit.rent_remaining === unit.rent) {
+        return 'due';
+      } else if (unit.rent_remaining > 0 && unit.rent_remaining < unit.rent) {
+        return 'overdue';  // Partial payment = overdue
+      }
+    }
+    
+    // Fallback: check pending rent transactions (like dashboard does)
+    const pendingRent = (transactions || []).filter(t => 
+      String(t.tenantId) === String(tenant.id) && 
+      t.type === 'rent' && 
+      (t.status === 'pending' || t.status === 'Pending')
+    );
+    
+    if (pendingRent.length > 0) {
+      return 'overdue';  // Has pending rent payments = overdue
+    }
+    
+    // Check if has completed rent payments
+    const completedRent = (transactions || []).filter(t => 
+      String(t.tenantId) === String(tenant.id) && 
+      t.type === 'rent' && 
+      (t.status === 'completed' || t.status === 'Success')
+    );
+    
+    return completedRent.length > 0 ? 'paid' : 'due';
+  };
+  
+  // Transform API data to component format
+  const transformedTenants = (mockTenants || []).map(tenant => {
+    // Check for unit data in different possible fields
+    const unit = tenant.current_unit || tenant.unit_data || tenant.unit;
+    const hasUnit = Boolean(unit);
+    const depositPaid = hasDepositPaid(tenant);
+    const rentStatus = getRentStatus(tenant);
+    
+    console.log(`🏠 Tenant: ${tenant.full_name || tenant.name}`);
+    console.log(`   - Has unit: ${hasUnit}`);
+    console.log(`   - Deposit paid: ${depositPaid} (from API: ${tenant.deposit_paid})`);
+    console.log(`   - Rent status: ${rentStatus} (from API: ${tenant.rent_status})`);
+    console.log(`   - Unit data:`, unit);
+    
+    return {
+      id: tenant.id,
+      name: tenant.full_name || tenant.name || 'Unknown Tenant',
+      email: tenant.email || 'no-email@example.com',
+      phone: tenant.phone_number || tenant.phone || 'N/A',
+      room: unit?.unit_number || unit?.number || 'N/A',
+      rentAmount: unit?.rent || unit?.rent_amount || 0,
+      bookingId: tenant.id,
+      joinDate: tenant.created_at || tenant.date_joined || '2024-01-01',
+      // Tenant is active only if they have paid deposit
+      status: depositPaid ? 'active' : 'inactive',
+      // Determine rent status from payments or unit data
+      rentStatus: rentStatus,
+      isEstimated: tenant.isEstimated || false,
+      // Keep all original data
+      ...tenant
+    };
+  });
+  
+  console.log('✅ Transformed tenants:', transformedTenants.length);
+  console.log('✅ Active tenants:', transformedTenants.filter(t => t.status === 'active').length);
+  console.log('✅ Tenants with overdue/due rent:', transformedTenants.filter(t => t.rentStatus === 'overdue' || t.rentStatus === 'due').length);
+
   // Toggle dropdown for specific tenant
   const toggleDropdown = (tenantId) => {
     setDropdownOpen(dropdownOpen === tenantId ? null : tenantId);
@@ -83,27 +192,104 @@ const AdminTenants = () => {
 
   // Handle download tenant statement (CSV) - now uses context transactions
   const handleDownloadStatement = (tenant) => {
-    const tenantTxns = (transactions || []).filter(t => String(t.tenantId) === String(tenant.id));
+    console.log('📥 DOWNLOAD CLICKED for tenant:', tenant);
+    console.log('📊 All transactions available:', transactions);
+    console.log('🆔 Looking for tenant ID:', tenant.id);
+    console.log('🔍 Sample transaction to see structure:', transactions[0]);
+    
+    // Check all possible tenant ID fields in transactions
+    const tenantTxns = (transactions || []).filter(t => {
+      // Log each transaction's tenant-related fields to debug
+      console.log('🔍 Checking transaction:', {
+        id: t.id,
+        tenantId: t.tenantId,
+        tenant_id: t.tenant_id,
+        tenant: t.tenant,
+        tenant_obj: t.tenant_obj,
+        'tenant?.id': t.tenant?.id,
+        unit: t.unit,
+        unit_id: t.unit_id
+      });
+      
+      const matches = String(t.tenantId) === String(tenant.id) || 
+                     String(t.tenant_id) === String(tenant.id) ||
+                     String(t.tenant) === String(tenant.id) ||
+                     String(t.tenant?.id) === String(tenant.id);
+      if (matches) {
+        console.log('✅ Transaction matched:', t);
+      }
+      return matches;
+    });
+    
+    console.log('💳 Tenant transactions found:', tenantTxns.length);
+    console.log('💳 Filtered transactions:', tenantTxns);
+    
+    if (tenantTxns.length === 0) {
+      console.warn('⚠️ No transactions found for this tenant');
+      alert(`No transactions found for ${tenant.name}. Transaction data may not be available yet.`);
+      setDropdownOpen(null);
+      return;
+    }
+    
+    console.log('📝 Creating CSV content...');
     const headers = ['Date', 'Description', 'Amount (KSh)', 'Type', 'Reference', 'Method', 'Status'];
     const csvRows = [
       headers.join(','),
-      ...tenantTxns.map(t =>
-        `${t.date},"${t.description}",${t.amount},${t.type},${t.reference || ''},${t.paymentMethod || ''},${t.status}`
-      )
+      ...tenantTxns.map(t => {
+        const date = t.date || t.created_at || t.timestamp || new Date().toISOString().split('T')[0];
+        const description = (t.description || t.desc || 'Payment').replace(/"/g, '""');
+        const amount = t.amount || 0;
+        const type = t.type || t.transaction_type || 'Payment';
+        const reference = (t.reference || t.transaction_id || t.ref || 'N/A').replace(/"/g, '""');
+        const method = (t.paymentMethod || t.payment_method || t.method || 'M-Pesa').replace(/"/g, '""');
+        const status = t.status || 'Completed';
+        
+        return `${date},"${description}",${amount},${type},"${reference}","${method}",${status}`;
+      })
     ];
+    
     const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${tenant.name.replace(/\s+/g, '_')}_statement.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    setDropdownOpen(null);
-    alert(`Statement downloaded for ${tenant.name}`);
+    console.log('📄 CSV Content generated (first 500 chars):', csvContent.substring(0, 500));
+    
+    try {
+      console.log('🔧 Creating blob...');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      console.log('🔧 Blob created, size:', blob.size);
+      
+      const url = window.URL.createObjectURL(blob);
+      console.log('🔧 Blob URL created:', url);
+      
+      const fileName = `${tenant.name.replace(/\s+/g, '_')}_statement_${new Date().toISOString().split('T')[0]}.csv`;
+      console.log('🔧 File name:', fileName);
+      
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.display = 'none';
+      
+      console.log('🔧 Appending link to body...');
+      document.body.appendChild(link);
+      
+      console.log('🔧 Triggering download...');
+      link.click();
+      
+      console.log('✅ Download initiated successfully');
+      
+      // Clean up after a delay
+      setTimeout(() => {
+        console.log('🧹 Cleaning up...');
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        setDropdownOpen(null);
+      }, 100);
+      
+      alert(`Statement with ${tenantTxns.length} transaction(s) is downloading for ${tenant.name}`);
+    } catch (error) {
+      console.error('❌ Download failed with error:', error);
+      console.error('❌ Error stack:', error.stack);
+      alert(`Failed to download statement: ${error.message}`);
+      setDropdownOpen(null);
+    }
   };
 
   // Handle shift tenant
@@ -338,35 +524,31 @@ const AdminTenants = () => {
                 onClick={() => {
                   setSelectedTenant(tenant);
                   setDropdownOpen(null);
-                  // Open WhatsApp or Email modal with invoice template
-                  if (window.confirm('Send invoice via WhatsApp? Click Cancel to send via Email.')) {
-                    setIsWhatsAppModalOpen(true);
-                  } else {
-                    setIsEmailModalOpen(true);
-                  }
+                  // Open Email modal with invoice template
+                  setIsEmailModalOpen(true);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
                 <Receipt className="w-4 h-4 mr-2" />
-                Add Invoice
+                Add Invoice (via Email)
               </button>
 
               <button
                 onClick={() => {
                   setSelectedTenant(tenant);
                   setDropdownOpen(null);
-                  setIsCustomMessageModalOpen(true);
+                  // Open Email modal for custom message
+                  setIsEmailModalOpen(true);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Send Custom Message
+                Send Custom Message (via Email)
               </button>
 
               <button
                 onClick={() => {
                   handleDownloadStatement(tenant);
-                  setDropdownOpen(null);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
@@ -376,13 +558,15 @@ const AdminTenants = () => {
 
               <button
                 onClick={() => {
-                  handleShiftTenant(tenant);
+                  setSelectedTenant(tenant);
                   setDropdownOpen(null);
+                  // Open Email modal to notify tenant about shift
+                  setIsEmailModalOpen(true);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Shift Tenant
+                Shift Tenant (via Email)
               </button>
             </div>
           </div>
@@ -408,11 +592,12 @@ const AdminTenants = () => {
           </button>
       
           <button
-            onClick={() => setIsWhatsAppModalOpen(true)}
+            onClick={() => alert('WhatsApp messaging is coming soon.')}
             className="bg-green-400 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+            title="This feature is coming soon"
           >
             <MessageSquare className="w-5 h-5 mr-2" />
-            Send WhatsApp
+            WhatsApp (Coming Soon)
           </button>
    
           <div className="relative group">
@@ -439,12 +624,12 @@ const AdminTenants = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-600 text-sm font-medium">Active Tenants</p>
-              <p className="text-2xl font-bold text-blue-900">{(mockTenants || []).filter(t => t.status === 'active').length}</p>
+              <p className="text-2xl font-bold text-blue-900">{transformedTenants.filter(t => t.status === 'active').length}</p>
             </div>
             <Users className="w-8 h-8 text-blue-600" />
           </div>
@@ -453,10 +638,30 @@ const AdminTenants = () => {
         <div className="bg-red-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-red-600 text-sm font-medium">Overdue Rent</p>
-              <p className="text-2xl font-bold text-red-900">{(mockTenants || []).filter(t => t.rentStatus === 'overdue').length}</p>
+              <p className="text-red-600 text-sm font-medium">Rent Overdue</p>
+              <p className="text-2xl font-bold text-red-900">{transformedTenants.filter(t => t.rentStatus === 'overdue').length}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-red-600" />
+          </div>
+        </div>
+        
+        <div className="bg-yellow-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-yellow-600 text-sm font-medium">Rent Due Soon</p>
+              <p className="text-2xl font-bold text-yellow-900">{transformedTenants.filter(t => t.rentStatus === 'due').length}</p>
+            </div>
+            <Clock className="w-8 h-8 text-yellow-600" />
+          </div>
+        </div>
+        
+        <div className="bg-green-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-600 text-sm font-medium">Rent Paid</p>
+              <p className="text-2xl font-bold text-green-900">{transformedTenants.filter(t => t.rentStatus === 'paid').length}</p>
+            </div>
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
       </div>
@@ -486,7 +691,7 @@ const AdminTenants = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Active Tenants ({(mockTenants || []).filter(t => t.status === 'active').length})
+            Active Tenants ({transformedTenants.filter(t => t.status === 'active').length})
           </button>
           <button
             onClick={() => setActiveTab('recent')}
@@ -506,7 +711,7 @@ const AdminTenants = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            All Tenants ({(mockTenants || []).length})
+            All Tenants ({transformedTenants.length})
           </button>
         </nav>
       </div>
@@ -525,7 +730,7 @@ const AdminTenants = () => {
                   <tr className="border-b"><th className="text-left py-3 px-4">Tenant</th><th className="text-left py-3 px-4">Room</th><th className="text-left py-3 px-4">Contact</th><th className="text-left py-3 px-4">Rent Status</th><th className="text-left py-3 px-4">Actions</th></tr>
                 </thead>
                 <tbody>
-                  {(mockTenants || []).filter(t => t.status === 'active').map(tenant => (
+                  {transformedTenants.filter(t => t.status === 'active').map(tenant => (
                     <tr key={tenant.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div>
@@ -713,59 +918,59 @@ const AdminTenants = () => {
                   <tr className="border-b"><th className="text-left py-3 px-4">Tenant</th><th className="text-left py-3 px-4">Room</th><th className="text-left py-3 px-4">Contact</th><th className="text-left py-3 px-4">Rent Status</th><th className="text-left py-3 px-4">Status</th><th className="text-left py-3 px-4">Actions</th></tr>
                 </thead>
                 <tbody>
-                  {(mockTenants || []).map(tenant => (
-                    <tr key={tenant.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">{tenant.name}</p>
-                          <p className="text-sm text-gray-600">{tenant.email}</p>
-                          <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">{tenant.room}</p>
-                          <p className="text-sm text-gray-600">Since {new Date(tenant.joinDate || '2024-01-01').toLocaleDateString()}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="flex items-center text-sm">
-                            <Phone className="w-4 h-4 mr-1" /> {tenant.phone || '-'}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">KSh {Number(tenant.rentAmount || 0).toLocaleString()}</p>
+                  {transformedTenants.map(tenant => (
+                      <tr key={tenant.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium">{tenant.name}</p>
+                            <p className="text-sm text-gray-600">{tenant.email}</p>
+                            <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium">{tenant.room}</p>
+                            <p className="text-sm text-gray-600">Since {new Date(tenant.joinDate || '2024-01-01').toLocaleDateString()}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="flex items-center text-sm">
+                              <Phone className="w-4 h-4 mr-1" /> {tenant.phone || '-'}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium">KSh {Number(tenant.rentAmount || 0).toLocaleString()}</p>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              tenant.rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                              tenant.rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {tenant.rentStatus === 'paid' ? 'Paid' : 
+                               tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            tenant.rentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                            tenant.rentStatus === 'due' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
+                            tenant.status === 'active' ? 'bg-green-100 text-green-800' :
+                            tenant.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
-                            {tenant.rentStatus === 'paid' ? 'Paid' : 
-                             tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
+                            {tenant.status}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          tenant.status === 'active' ? 'bg-green-100 text-green-800' :
-                          tenant.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {tenant.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <TenantActionsDropdown 
-                          tenant={tenant}
-                          isOpen={dropdownOpen === tenant.id}
-                          onToggle={toggleDropdown}
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-3 px-4">
+                          <TenantActionsDropdown 
+                            tenant={tenant}
+                            isOpen={dropdownOpen === tenant.id}
+                            onToggle={toggleDropdown}
+                          />
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -780,12 +985,12 @@ const AdminTenants = () => {
       <EmailFormModal 
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
-        tenants={mockTenants}
+        tenants={transformedTenants}
       />
       <WhatsAppFormModal
         isOpen={isWhatsAppModalOpen}
-        onClose={() => setWhatsAppModalOpen(false)}
-        tenants={mockTenants}
+        onClose={() => setIsWhatsAppModalOpen(false)}
+        tenants={transformedTenants}
       />
       <InvoiceModal
         isOpen={isInvoiceModalOpen}

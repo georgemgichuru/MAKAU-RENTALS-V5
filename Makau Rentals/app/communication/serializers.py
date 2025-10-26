@@ -1,17 +1,19 @@
 from rest_framework import serializers
-from .models import Report
+from .models import Report, ReminderSetting
 from accounts.models import CustomUser, Unit, Property
 
 class ReportSerializer(serializers.ModelSerializer):
     tenant_name = serializers.CharField(source='tenant.full_name', read_only=True)
     unit_number = serializers.CharField(source='unit.unit_number', read_only=True)
     property_name = serializers.CharField(source='unit.property_obj.name', read_only=True)
+    # Expose property ID for reliable frontend filtering by property
+    property_id = serializers.IntegerField(source='unit.property_obj.id', read_only=True)
     days_open = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Report
         fields = [
-            'id', 'tenant', 'tenant_name', 'unit', 'unit_number', 'property_name',
+            'id', 'tenant', 'tenant_name', 'unit', 'unit_number', 'property_name', 'property_id',
             'issue_category', 'priority_level', 'issue_title', 'description',
             'status', 'reported_date', 'resolved_date', 'assigned_to',
             'estimated_cost', 'actual_cost', 'attachment', 'days_open'
@@ -39,12 +41,23 @@ class SendEmailSerializer(serializers.Serializer):
         allow_empty=True
     )
     send_to_all = serializers.BooleanField(default=False)
+    # Optional: scope "all" to a single property
+    property_id = serializers.IntegerField(required=False)
 
     def validate(self, data):
         if not data.get('send_to_all') and not data.get('tenants'):
             raise serializers.ValidationError("Either provide a list of tenants or set send_to_all to True.")
         if data.get('send_to_all') and data.get('tenants'):
             raise serializers.ValidationError("Cannot specify tenants when send_to_all is True.")
+        # If property_id provided, validate ownership for landlords
+        request = self.context.get('request')
+        if data.get('property_id') is not None:
+            if not request or request.user.user_type != 'landlord':
+                raise serializers.ValidationError("property_id can only be used by landlords.")
+            try:
+                prop = Property.objects.get(id=data['property_id'], landlord=request.user)
+            except Property.DoesNotExist:
+                raise serializers.ValidationError("Invalid property_id or you do not own this property.")
         return data
 
     def validate_tenants(self, value):
@@ -57,3 +70,34 @@ class SendEmailSerializer(serializers.Serializer):
             if set(t.id for t in value) != valid_tenants:
                 raise serializers.ValidationError("Some tenants do not belong to your properties.")
         return value
+
+
+class ReminderSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReminderSetting
+        fields = [
+            'days_of_month',
+            'subject',
+            'message',
+            'send_email',
+            'send_sms',
+            'active',
+        ]
+
+    def validate_days_of_month(self, value):
+        # Ensure list of unique integers between 1 and 31
+        if not isinstance(value, list):
+            raise serializers.ValidationError('days_of_month must be a list of integers between 1 and 31.')
+        cleaned = []
+        for v in value:
+            try:
+                iv = int(v)
+            except (TypeError, ValueError):
+                raise serializers.ValidationError('All reminder days must be integers.')
+            if iv < 1 or iv > 31:
+                raise serializers.ValidationError('Reminder days must be between 1 and 31.')
+            cleaned.append(iv)
+        # Deduplicate while preserving order
+        seen = set()
+        deduped = [x for x in cleaned if not (x in seen or seen.add(x))]
+        return deduped

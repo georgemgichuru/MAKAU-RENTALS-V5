@@ -312,7 +312,7 @@ const SMSPurchasePage = () => {
             Register Interest
           </button>
           <p className="text-sm text-gray-500 mt-4">
-            Questions? Contact us at sms-support@makao.com
+            Questions? Contact us at makaorentalmanagementsystem@gmail.com
           </p>
         </div>
       </div>

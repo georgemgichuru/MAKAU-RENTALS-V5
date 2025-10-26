@@ -15,17 +15,19 @@ const ResetPassword = () => {
   const [resetEmail, setResetEmail] = useState("")
 
   useEffect(() => {
-    // Check if user came from forgot password page
-    const email = sessionStorage.getItem("resetEmail")
-    const token = sessionStorage.getItem("resetToken")
-
-    if (!email || !token) {
-      navigate("/forgot-password")
-      return
+    // Extract uid and token from URL (e.g. /reset-password/:uid/:token)
+    const pathParts = window.location.pathname.split("/");
+    // Assumes route: /reset-password/:uid/:token
+    const uid = pathParts[pathParts.length - 2];
+    const token = pathParts[pathParts.length - 1];
+    if (!uid || !token) {
+      navigate("/forgot-password");
+      return;
     }
-
-    setResetEmail(email)
-  }, [navigate])
+    setResetEmail(uid); // Actually uid, not email, for this step
+    sessionStorage.setItem("resetUid", uid);
+    sessionStorage.setItem("resetToken", token);
+  }, [navigate]);
 
   const validatePassword = (password) => {
     return {
@@ -44,37 +46,55 @@ const ResetPassword = () => {
 
     try {
       if (!password.trim()) {
-        throw new Error("Password is required")
+        throw new Error("Password is required");
       }
-
       if (!confirmPassword.trim()) {
-        throw new Error("Please confirm your password")
+        throw new Error("Please confirm your password");
       }
-
-      const passValidation = validatePassword(password)
+      const passValidation = validatePassword(password);
       if (!passValidation.isValid) {
-        throw new Error("Password does not meet all requirements")
+        throw new Error("Password does not meet all requirements");
       }
-
       if (password !== confirmPassword) {
-        throw new Error("Passwords do not match")
+        throw new Error("Passwords do not match");
       }
 
-      // Simulate API call to reset password
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Get uid and token from sessionStorage (set in useEffect)
+      const uid = sessionStorage.getItem("resetUid");
+      const token = sessionStorage.getItem("resetToken");
+      if (!uid || !token) {
+        throw new Error("Invalid reset link. Please try again.");
+      }
+
+      // Call backend API to reset password
+      const response = await fetch("/api/accounts/password/reset/confirm/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uid,
+          token,
+          new_password: password,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reset password.");
+      }
 
       // Clear session storage
-      sessionStorage.removeItem("resetEmail")
-      sessionStorage.removeItem("resetToken")
+      sessionStorage.removeItem("resetUid");
+      sessionStorage.removeItem("resetToken");
 
       // Navigate to success page
-      navigate("/reset-success")
+      navigate("/reset-success");
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const passwordValidation = validatePassword(password)
 

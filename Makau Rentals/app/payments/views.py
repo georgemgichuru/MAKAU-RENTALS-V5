@@ -213,15 +213,18 @@ def stk_push_subscription(request):
         if not plan or not phone_number:
             return Response({"error": "Plan and phone number are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate plan
+        # Validate plan and get amount
         plan_amounts = {
-            'starter': 1000,
-            'basic': 2000,
-            'professional': 3000
+            'starter': 2000,        # tier1: 1-10 units
+            'basic': 2500,          # tier2: 11-20 units  
+            'professional': 4500,   # tier3/tier4: 21-100 units
+            'onetime': 40000        # Lifetime access
         }
 
         if plan not in plan_amounts:
-            return Response({"error": "Invalid plan"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "error": f"Invalid plan '{plan}'. Valid plans are: {', '.join(plan_amounts.keys())}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         amount = plan_amounts[plan]
 
@@ -1008,6 +1011,27 @@ class SubscriptionPaymentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return SubscriptionPayment.objects.filter(user=self.request.user)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve to return payment status for polling
+        """
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            
+            # Add additional status information
+            response_data = serializer.data
+            response_data['status'] = instance.status
+            response_data['is_complete'] = instance.status in ['Success', 'Failed']
+            
+            return Response(response_data)
+        except Exception as e:
+            logger.error(f"Error retrieving subscription payment: {str(e)}")
+            return Response(
+                {"error": "Failed to retrieve payment status"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class RentSummaryView(APIView):

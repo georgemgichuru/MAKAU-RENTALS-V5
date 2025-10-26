@@ -19,31 +19,8 @@ export default function AdminLayout() {
 const selectedProperty = properties?.find(p => p.id?.toString() === selectedPropertyId);
 const propertyName = selectedProperty?.name || (properties?.length > 0 ? properties[0]?.name : 'Loading...');
 
-  // Mock notification data - you can replace this with real data from your backend
-  const mockNotifications = [
-    {
-      id: 1,
-      type: 'report',
-      title: 'New Report: Power Outlet Not Working',
-      message: 'John Doe reported an electrical issue in Room A101',
-      timestamp: new Date(Date.now() - 10 * 60000),
-      isRead: false,
-      priority: 'high',
-      tenant: 'John Doe',
-      room: 'A101'
-    },
-    {
-      id: 2,
-      type: 'report',
-      title: 'Report Update: Leaky Faucet',
-      message: 'Maintenance team started working on the plumbing issue',
-      timestamp: new Date(Date.now() - 2 * 60 * 60000),
-      isRead: false,
-      priority: 'medium',
-      tenant: 'Jane Smith',
-      room: 'B205'
-    },
-  ];
+  // Use real notification data from NotificationContext
+  // notifications.reports.count is the real count of open reports
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -101,7 +78,7 @@ const propertyName = selectedProperty?.name || (properties?.length > 0 ? propert
     return `${days}d ago`;
   };
 
-  const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications?.reports?.count || 0;
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -159,76 +136,32 @@ const propertyName = selectedProperty?.name || (properties?.length > 0 ? propert
 
                   {/* Notifications List */}
                   <div className="max-h-80 overflow-y-auto">
-                    {mockNotifications.length === 0 ? (
+                    {unreadCount === 0 ? (
                       <div className="px-4 py-8 text-center text-gray-500">
                         <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                         <p>No notifications</p>
                       </div>
                     ) : (
-                      <div className="divide-y divide-gray-100">
-                        {mockNotifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
-                              !notification.isRead ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                            }`}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0 mt-1">
-                                {getNotificationIcon(notification.type, notification.priority)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <p className={`text-sm font-medium text-gray-900 truncate ${
-                                    !notification.isRead ? 'font-semibold' : ''
-                                  }`}>
-                                    {notification.title}
-                                  </p>
-                                  <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                                    {formatTimestamp(notification.timestamp)}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {notification.message}
-                                </p>
-                                {notification.tenant && (
-                                  <div className="flex items-center mt-2 text-xs text-gray-500">
-                                    <span>{notification.tenant}</span>
-                                    {notification.room && (
-                                      <>
-                                        <span className="mx-1">•</span>
-                                        <span>Room {notification.room}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {notification.type === 'report' && (
-                              <div className="mt-2 ml-7">
-                                <NavLink
-                                  to="/admin/reports"
-                                  onClick={() => setNotificationDropdownOpen(false)}
-                                  className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  View Report
-                                </NavLink>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                      <div className="px-4 py-4 text-gray-700">
+                        <p>You have {unreadCount} open report(s).</p>
+                        <NavLink
+                          to="/admin/reports"
+                          onClick={() => setNotificationDropdownOpen(false)}
+                          className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 mt-2"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Reports
+                        </NavLink>
                       </div>
                     )}
                   </div>
 
                   {/* Footer */}
-                  {mockNotifications.length > 0 && (
+                  {unreadCount > 0 && (
                     <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
                       <div className="flex items-center justify-between">
-                        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                          Mark all as read
+                        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium" onClick={markReportsAsViewed}>
+                          Mark all as viewed
                         </button>
                         <NavLink
                           to="/admin/reports"

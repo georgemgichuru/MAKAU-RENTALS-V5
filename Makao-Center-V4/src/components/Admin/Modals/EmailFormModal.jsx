@@ -1,15 +1,15 @@
 import React from 'react'
-import {useState, useContext} from 'react'
+import {useState, useContext, useEffect} from 'react'
 import { 
   X, 
   Send,
 } from 'lucide-react';
-import { communicationAPI } from "../../../services/api";
+import { communicationAPI, tenantsAPI, propertiesAPI } from "../../../services/api";
 
 import { AppContext } from '../../../context/AppContext';
 
 const EmailFormModal = ({ isOpen, onClose, tenants }) => {
-  const { selectedPropertyId, getTenantsByProperty } = useContext(AppContext);
+  const { selectedPropertyId, getTenantsByProperty, tenants: allTenants } = useContext(AppContext);
   const [emailData, setEmailData] = useState({
     recipients: 'all',
     selectedTenants: [],
@@ -24,6 +24,93 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
 
   // Get tenants for the selected property
   const propertyTenants = selectedPropertyId ? getTenantsByProperty(selectedPropertyId) : tenants;
+  // Only allow selecting real tenants that exist in the backend (exclude estimated/fallback)
+  let selectableTenants = (propertyTenants || []).filter(t => !t?.isEstimated && t?.id !== undefined && !Number.isNaN(parseInt(t.id)));
+  // Fallback: if none found, try global tenants list filtered by property and numeric IDs
+  if ((!selectableTenants || selectableTenants.length === 0) && selectedPropertyId && Array.isArray(allTenants)) {
+    selectableTenants = allTenants.filter(t => {
+      const tProp = t?.current_unit?.property_obj?.id?.toString() || t?.propertyId || t?.property?.toString();
+      return tProp?.toString() === selectedPropertyId?.toString() && t?.id !== undefined && Number.isInteger(parseInt(t.id));
+    });
+  }
+
+  // Local fallback loader: fetch tenants from API or derive from units if needed
+  const [remoteTenants, setRemoteTenants] = useState([]);
+  const [loadingRemote, setLoadingRemote] = useState(false);
+  const [showAllTenants, setShowAllTenants] = useState(false);
+
+  // Helper to load tenants for selected property by joining units->tenantId->tenantAPI
+  const loadFallbackTenants = async () => {
+    if (!isOpen) return;
+    if (!selectedPropertyId) return;
+    try {
+      setLoadingRemote(true);
+      console.log('[EmailFormModal] Loading tenants for property:', selectedPropertyId);
+
+      // Get tenants list
+      let resTenants = [];
+      try {
+        const res = await tenantsAPI.getTenants();
+        resTenants = Array.isArray(res.data) ? res.data : [];
+        console.log('[EmailFormModal] Tenants API count:', resTenants.length);
+      } catch (e) {
+        console.warn('[EmailFormModal] Tenants API failed:', e?.message);
+      }
+
+      // Get units and join
+      try {
+        const ures = await propertiesAPI.getUnits();
+        const units = (ures.data || []).filter(u => {
+          const p = u?.property_obj?.id?.toString() || u?.property?.toString();
+          return p?.toString() === selectedPropertyId?.toString();
+        });
+        console.log('[EmailFormModal] Units for property count:', units.length);
+
+        const tenantById = new Map((resTenants || []).map(t => [parseInt(t.id), t]));
+        console.log('[EmailFormModal] Tenant map size:', tenantById.size);
+
+        const derived = [];
+        for (const u of units) {
+          const tVal = u?.tenant;
+          if (!tVal) continue;
+          if (typeof tVal === 'object' && tVal.id) {
+            derived.push({ id: parseInt(tVal.id), full_name: tVal.full_name || tVal.name || 'Tenant', current_unit: tVal.current_unit });
+          } else {
+            const idNum = parseInt(tVal);
+            if (Number.isInteger(idNum) && tenantById.has(idNum)) {
+              const t = tenantById.get(idNum);
+              derived.push({ id: idNum, full_name: t.full_name || t.name || 'Tenant', current_unit: t.current_unit });
+            } else {
+              console.warn('[EmailFormModal] Tenant ID in unit not found in tenants API:', tVal);
+            }
+          }
+        }
+        // Unique by id and ensure numeric ids
+        const uniq = Array.from(new Map(derived.map(t => [parseInt(t.id), { ...t, id: parseInt(t.id) }])).values());
+        console.log('[EmailFormModal] Derived tenants for property:', uniq.length, uniq);
+        setRemoteTenants(uniq);
+      } catch (e) {
+        console.warn('[EmailFormModal] Units API failed:', e?.message);
+      }
+    } finally {
+      setLoadingRemote(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (selectableTenants && selectableTenants.length > 0) return;
+    loadFallbackTenants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedPropertyId]);
+
+  if ((!selectableTenants || selectableTenants.length === 0) && remoteTenants.length > 0) {
+    selectableTenants = remoteTenants;
+  }
+  // Last-chance fallback: allow showing all tenants (landlord-wide) to select
+  if ((!selectableTenants || selectableTenants.length === 0) && showAllTenants && Array.isArray(allTenants)) {
+    selectableTenants = allTenants.filter(t => t?.id !== undefined && Number.isInteger(parseInt(t.id)) && !t?.isEstimated);
+  }
 
   // Predefined templates - generic when tenant is not provided, personalized when tenant object available
   const messageTemplates = {
@@ -63,11 +150,13 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
   };
 
   const handleTenantSelection = (tenantId) => {
+    // Coerce to integer IDs for backend serializer (PrimaryKeyRelatedField)
+    const idNum = parseInt(tenantId);
     setEmailData(prev => ({
       ...prev,
-      selectedTenants: prev.selectedTenants.includes(tenantId)
-        ? prev.selectedTenants.filter(id => id !== tenantId)
-        : [...prev.selectedTenants, tenantId]
+      selectedTenants: prev.selectedTenants.includes(idNum)
+        ? prev.selectedTenants.filter(id => id !== idNum)
+        : [...prev.selectedTenants, idNum]
     }));
   };
 
@@ -112,13 +201,25 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Basic validation for specific recipients
+    if (emailData.recipients === 'specific' && (!emailData.selectedTenants || emailData.selectedTenants.length === 0)) {
+      alert('Please select at least one tenant.');
+      return;
+    }
     
     // Prepare payload for Django API
     const payload = {
       subject: emailData.subject,
       message: emailData.message,
       send_to_all: emailData.recipients === 'all',
-      tenants: emailData.recipients === 'specific' ? emailData.selectedTenants : []
+      // Ensure IDs are integers and valid
+      tenants: emailData.recipients === 'specific'
+        ? emailData.selectedTenants.map(id => parseInt(id)).filter(id => Number.isInteger(id))
+        : [],
+      // Scope 'all' to the selected property when available
+      property_id: (emailData.recipients === 'all' && selectedPropertyId)
+        ? parseInt(selectedPropertyId)
+        : undefined,
     };
 
     try {
@@ -127,7 +228,7 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
       console.log('Sending email with payload:', payload);
       
       // Use your actual API call
-      const response = await communicationAPI.sendEmail(payload);
+  const response = await communicationAPI.sendEmail(payload);
       
       if (response.status >= 200 && response.status < 300) {
         alert('Emails sent successfully!');
@@ -150,10 +251,11 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
       console.error('Error sending email:', error);
       
       // Show specific error message from backend
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Failed to send emails. Please try again.';
+  const errorMessage = error.response?.data?.detail ||
+          error.response?.data?.error || 
+          error.response?.data?.message || 
+          error.message || 
+          'Failed to send emails. Please try again.';
       
       alert(`Error: ${errorMessage}`);
     } finally {
@@ -221,19 +323,39 @@ const EmailFormModal = ({ isOpen, onClose, tenants }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Tenants</label>
               <div className="border rounded-lg p-3 max-h-40 overflow-y-auto">
-                {propertyTenants.map(tenant => (
+                {selectableTenants.length === 0 && (
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <div>
+                      {loadingRemote ? 'Loading tenants…' : 'No verified tenants available to select for this property.'}
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={loadFallbackTenants} disabled={loadingRemote}
+                        className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">
+                        Reload tenants
+                      </button>
+                      <button type="button" onClick={() => setShowAllTenants(true)} disabled={loadingRemote}
+                        className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">
+                        Show all tenants
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {selectableTenants.map(tenant => (
                   <label key={tenant.id} className="flex items-center py-2">
                     <input
                       type="checkbox"
-                      checked={emailData.selectedTenants.includes(tenant.id)}
+                      checked={emailData.selectedTenants.includes(parseInt(tenant.id))}
                       onChange={() => handleTenantSelection(tenant.id)}
                       className="mr-2"
                       disabled={loading}
                     />
-                    <span>{tenant.full_name} {tenant.current_unit && `(Unit ${tenant.current_unit.unitNumber})`}</span>
+                    <span>{tenant.full_name} {tenant.current_unit && `(Unit ${tenant.current_unit.unitNumber || tenant.current_unit.unit_number || ''})`}</span>
                   </label>
                 ))}
               </div>
+              {emailData.selectedTenants.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2">{emailData.selectedTenants.length} recipient(s) selected</p>
+              )}
             </div>
           )}
 

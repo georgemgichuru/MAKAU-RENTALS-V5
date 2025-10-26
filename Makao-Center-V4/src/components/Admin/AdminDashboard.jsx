@@ -11,16 +11,22 @@ import {
   Home,
   CreditCard,
   FileText,
-  AlertOctagon
+  AlertOctagon,
+  Clock
 } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import EmailFormModal from './Modals/EmailFormModal';
 import WhatsAppFormModal from './Modals/WhatsAppFormModal';
+import { useSubscription } from '../../hooks/useSubscription';
 
 const AdminDashboard = ({ onEmailClick }) => {
+  const navigate = useNavigate();
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  
+  // Get subscription status
+  const { subscription, isExpired, daysUntilExpiry, loading: subLoading } = useSubscription();
   
   // Get data from context
   const { 
@@ -169,6 +175,47 @@ const AdminDashboard = ({ onEmailClick }) => {
 
   return (
     <div className="space-y-6">
+      {/* Subscription Status Banner */}
+      {!subLoading && (isExpired || (daysUntilExpiry !== null && daysUntilExpiry <= 7)) && (
+        <div className={`rounded-lg p-4 ${isExpired ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'} border`}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-start">
+              {isExpired ? (
+                <AlertOctagon className="w-6 h-6 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
+              ) : (
+                <Clock className="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+              )}
+              <div>
+                <h3 className={`font-semibold ${isExpired ? 'text-red-900' : 'text-yellow-900'}`}>
+                  {isExpired ? 'Subscription Expired' : 'Subscription Expiring Soon'}
+                </h3>
+                <p className={`text-sm mt-1 ${isExpired ? 'text-red-800' : 'text-yellow-800'}`}>
+                  {isExpired ? (
+                    <>
+                      Your subscription has expired. Some features are now restricted. 
+                      Your tenants cannot make payments until you renew.
+                    </>
+                  ) : (
+                    <>
+                      Your subscription expires in <strong>{daysUntilExpiry} days</strong>. 
+                      Renew now to avoid service interruption.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/admin/subscription')}
+              className={`px-4 py-2 rounded-lg font-semibold text-white ${
+                isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-yellow-600 hover:bg-yellow-700'
+              }`}
+            >
+              Renew Now
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center flex-col sm:flex-row gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -185,9 +232,10 @@ const AdminDashboard = ({ onEmailClick }) => {
           <button
             onClick={handleWhatsAppClick}
             className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center"
+            title="This feature is coming soon"
           >
             <Mail className="w-5 h-5 mr-2" />
-            Send WhatsApp
+            WhatsApp (Coming Soon)
           </button>
         </div>
       </div>

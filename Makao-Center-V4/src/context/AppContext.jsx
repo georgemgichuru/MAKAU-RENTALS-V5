@@ -2,6 +2,7 @@ import React from 'react'
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tenantsAPI, propertiesAPI, paymentsAPI, communicationAPI } from '../services/api';
+import { useToast } from './ToastContext';
 
 export const AppContext = createContext();
 
@@ -383,19 +384,58 @@ const fetchReports = async () => {
       
       const response = await paymentsAPI.getPaymentHistory();
       console.log('✅ Transactions data received:', response.data);
+      console.log('🔍 First transaction raw:', response.data[0]);
       
-      const transformedTransactions = response.data.map(txn => ({
-        id: txn.id,
-        tenantId: txn.tenant?.id || txn.tenant_id,
-        date: txn.created_at || txn.date || new Date().toISOString(),
-        description: txn.description || `Payment for ${txn.unit?.unit_number || 'unit'}`,
-        amount: txn.amount || 0,
-        type: txn.transaction_type || txn.type || 'rent',
-        status: txn.status || 'pending',
-        reference: txn.reference_number || txn.reference || `REF-${txn.id}`,
-        paymentMethod: txn.payment_method || 'mpesa',
-        propertyId: txn.property?.id?.toString() || txn.property_id?.toString() || 'unknown'
-      }));
+      const transformedTransactions = response.data.map(txn => {
+        // Extract tenant ID from multiple possible sources
+        let tenantId = null;
+        
+        // Method 1: Direct tenant field (object or ID)
+        if (txn.tenant) {
+          tenantId = typeof txn.tenant === 'object' ? txn.tenant.id : txn.tenant;
+        }
+        
+        // Method 2: tenant_id field
+        if (!tenantId && txn.tenant_id) {
+          tenantId = txn.tenant_id;
+        }
+        
+        // Method 3: From unit object (if tenant lives in the unit)
+        if (!tenantId && txn.unit) {
+          if (typeof txn.unit === 'object') {
+            tenantId = txn.unit.tenant?.id || txn.unit.tenant;
+          }
+        }
+        
+        // Method 4: From unit_id (need to match with property units)
+        if (!tenantId && txn.unit_id) {
+          // This will need to be matched with propertyUnits later
+          console.log('⚠️ Transaction has unit_id but no direct tenant:', txn.id);
+        }
+        
+        console.log(`🔍 Transaction ${txn.id} -> Tenant ID: ${tenantId}`);
+        
+        return {
+          id: txn.id,
+          tenantId: tenantId,
+          date: txn.created_at || txn.date || new Date().toISOString(),
+          description: txn.description || `Payment for ${txn.unit?.unit_number || 'unit'}`,
+          amount: txn.amount || 0,
+          type: txn.transaction_type || txn.type || 'rent',
+          status: txn.status || 'pending',
+          reference: txn.reference_number || txn.reference || `REF-${txn.id}`,
+          paymentMethod: txn.payment_method || 'mpesa',
+          propertyId: txn.property?.id?.toString() || txn.property_id?.toString() || 'unknown',
+          // Keep unit info for reference
+          unitId: txn.unit?.id || txn.unit_id || txn.unit,
+          unitNumber: txn.unit?.unit_number || txn.unit_number,
+          // Keep original data for debugging
+          ...txn
+        };
+      });
+      
+      console.log('✅ Transformed transactions with tenant IDs:', transformedTransactions.filter(t => t.tenantId).length);
+      console.log('⚠️ Transactions without tenant IDs:', transformedTransactions.filter(t => !t.tenantId).length);
       
       setTransactions(transformedTransactions);
     } catch (error) {
@@ -615,6 +655,8 @@ const fetchReports = async () => {
 
       // Backward compatibility - map tenants to mockTenants for existing components
       mockTenants: getTenantsWithFallback(), // Use fallback tenants
+      mockPendingApplications: [], // Recent tenant applications - can be populated from API if needed
+      mockEvictedTenants: [], // Evicted tenants - can be populated from API if needed
       landlords: [], // Simplified - could be expanded if needed
       setLandlords: () => {}, // Placeholder
     }}>
@@ -637,25 +679,15 @@ export { ErrorBoundary }; // Export ErrorBoundary for use in other components
 // ============== ADD PROPERTY FORM COMPONENT ==============
 export const AddPropertyForm = () => {
   const navigate = useNavigate();
-  const { addProperty } = useContext(AppContext);
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
+  
+  // Simplified form data - only what backend needs
   const [formData, setFormData] = useState({
     name: '',
-    numberOfUnits: '',
     city: '',
-    waterRate: '',
-    electricityRate: '',
-    mpesaType: 'till',
-    mpesaStoreNumber: '',
-    mpesaTillNumber: '',
-    rentPenaltyType: '',
-    taxRate: 7.5,
-    recurringBills: [{ type: '', amount: '' }],
-    managementFee: '',
-    streetName: '',
-    companyName: '',
-    notes: '',
-    paymentInstructions: '',
-    ownerPhone: '+254'
+    state: '',
+    unit_count: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -740,23 +772,22 @@ useEffect(() => {
 }, []);
   const validate = () => {
     const newErrors = {};
-    // Required fields
-    if (!formData.name.trim()) newErrors.name = 'Property name is required';
-    if (!formData.numberOfUnits || isNaN(formData.numberOfUnits) || Number(formData.numberOfUnits) <= 0) newErrors.numberOfUnits = 'Number of units must be a positive number';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.streetName.trim()) newErrors.streetName = 'Property address is required';
-    if (!formData.ownerPhone.match(/^\+254\d{9}$/)) newErrors.ownerPhone = 'Phone must be in +254XXXXXXXXX format';
-
-    // Water/Electricity rates
-    if (formData.waterRate === '' || isNaN(formData.waterRate) || Number(formData.waterRate) < 0) newErrors.waterRate = 'Water rate must be a positive number';
-    if (formData.electricityRate === '' || isNaN(formData.electricityRate) || Number(formData.electricityRate) < 0) newErrors.electricityRate = 'Electricity rate must be a positive number';
-
-    // MPESA validation
-    if (formData.mpesaType === 'paybill') {
-      if (!formData.mpesaStoreNumber.trim()) newErrors.mpesaStoreNumber = 'Store number is required for Paybill';
-      if (!formData.mpesaTillNumber.match(/^\d+$/)) newErrors.mpesaTillNumber = 'Paybill number must be numeric';
-    } else if (formData.mpesaType === 'till') {
-      if (!formData.mpesaTillNumber.match(/^\d+$/)) newErrors.mpesaTillNumber = 'Till number must be numeric';
+    
+    // Required fields validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Property name is required';
+    }
+    
+    if (!formData.city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    
+    if (!formData.state.trim()) {
+      newErrors.state = 'State/County is required';
+    }
+    
+    if (!formData.unit_count || isNaN(formData.unit_count) || Number(formData.unit_count) <= 0) {
+      newErrors.unit_count = 'Number of units must be a positive number';
     }
 
     return newErrors;
@@ -773,55 +804,48 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
-    // Add property to context
-    addProperty('LL001', formData);
-
-    // Prepare for backend (commented out)
-    /*
+    setLoading(true);
+    
     try {
-      const response = await fetch('/api/properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      if (!response.ok) throw new Error('Failed to add property');
-      // Optionally handle response
-    } catch (err) {
-      alert('Error sending data to backend');
-      return;
+      // Send data to backend
+      const response = await propertiesAPI.createProperty(formData);
+      
+      if (response.data) {
+        showToast?.('Property created successfully!', 'success');
+        navigate('/admin/organisation');
+      }
+    } catch (error) {
+      console.error('Error creating property:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to create property. Please try again.';
+      showToast?.(errorMessage, 'error');
+      
+      // Set field-specific errors if provided by backend
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
+    } finally {
+      setLoading(false);
     }
-    */
-
-    alert('Property added successfully!');
-    navigate('/admin/organisation');
   };
 
   const handleClear = () => {
     setFormData({
       name: '',
-      numberOfUnits: '',
       city: '',
-      waterRate: '',
-      electricityRate: '',
-      mpesaType: 'till',
-      mpesaStoreNumber: '',
-      mpesaTillNumber: '',
-      rentPenaltyType: '',
-      taxRate: 7.5,
-      recurringBills: [{ type: '', amount: '' }],
-      managementFee: '',
-      streetName: '',
-      companyName: '',
-      notes: '',
-      paymentInstructions: '',
-      ownerPhone: '+254'
+      state: '',
+      unit_count: ''
     });
+    setErrors({});
   };
 
   return (
@@ -831,14 +855,17 @@ useEffect(() => {
           onClick={() => navigate('/admin/organisation')}
           className="mb-6 flex items-center text-blue-600 hover:text-blue-800 font-medium"
         >
-          <span className="mr-2">←</span> Back
+          <span className="mr-2">←</span> Back to Organisation
         </button>
+        
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Property Form</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Property</h1>
+          <p className="text-gray-600 mb-8">Add a new property to your portfolio</p>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Property Name */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Property Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -846,31 +873,16 @@ useEffect(() => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Property Name ..."
-                className={`col-span-2 px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                placeholder="e.g., Sunrise Apartments"
+                className={`w-full px-4 py-3 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 required
               />
-              {errors.name && <span className="text-red-500 col-span-3 text-sm">{errors.name}</span>}
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
-            {/* Number of Units */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Number of units <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="numberOfUnits"
-                value={formData.numberOfUnits}
-                onChange={handleInputChange}
-                min="1"
-                className={`col-span-2 px-4 py-2 border ${errors.numberOfUnits ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                required
-              />
-              {errors.numberOfUnits && <span className="text-red-500 col-span-3 text-sm">{errors.numberOfUnits}</span>}
-            </div>
+
             {/* City */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 City <span className="text-red-500">*</span>
               </label>
               <input
@@ -878,264 +890,67 @@ useEffect(() => {
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="City or nearest town ..."
-                className={`col-span-2 px-4 py-2 border ${errors.city ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                placeholder="e.g., Nairobi"
+                className={`w-full px-4 py-3 border ${errors.city ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 required
               />
-              {errors.city && <span className="text-red-500 col-span-3 text-sm">{errors.city}</span>}
+              {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
             </div>
-            {/* MPESA */}
-            <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-right font-medium text-gray-700 pt-2">
-                MPESA <span className="text-red-500">*</span>
-              </label>
-              <div className="col-span-2 space-y-3">
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="mpesaType"
-                      value="paybill"
-                      checked={formData.mpesaType === 'paybill'}
-                      onChange={handleInputChange}
-                      required
-                      className="mr-2"
-                    />
-                    Paybill
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="mpesaType"
-                      value="till"
-                      checked={formData.mpesaType === 'till'}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    Till Number
-                  </label>
-                </div>
-                {formData.mpesaType === 'paybill' && (
-                  <div>
-                    <label className="text-sm text-gray-600 flex items-center mb-1">
-                      Store Number
-                      <span className="ml-1 text-gray-400 cursor-help" title="Store Number Info">ⓘ</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="mpesaStoreNumber"
-                      value={formData.mpesaStoreNumber}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2 border ${errors.mpesaStoreNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                      required={formData.mpesaType === 'paybill'}
-                    />
-                    {errors.mpesaStoreNumber && <span className="text-red-500 text-sm">{errors.mpesaStoreNumber}</span>}
-                  </div>
-                )}
-                <div>
-                  <label className="text-sm text-gray-600 mb-1 block">
-                    {formData.mpesaType === 'paybill' ? 'Paybill Number' : 'Till Number'}
-                  </label>
-                  <input
-                    type="text"
-                    name="mpesaTillNumber"
-                    value={formData.mpesaTillNumber}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2 border ${errors.mpesaTillNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                    required
-                  />
-                  {errors.mpesaTillNumber && <span className="text-red-500 text-sm">{errors.mpesaTillNumber}</span>}
-                </div>
-              </div>
-            </div>
-            {/* Street Name */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Property Address <span className="text-red-500">*</span>
+
+            {/* State/County */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                State/County <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="streetName"
-                value={formData.streetName}
+                name="state"
+                value={formData.state}
                 onChange={handleInputChange}
-                placeholder="Address / Closest street Name ..."
+                placeholder="e.g., Nairobi County"
+                className={`w-full px-4 py-3 border ${errors.state ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 required
-                className={`col-span-2 px-4 py-2 border ${errors.streetName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
-              {errors.streetName && <span className="text-red-500 col-span-3 text-sm">{errors.streetName}</span>}
+              {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
             </div>
-            {/* Owner Phone Number */}
-            <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-right font-medium text-gray-700 pt-2 flex items-center">
-                Owner Phone Number <span className="text-red-500">*</span>
-                <span className="ml-1 text-gray-400 cursor-help" title="Phone Info">ⓘ</span>
-              </label>
-              <div className="col-span-2">
-                <input
-                  type="tel"
-                  name="ownerPhone"
-                  value={formData.ownerPhone}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="+254XXXXXXXXX"
-                  className={`w-full px-4 py-2 border ${errors.ownerPhone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  The phone number should be in international format: +254XXXXXXXXX.
-                </p>
-                {errors.ownerPhone && <span className="text-red-500 text-sm">{errors.ownerPhone}</span>}
-              </div>
-            </div>
-            {/* Water Rate */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Water Rate (Ksh per unit)
+
+            {/* Number of Units */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Number of Units <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="waterRate"
-                value={formData.waterRate}
+                name="unit_count"
+                value={formData.unit_count}
                 onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                placeholder="e.g., 50"
-                className={`col-span-2 px-4 py-2 border ${errors.waterRate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                min="1"
+                placeholder="e.g., 20"
+                className={`w-full px-4 py-3 border ${errors.unit_count ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                required
               />
-              {errors.waterRate && <span className="text-red-500 col-span-3 text-sm">{errors.waterRate}</span>}
+              {errors.unit_count && <p className="text-red-500 text-sm mt-1">{errors.unit_count}</p>}
+              <p className="text-sm text-gray-500">
+                This is the maximum number of rental units for this property
+              </p>
             </div>
-            {/* Electricity Rate */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Electricity Rate (Ksh per unit)
-              </label>
-              <input
-                type="number"
-                name="electricityRate"
-                value={formData.electricityRate}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                placeholder="e.g., 25"
-                className={`col-span-2 px-4 py-2 border ${errors.electricityRate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              />
-              {errors.electricityRate && <span className="text-red-500 col-span-3 text-sm">{errors.electricityRate}</span>}
-            </div>
-            {/* Tax Rate */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Tax Rate (%)
-              </label>
-              <input
-                type="number"
-                name="taxRate"
-                value={formData.taxRate}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                placeholder="e.g., 7.5"
-                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            {/* Management Fee */}
-            <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-right font-medium text-gray-700 pt-2">
-                Management Fee
-              </label>
-              <div className="col-span-2 space-y-3">
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="managementFee"
-                      value="percentage"
-                      checked={formData.managementFee === 'percentage'}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    Percentage
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="managementFee"
-                      value="fixed"
-                      checked={formData.managementFee === 'fixed'}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    Fixed Amount
-                  </label>
-                </div>
-                {formData.managementFee && (
-                  <input
-                    type="number"
-                    name="managementFeeValue"
-                    value={formData.managementFeeValue}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
-                    placeholder={formData.managementFee === 'percentage' ? 'e.g., 10' : 'e.g., 5000'}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                )}
-              </div>
-            </div>
-            {/* Company Name */}
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <label className="text-right font-medium text-gray-700">
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                placeholder="Company Name ..."
-                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            {/* Notes */}
-            <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-right font-medium text-gray-700 pt-2">
-                Notes
-              </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                placeholder="Additional notes about the property ..."
-                rows="3"
-                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            {/* Payment Instructions */}
-            <div className="grid grid-cols-3 gap-4 items-start">
-              <label className="text-right font-medium text-gray-700 pt-2">
-                Payment Instructions
-              </label>
-              <textarea
-                name="paymentInstructions"
-                value={formData.paymentInstructions}
-                onChange={handleInputChange}
-                placeholder="Instructions for tenants on how to pay rent ..."
-                rows="3"
-                className="col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            {/* Submit Buttons */}
-            <div className="pt-6 space-y-3">
-              <button
-                type="submit"
-                className="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 font-semibold text-lg flex items-center justify-center"
-              >
-                <span className="mr-2">+</span> Add Property
-              </button>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-6 border-t">
               <button
                 type="button"
                 onClick={handleClear}
-                className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 font-semibold"
+                className="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                disabled={loading}
               >
                 Clear
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                {loading ? 'Creating...' : 'Create Property'}
               </button>
             </div>
           </form>

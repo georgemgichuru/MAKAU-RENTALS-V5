@@ -16,13 +16,18 @@ import { AppContext } from '../../context/AppContext';
 const TenantTransactions = () => {
   const { tenantId } = useParams();
   const navigate = useNavigate();
-  const { mockTenants, transactions } = useContext(AppContext);
+  const { mockTenants, tenants, tenantsLoading, transactions } = useContext(AppContext);
 
-  // Find the specific tenant
-  const tenant = mockTenants.find(t => t.id === parseInt(tenantId));
+  // Find the specific tenant - check both mockTenants and tenants from API
+  const allTenants = mockTenants || tenants || [];
+  const tenant = allTenants.find(t => String(t.id) === String(tenantId));
+  
+  console.log('🔍 TenantTransactions - tenantId:', tenantId);
+  console.log('🔍 TenantTransactions - allTenants:', allTenants.length);
+  console.log('🔍 TenantTransactions - found tenant:', tenant);
 
   // Use transactions from context and filter for this tenant
-  const [allTxns] = useState(() => (transactions || []).filter(tx => tx.tenantId == tenantId));
+  const [allTxns] = useState(() => (transactions || []).filter(tx => String(tx.tenantId) === String(tenantId)));
   const [transactionsState] = useState(allTxns); // used by filters below
   // If you prefer live updates, remove the above useState and use `const transactionsState = transactions.filter(...)`
 
@@ -31,6 +36,18 @@ const TenantTransactions = () => {
   const [filterType, setFilterType] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  console.log('💳 TenantTransactions - filtered transactions:', transactionsState.length);
+
+  // Show loading state while tenants are being fetched
+  if (tenantsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-gray-600">Loading tenant data...</p>
+      </div>
+    );
+  }
 
   // If tenant not found, redirect back
   if (!tenant) {
@@ -65,30 +82,59 @@ const TenantTransactions = () => {
 
   // Calculate totals
   const totalPaid = filteredTransactions
-    .filter(t => t.status === 'completed')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.status === 'completed' || t.status === 'Success')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
   
   const totalTransactions = filteredTransactions.length;
+  
+  // Get tenant details safely
+  const tenantName = tenant.full_name || tenant.name || 'Unknown Tenant';
+  const unit = tenant.current_unit || tenant.unit_data || tenant.unit;
+  const roomNumber = unit?.unit_number || unit?.number || tenant.room || 'N/A';
+  const rentAmount = unit?.rent || unit?.rent_amount || tenant.rentAmount || 0;
+  const rentStatus = tenant.rent_status || tenant.rentStatus || 'due';
+  const tenantEmail = tenant.email || 'no-email@example.com';
+  const tenantPhone = tenant.phone_number || tenant.phone || 'N/A';
+  const tenantBookingId = tenant.bookingId || tenant.id;
 
   // Download CSV function
   const handleDownloadCSV = () => {
+    console.log('📥 Downloading CSV for transactions:', filteredTransactions.length);
+    
+    if (filteredTransactions.length === 0) {
+      alert('No transactions to download');
+      return;
+    }
+    
     const headers = ['Date', 'Description', 'Amount (KSh)', 'Type', 'Status', 'Reference', 'Payment Method'];
     const csvContent = [
       headers.join(','),
-      ...filteredTransactions.map(t => 
-        `${t.date},"${t.description}",${t.amount},${t.type},${t.status},${t.reference},${t.paymentMethod}`
-      )
+      ...filteredTransactions.map(t => {
+        const date = t.date || t.created_at || new Date().toISOString().split('T')[0];
+        const description = (t.description || 'Payment').replace(/"/g, '""'); // Escape quotes
+        const amount = t.amount || 0;
+        const type = t.type || 'Payment';
+        const status = t.status || 'Completed';
+        const reference = (t.reference || t.transaction_id || 'N/A').replace(/"/g, '""');
+        const method = (t.paymentMethod || t.payment_method || 'M-Pesa').replace(/"/g, '""');
+        
+        return `${date},"${description}",${amount},${type},${status},"${reference}","${method}"`;
+      })
     ].join('\n');
+    
+    console.log('📄 CSV Content preview:', csvContent.substring(0, 200));
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${tenant.name.replace(/\s+/g, '_')}_transactions.csv`;
+    a.download = `${tenantName.replace(/\s+/g, '_')}_transactions_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+    
+    console.log('✅ CSV downloaded successfully');
   };
 
   // Clear filters
@@ -115,7 +161,7 @@ const TenantTransactions = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Transaction History</h1>
             <p className="text-gray-600">
-              Viewing transactions for {tenant.name} - Room {tenant.room}
+              Viewing transactions for {tenantName} - Room {roomNumber}
             </p>
           </div>
         </div>
@@ -154,7 +200,7 @@ const TenantTransactions = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-600 text-sm font-medium">Current Rent</p>
-              <p className="text-2xl font-bold text-purple-900">KSh {tenant.rentAmount.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-purple-900">KSh {Number(rentAmount).toLocaleString()}</p>
             </div>
             <DollarSign className="w-8 h-8 text-purple-600" />
           </div>
@@ -164,7 +210,7 @@ const TenantTransactions = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-600 text-sm font-medium">Rent Status</p>
-              <p className="text-lg font-bold text-yellow-900 capitalize">{tenant.rentStatus}</p>
+              <p className="text-lg font-bold text-yellow-900 capitalize">{rentStatus}</p>
             </div>
             <Clock className="w-8 h-8 text-yellow-600" />
           </div>
@@ -334,27 +380,27 @@ const TenantTransactions = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-gray-600">Name</p>
-            <p className="font-medium text-gray-900">{tenant.name}</p>
+            <p className="font-medium text-gray-900">{tenantName}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Email</p>
-            <p className="font-medium text-gray-900">{tenant.email}</p>
+            <p className="font-medium text-gray-900">{tenantEmail}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Phone</p>
-            <p className="font-medium text-gray-900">{tenant.phone}</p>
+            <p className="font-medium text-gray-900">{tenantPhone}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Room Number</p>
-            <p className="font-medium text-gray-900">{tenant.room}</p>
+            <p className="font-medium text-gray-900">{roomNumber}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Booking ID</p>
-            <p className="font-medium text-gray-900">{tenant.bookingId}</p>
+            <p className="font-medium text-gray-900">{tenantBookingId}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Monthly Rent</p>
-            <p className="font-medium text-gray-900">KSh {tenant.rentAmount.toLocaleString()}</p>
+            <p className="font-medium text-gray-900">KSh {Number(rentAmount).toLocaleString()}</p>
           </div>
         </div>
       </div>
