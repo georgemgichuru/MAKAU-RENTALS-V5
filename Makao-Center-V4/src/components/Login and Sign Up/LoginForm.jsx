@@ -97,6 +97,9 @@ const LoginForm = ({ onLogin }) => {
 
   // Bulk unit addition state
   const [bulkUnitMode, setBulkUnitMode] = useState({});
+  
+  // Single unit addition state - track selected room type per property
+  const [singleUnitSelection, setSingleUnitSelection] = useState({});
 
   const pricingTiers = [
     { min: 1, max: 10, price: 2000, label: '1-10 units' },
@@ -861,7 +864,8 @@ const LoginForm = ({ onLogin }) => {
   };
 
   // Unit Management Functions
-  const addUnit = (propertyId) => {
+  // Add Unit with selected type
+  const addUnit = (propertyId, selectedRoomType = 'studio', selectedRent = '') => {
     setLandlordData(prev => ({
       ...prev,
       properties: prev.properties.map(property => {
@@ -871,8 +875,8 @@ const LoginForm = ({ onLogin }) => {
             units: [...property.units, {
               id: Date.now(),
               unitNumber: '',
-              roomType: 'studio',
-              monthlyRent: ''
+              roomType: selectedRoomType,
+              monthlyRent: selectedRent
             }]
           };
         }
@@ -1842,12 +1846,59 @@ const LoginForm = ({ onLogin }) => {
                       Bulk Add Units
                     </button>
                     <button
-                      onClick={() => addUnit(property.id)}
+                      onClick={() => {
+                        const selectedType = singleUnitSelection[property.id]?.roomType || 'studio';
+                        const selectedRent = singleUnitSelection[property.id]?.rentAmount || '';
+                        addUnit(property.id, selectedType, selectedRent);
+                      }}
                       className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm border border-blue-700"
                     >
                       + Add Unit
                     </button>
                   </div>
+                </div>
+
+                {/* Single Unit Type Selection */}
+                <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+                  <h5 className="font-medium mb-2 text-sm">Quick Add Unit Settings</h5>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Room Type *</label>
+                      <select
+                        className="w-full px-3 py-2 border rounded text-sm"
+                        value={singleUnitSelection[property.id]?.roomType || 'studio'}
+                        onChange={(e) => setSingleUnitSelection(prev => ({
+                          ...prev,
+                          [property.id]: { ...prev[property.id], roomType: e.target.value }
+                        }))}
+                      >
+                        <option value="studio">Studio</option>
+                        <option value="1-bedroom">1 Bedroom</option>
+                        <option value="2-bedroom">2 Bedroom</option>
+                        <option value="3-bedroom">3 Bedroom</option>
+                        <option value="4-bedroom">4 Bedroom</option>
+                        <option value="5-bedroom">5 Bedroom</option>
+                        <option value="6-bedroom">6 Bedroom</option>
+                        <option value="7-bedroom">7 Bedroom</option>
+                        <option value="8-bedroom">8 Bedroom</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Monthly Rent (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full px-3 py-2 border rounded text-sm"
+                        placeholder="e.g., 15000"
+                        value={singleUnitSelection[property.id]?.rentAmount || ''}
+                        onChange={(e) => setSingleUnitSelection(prev => ({
+                          ...prev,
+                          [property.id]: { ...prev[property.id], rentAmount: e.target.value }
+                        }))}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">These settings will be used when you click "+ Add Unit"</p>
                 </div>
 
                 {bulkUnitMode[property.id] && (
@@ -1955,67 +2006,31 @@ const LoginForm = ({ onLogin }) => {
                 )}
 
                 {property.units.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {property.units.map((unit, unitIndex) => {
                       // Inline validation for unit fields
                       const unitNumberError = !unit.unitNumber ? "Unit number required" : "";
                       const unitRentError = !unit.monthlyRent ? "Rent required" : "";
                       return (
-                        <div key={unit.id} className="flex items-center gap-2 p-2 border rounded bg-white">
-                          <span className="text-xs text-gray-400">#{unitIndex + 1}</span>
-                          <input
-                            type="text"
-                            value={unit.unitNumber}
-                            onChange={(e) => updateUnitField(property.id, unit.id, 'unitNumber', e.target.value)}
-                            className={`flex-1 px-3 py-1 border rounded text-sm ${unitNumberError ? 'border-red-400' : ''}`}
-                            placeholder="Unit number"
-                            required
-                          />
-                          {unitNumberError && <span className="text-xs text-red-500">{unitNumberError}</span>}
-                          <select
-                            value={unit.roomType}
-                            onChange={(e) => updateUnitField(property.id, unit.id, 'roomType', e.target.value)}
-                            className="px-3 py-1 border rounded text-sm"
-                          >
-                            <option value="studio">Studio</option>
-                            <option value="1-bedroom">1 Bedroom</option>
-                            <option value="2-bedroom">2 Bedroom</option>
-                            <option value="3-bedroom">3 Bedroom</option>
-                            <option value="4-bedroom">4 Bedroom</option>
-                            <option value="5-bedroom">5 Bedroom</option>
-                            <option value="6-bedroom">6 Bedroom</option>
-                            <option value="7-bedroom">7 Bedroom</option>
-                            <option value="8-bedroom">8 Bedroom</option>
-                            <option value="custom">Custom Room Type</option>
-                          </select>
-                          {unit.roomType === 'custom' && (
-                            <input
-                              type="text"
-                              className="px-3 py-1 border rounded text-sm"
-                              placeholder="Custom room type"
-                              value={unit.customRoomType || ''}
-                              onChange={(e) => {
-                                updateUnitField(property.id, unit.id, 'customRoomType', e.target.value);
-                                updateUnitField(property.id, unit.id, 'roomType', `custom-${e.target.value}`);
-                              }}
-                            />
-                          )}
-                          <input
-                            type="number"
-                            value={unit.monthlyRent}
-                            onChange={(e) => updateUnitField(property.id, unit.id, 'monthlyRent', e.target.value)}
-                            className={`w-24 px-3 py-1 border rounded text-sm ${unitRentError ? 'border-red-400' : ''}`}
-                            placeholder="Rent"
-                            min="0"
-                            required
-                          />
-                          {unitRentError && <span className="text-xs text-red-500">{unitRentError}</span>}
-                          <button
-                            onClick={() => removeUnit(property.id, unit.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <X size={16} />
-                          </button>
+                        <div key={unit.id} className="flex flex-col justify-between border rounded-lg p-3 bg-gray-50 shadow-sm min-w-0" style={{ wordBreak: 'break-word' }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-blue-700 text-sm">Unit {unit.unitNumber || unitIndex + 1}</span>
+                            <span className="text-xs text-gray-500">{unit.roomType}</span>
+                          </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-gray-600">Rent:</span>
+                            <span className="font-bold text-green-700 text-sm">KES {unit.monthlyRent}</span>
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => removeUnit(property.id, unit.id)}
+                              className="text-red-500 hover:text-red-700 p-1 text-xs border border-red-200 rounded"
+                            >
+                              <X size={14} /> Remove
+                            </button>
+                          </div>
+                          {unitNumberError && <span className="text-xs text-red-500 mt-1">{unitNumberError}</span>}
+                          {unitRentError && <span className="text-xs text-red-500 mt-1">{unitRentError}</span>}
                         </div>
                       );
                     })}

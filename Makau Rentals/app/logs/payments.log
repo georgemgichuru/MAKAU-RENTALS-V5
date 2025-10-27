@@ -1722,3 +1722,22 @@ INFO 2025-10-26 23:50:34,409 autoreload 31944 37912 C:\Users\George Mwangi\Deskt
 INFO 2025-10-26 23:50:36,799 autoreload 2524 45676 Watching for file changes with StatReloader
 INFO 2025-10-26 23:53:16,880 autoreload 2524 45676 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\apps.py changed, reloading.
 INFO 2025-10-26 23:53:20,049 autoreload 24480 19992 Watching for file changes with StatReloader
+INFO 2025-10-27 10:13:20,674 views 39012 44052 CreatePropertyView: User 1 attempting to create property
+INFO 2025-10-27 10:13:20,677 views 39012 44052 Subscription found: free
+INFO 2025-10-27 10:13:20,680 views 39012 44052 Current properties count: 0, max: 2
+INFO 2025-10-27 10:13:20,685 views 39012 44052 Serializer valid, saving property for user 1
+INFO 2025-10-27 10:13:20,694 views 39012 44052 Cache cleared for user 1
+INFO 2025-10-27 10:13:20,695 views 39012 44052 Property created successfully: 1
+INFO 2025-10-27 10:13:20,718 views 39012 44052 CreatePropertyView: User 1 attempting to create property
+INFO 2025-10-27 10:13:20,729 views 39012 44052 Subscription found: free
+INFO 2025-10-27 10:13:20,734 views 39012 44052 Current properties count: 1, max: 2
+INFO 2025-10-27 10:13:20,744 views 39012 44052 Serializer valid, saving property for user 1
+INFO 2025-10-27 10:13:20,746 views 39012 44052 Cache cleared for user 1
+INFO 2025-10-27 10:13:20,747 views 39012 44052 Property created successfully: 2
+INFO 2025-10-27 10:13:20,763 views 39012 44052 CreatePropertyView: User 1 attempting to create property
+INFO 2025-10-27 10:13:20,767 views 39012 44052 Subscription found: free
+INFO 2025-10-27 10:13:20,778 views 39012 44052 Current properties count: 2, max: 2
+WARNING 2025-10-27 10:13:20,782 log 39012 44052 Forbidden: /api/accounts/properties/create/
+WARNING 2025-10-27 10:13:25,569 log 39012 44052 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-27 10:13:26,759 log 39012 44052 Method Not Allowed: /api/payments/unit-types/
+INFO 2025-10-27 10:14:38,802 autoreload 38384 10968 Watching for file changes with StatReloader
