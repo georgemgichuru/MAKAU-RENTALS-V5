@@ -175,12 +175,12 @@ export const paymentsAPI = {
 
   getDepositStatus: (paymentId) => api.get(`/payments/deposit-status/${paymentId}/`),
   
-  // Rent payments
-  stkPush: (unitId, data) => api.post(`/payments/stk-push/${unitId}/`, data),
+  // Rent payments - NOW USING PESAPAL
+  initiateRentPayment: (unitId, data) => api.post(`/payments/initiate-rent-payment/${unitId}/`, data),
   getRentPaymentStatus: (paymentId) => api.get(`/payments/rent-status/${paymentId}/`),
   
-  // Subscription payments
-  stkPushSubscription: (data) => api.post('/payments/stk-push-subscription/', data),
+  // Subscription payments - NOW USING PESAPAL
+  initiateSubscriptionPayment: (data) => api.post('/payments/initiate-subscription-payment/', data),
   getSubscriptionPaymentStatus: (paymentId) => api.get(`/payments/subscription-payments/${paymentId}/`),
   
   // Payment history
@@ -191,6 +191,7 @@ export const paymentsAPI = {
 
   // Test connection
   testConnection: () => api.get('/payments/test-connection/'),
+  testPesaPal: () => api.get('/payments/test-pesapal/'),
 
   // Bulk rent update
   bulkRentUpdate: (data) => api.post('/payments/bulk-rent-update/', data),

@@ -6,23 +6,25 @@ import {
   XCircle, 
   Loader2,
   ArrowLeft,
-  Shield,
-  Clock
+  Shield
 } from 'lucide-react';
 import { paymentsAPI } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import PesaPalPaymentModal from '../PesaPalPaymentModal';
 
 const SubscriptionPaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
   
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState(null); // 'pending', 'success', 'failed'
-  const [checkoutRequestId, setCheckoutRequestId] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
   const [subscriptionPaymentId, setSubscriptionPaymentId] = useState(null);
-  const [countdown, setCountdown] = useState(180); // 3 minutes countdown
+  const [pollingPaymentId, setPollingPaymentId] = useState(null);
+  
+  // PesaPal Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pesapalUrl, setPesapalUrl] = useState('');
 
   // Get plan details from navigation state
   const planDetails = location.state?.planDetails || null;
@@ -35,34 +37,31 @@ const SubscriptionPaymentPage = () => {
     }
   }, [planDetails, navigate, showToast]);
 
+  // Check for payment status on component mount (after redirect return)
   useEffect(() => {
-    // Countdown timer when payment is pending
-    let timer;
-    if (paymentStatus === 'pending' && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            setPaymentStatus('timeout');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    const pendingPaymentId = localStorage.getItem('pending_payment_id');
+    const paymentType = localStorage.getItem('payment_type');
+    
+    if (pendingPaymentId && paymentType === 'subscription') {
+      setPollingPaymentId(parseInt(pendingPaymentId));
+      localStorage.removeItem('pending_payment_id');
+      localStorage.removeItem('payment_type');
     }
-    return () => clearInterval(timer);
-  }, [paymentStatus, countdown]);
+  }, []);
 
+  // Poll for payment status
   useEffect(() => {
-    // Poll for payment status when pending
     let statusInterval;
-    if (paymentStatus === 'pending' && subscriptionPaymentId) {
+    if (pollingPaymentId) {
+      setPaymentStatus('pending');
+      
       statusInterval = setInterval(async () => {
         try {
-          const response = await paymentsAPI.getSubscriptionPaymentStatus(subscriptionPaymentId);
+          const response = await paymentsAPI.getSubscriptionPaymentStatus(pollingPaymentId);
           
           console.log('Payment status check:', response.data);
           
-          if (response.data.status === 'Success') {
+          if (response.data.status === 'Success' || response.data.status === 'completed') {
             setPaymentStatus('success');
             clearInterval(statusInterval);
             showToast('Subscription payment successful!', 'success');
@@ -71,16 +70,15 @@ const SubscriptionPaymentPage = () => {
             setTimeout(() => {
               navigate('/admin/dashboard');
             }, 3000);
-          } else if (response.data.status === 'Failed') {
+          } else if (response.data.status === 'Failed' || response.data.status === 'failed') {
             setPaymentStatus('failed');
             clearInterval(statusInterval);
             showToast('Payment failed. Please try again.', 'error');
           }
         } catch (error) {
           console.error('Error checking payment status:', error);
-          // Don't clear interval on error - keep polling
         }
-      }, 3000); // Check every 3 seconds
+      }, 3000);
     }
 
     return () => {
@@ -88,108 +86,81 @@ const SubscriptionPaymentPage = () => {
         clearInterval(statusInterval);
       }
     };
-  }, [paymentStatus, subscriptionPaymentId, navigate, showToast]);
-
-  const handlePhoneChange = (e) => {
-    // Allow only numbers and basic formatting
-    const value = e.target.value.replace(/[^\d+]/g, '');
-    setPhoneNumber(value);
-  };
-
-  const validatePhoneNumber = (phone) => {
-    // Remove spaces and special characters
-    const cleaned = phone.replace(/\s+/g, '').replace(/[^\d+]/g, '');
-    
-    // Check various valid formats
-    if (cleaned.match(/^(\+?254|0)[17]\d{8}$/)) {
-      return true;
-    }
-    return false;
-  };
+  }, [pollingPaymentId, navigate, showToast]);
 
   const handleInitiatePayment = async () => {
-    // Validate phone number
-    if (!validatePhoneNumber(phoneNumber)) {
-      showToast('Please enter a valid Kenyan phone number (e.g., 0712345678 or +254712345678)', 'error');
-      return;
-    }
-
     setIsProcessing(true);
+    setPaymentStatus(null);
 
     try {
-      // Use backendPlan if available, otherwise use id
-      const planToSend = planDetails.backendPlan || planDetails.id;
-      
       console.log('Initiating subscription payment:', {
-        plan: planToSend,
-        phone_number: phoneNumber,
+        subscription_type: planDetails.backendPlan || planDetails.id,
         amount: planDetails.price
       });
 
-      const response = await paymentsAPI.stkPushSubscription({
-        plan: planToSend,
-        phone_number: phoneNumber
+      const response = await paymentsAPI.initiateSubscriptionPayment({
+        subscription_type: planDetails.backendPlan || planDetails.id,
+        amount: planDetails.price
       });
 
       console.log('Payment response:', response.data);
 
-      if (response.data.success) {
-        setPaymentStatus('pending');
-        setCheckoutRequestId(response.data.checkout_request_id);
-        setSubscriptionPaymentId(response.data.subscription_payment_id);
-        setCountdown(180); // Reset countdown
+      if (response.data.success && response.data.redirect_url) {
+        // Store payment ID for status checking
+        localStorage.setItem('pending_payment_id', response.data.payment_id);
+        localStorage.setItem('payment_type', 'subscription');
         
-        showToast('Payment request sent! Please check your phone for M-Pesa prompt.', 'info');
+        setPaymentStatus('redirecting');
+        
+        // Show modal instead of redirecting
+        setSubscriptionPaymentId(response.data.payment_id);
+        setPesapalUrl(response.data.redirect_url);
+        setShowPaymentModal(true);
+        setIsProcessing(false);
       } else {
         throw new Error(response.data.error || 'Failed to initiate payment');
       }
     } catch (error) {
       console.error('Payment initiation error:', error);
-      console.error('Error response:', error.response);
-      console.error('Error data:', error.response?.data);
       
-      // Extract detailed error message
       let errorMessage = 'Failed to initiate payment';
       
       if (error.response?.data) {
         const errorData = error.response.data;
-        
-        // Check various error formats
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        } else if (errorData.details) {
-          errorMessage = errorData.details;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else {
-          // If error data is an object, stringify it
-          errorMessage = JSON.stringify(errorData);
-        }
+        errorMessage = errorData.error || errorData.details || errorData.message || JSON.stringify(errorData);
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      console.log('Final error message:', errorMessage);
       showToast(errorMessage, 'error');
       setPaymentStatus('failed');
-    } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleRetry = () => {
+  // Handle payment modal close
+  const handleCloseModal = () => {
+    setShowPaymentModal(false);
+    setPesapalUrl('');
     setPaymentStatus(null);
-    setCheckoutRequestId(null);
-    setSubscriptionPaymentId(null);
-    setCountdown(180);
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // Handle payment completion from modal
+  const handlePaymentComplete = (paymentId) => {
+    setShowPaymentModal(false);
+    setPesapalUrl('');
+    
+    // Start polling for payment status
+    setPollingPaymentId(paymentId);
+    setPaymentStatus('pending');
+    
+    showToast('Payment completed! Verifying...', 'success');
+  };
+
+  const handleRetry = () => {
+    setPaymentStatus(null);
+    setSubscriptionPaymentId(null);
+    setPollingPaymentId(null);
   };
 
   if (!planDetails) {
@@ -217,7 +188,7 @@ const SubscriptionPaymentPage = () => {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">Complete Your Subscription</h1>
-            <p className="text-blue-100">Secure M-Pesa payment processing</p>
+            <p className="text-blue-100">Secure payment via PesaPal</p>
           </div>
 
           <div className="p-6 sm:p-8">
@@ -262,13 +233,21 @@ const SubscriptionPaymentPage = () => {
                   <Loader2 className="w-6 h-6 text-blue-600 animate-spin mr-3" />
                   <h3 className="text-lg font-semibold text-blue-900">Processing Payment...</h3>
                 </div>
-                <p className="text-blue-800 mb-4">
-                  Please enter your M-Pesa PIN on your phone to complete the payment.
+                <p className="text-blue-800">
+                  Verifying your payment. This may take a moment...
                 </p>
-                <div className="flex items-center text-sm text-blue-700">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span>Time remaining: {formatTime(countdown)}</span>
+              </div>
+            )}
+
+            {paymentStatus === 'redirecting' && (
+              <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Loader2 className="w-6 h-6 text-blue-600 animate-spin mr-3" />
+                  <h3 className="text-lg font-semibold text-blue-900">Redirecting...</h3>
                 </div>
+                <p className="text-blue-800">
+                  Redirecting you to PesaPal payment gateway...
+                </p>
               </div>
             )}
 
@@ -284,18 +263,14 @@ const SubscriptionPaymentPage = () => {
               </div>
             )}
 
-            {(paymentStatus === 'failed' || paymentStatus === 'timeout') && (
+            {(paymentStatus === 'failed') && (
               <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-6">
                 <div className="flex items-center mb-4">
                   <XCircle className="w-6 h-6 text-red-600 mr-3" />
-                  <h3 className="text-lg font-semibold text-red-900">
-                    {paymentStatus === 'timeout' ? 'Payment Timeout' : 'Payment Failed'}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-red-900">Payment Failed</h3>
                 </div>
                 <p className="text-red-800 mb-4">
-                  {paymentStatus === 'timeout' 
-                    ? 'The payment request has timed out. Please try again.'
-                    : 'The payment could not be processed. Please try again or contact support.'}
+                  The payment could not be processed. Please try again or contact support.
                 </p>
                 <button
                   onClick={handleRetry}
@@ -309,40 +284,13 @@ const SubscriptionPaymentPage = () => {
             {/* Payment Form */}
             {!paymentStatus && (
               <>
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h2>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      M-Pesa Phone Number
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={handlePhoneChange}
-                        placeholder="e.g., 0712345678 or +254712345678"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={isProcessing}
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <CreditCard className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Enter the phone number registered with M-Pesa
-                    </p>
-                  </div>
-                </div>
-
                 {/* Security Notice */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6 flex items-start">
-                  <Shield className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                <div className="bg-blue-50 rounded-lg p-4 mb-6 flex items-start">
+                  <Shield className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-gray-700">
                     <p className="font-medium mb-1">Secure Payment</p>
                     <p className="text-gray-600">
-                      Your payment is processed securely through Safaricom M-Pesa. 
-                      You'll receive an STK push prompt on your phone.
+                      You'll be redirected to PesaPal's secure payment gateway where you can pay using M-Pesa, cards, or other payment methods.
                     </p>
                   </div>
                 </div>
@@ -358,7 +306,7 @@ const SubscriptionPaymentPage = () => {
                   </button>
                   <button
                     onClick={handleInitiatePayment}
-                    disabled={isProcessing || !phoneNumber}
+                    disabled={isProcessing}
                     className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {isProcessing ? (
@@ -384,6 +332,16 @@ const SubscriptionPaymentPage = () => {
           <p>Need help? Contact support at <a href="mailto:makaorentalmanagementsystem@gmail.com" className="text-blue-600 hover:underline">makaorentalmanagementsystem@gmail.com</a></p>
         </div>
       </div>
+
+      {/* PesaPal Payment Modal */}
+      <PesaPalPaymentModal
+        isOpen={showPaymentModal}
+        redirectUrl={pesapalUrl}
+        onClose={handleCloseModal}
+        onPaymentComplete={handlePaymentComplete}
+        paymentId={subscriptionPaymentId}
+        amount={planDetails?.price}
+      />
     </div>
   );
 };

@@ -1741,3 +1741,575 @@ WARNING 2025-10-27 10:13:20,782 log 39012 44052 Forbidden: /api/accounts/propert
 WARNING 2025-10-27 10:13:25,569 log 39012 44052 Bad Request: /api/accounts/units/create/
 WARNING 2025-10-27 10:13:26,759 log 39012 44052 Method Not Allowed: /api/payments/unit-types/
 INFO 2025-10-27 10:14:38,802 autoreload 38384 10968 Watching for file changes with StatReloader
+WARNING 2025-10-27 10:18:11,795 log 38384 4572 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 10:18:29,457 log 38384 7728 Not Found: /favicon.ico
+INFO 2025-10-27 10:28:35,099 views 38384 12880 Subscription already exists for user 44
+INFO 2025-10-27 10:28:35,101 views 38384 12880 Welcome email prepared for landlord@mail.com: Welcome to Makao Rentals - Your Landlord Account is Ready!
+WARNING 2025-10-27 12:48:38,682 log 38384 15808 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 12:48:38,690 log 38384 41844 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-27 12:48:38,704 log 38384 21928 Unauthorized: /api/communication/reports/
+WARNING 2025-10-27 12:48:38,723 log 38384 15808 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 12:48:38,737 log 38384 41844 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-27 12:48:38,753 log 38384 21928 Unauthorized: /api/communication/reports/
+WARNING 2025-10-27 12:48:38,785 log 38384 15808 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 12:48:38,832 log 38384 15808 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 12:49:26,715 log 38384 41844 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 12:49:45,231 log 38384 41844 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 12:49:54,768 log 38384 41844 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 15:18:57,269 log 38384 76 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-27 15:18:57,338 log 38384 76 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 15:18:57,395 log 38384 42312 Unauthorized: /api/communication/reports/
+WARNING 2025-10-27 15:18:57,430 log 38384 76 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-27 15:18:57,502 log 38384 76 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 15:18:57,524 log 38384 42312 Unauthorized: /api/communication/reports/
+WARNING 2025-10-27 15:18:57,678 log 38384 6400 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 15:18:57,751 log 38384 6400 Unauthorized: /api/accounts/me/
+WARNING 2025-10-27 16:01:47,030 log 38384 24764 Not Found: /api/accounts/validate-landlord/
+INFO 2025-10-27 16:02:12,403 views 38384 24764 Document uploaded for session 201bc849-b3b7-4e34-ae65-386f01254a76: GEORGE MWANGI GICHURU - ID FRONT.jpg
+INFO 2025-10-27 16:02:22,313 views 38384 24764 Registration deposit STK push request: unit_id=190, phone=+254722714334, amount=30000
+INFO 2025-10-27 16:02:22,320 views 38384 24764 Processing deposit payment: amount=30000.0, unit=A115
+INFO 2025-10-27 16:02:24,609 views 38384 24764 Access token generated successfully: x4HojajTQtl1pIwCwxNa...
+INFO 2025-10-27 16:02:24,610 views 38384 24764 Sending STK push request to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-27 16:02:24,611 views 38384 24764 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI3MTYwMjI0', 'Timestamp': '20251027160224', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 30000, 'PartyA': '254722714334', 'PartyB': '174379', 'PhoneNumber': '254722714334', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/deposit', 'AccountReference': 'DEPOSIT-REG-U-18-A115-e4c5e9c3', 'TransactionDesc': 'Deposit payment for A115'}
+INFO 2025-10-27 16:02:26,682 views 38384 24764 M-Pesa response: Status=200, Data={'MerchantRequestID': 'bdf9-49a1-8fd7-afb07f067ed418717', 'CheckoutRequestID': 'ws_CO_27102025160225291722714334', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+ERROR 2025-10-27 16:02:37,494 log 38384 16476 Internal Server Error: /api/payments/callback/deposit
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\utils\deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 108, in process_response
+    return self.response_redirect_class(self.get_full_path_with_slash(request))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 87, in get_full_path_with_slash
+    raise RuntimeError(
+RuntimeError: You called this URL via POST, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining POST data. Change your form to point to preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/deposit/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+ERROR 2025-10-27 16:02:38,910 log 38384 30748 Internal Server Error: /api/payments/callback/deposit
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\utils\deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 108, in process_response
+    return self.response_redirect_class(self.get_full_path_with_slash(request))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 87, in get_full_path_with_slash
+    raise RuntimeError(
+RuntimeError: You called this URL via POST, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining POST data. Change your form to point to preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/deposit/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+ERROR 2025-10-27 16:02:40,751 log 38384 16364 Internal Server Error: /api/payments/callback/deposit
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\utils\deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 108, in process_response
+    return self.response_redirect_class(self.get_full_path_with_slash(request))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\middleware\common.py", line 87, in get_full_path_with_slash
+    raise RuntimeError(
+RuntimeError: You called this URL via POST, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining POST data. Change your form to point to preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/deposit/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+WARNING 2025-10-27 16:02:56,984 views 38384 24764 Unit with code 190 not found for landlord L-4C09E362DE
+WARNING 2025-10-27 16:04:12,489 log 38384 24764 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 16:07:49,079 log 38384 42116 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 16:08:03,796 log 38384 42116 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 16:09:54,910 log 38384 24764 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 16:10:02,056 log 38384 24764 Bad Request: /api/accounts/token/
+WARNING 2025-10-27 16:10:09,088 log 38384 24764 Bad Request: /api/accounts/token/
+INFO 2025-10-27 16:57:32,905 views 38384 15884 Sending STK push to: https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest
+INFO 2025-10-27 16:57:32,906 views 38384 15884 Payload: {'BusinessShortCode': '174379', 'Password': 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMDI3MTY1NzMy', 'Timestamp': '20251027165732', 'TransactionType': 'CustomerPayBillOnline', 'Amount': 6005, 'PartyA': '254778211794', 'PartyB': '174379', 'PhoneNumber': '254778211794', 'CallBackURL': 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api/payments/callback/rent/', 'AccountReference': 'RENT-12-002-1E921910', 'TransactionDesc': 'Rent payment for 2'}
+INFO 2025-10-27 16:57:35,880 views 38384 15884 STK push response: {'MerchantRequestID': 'a574-4fed-9f2e-99f3609e269b25685', 'CheckoutRequestID': 'ws_CO_27102025165734378778211794', 'ResponseCode': '0', 'ResponseDescription': 'Success. Request accepted for processing', 'CustomerMessage': 'Success. Request accepted for processing'}
+INFO 2025-10-27 16:57:35,939 views 38384 15884 STK push initiated successfully. Payment ID: 106, Cache Key: stk_ws_CO_27102025165734378778211794
+INFO 2025-10-27 16:57:36,900 views 38384 33360 Rent callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'a574-4fed-9f2e-99f3609e269b25685', 'CheckoutRequestID': 'ws_CO_27102025165734378778211794', 'ResultCode': 2035, 'ResultDesc': 'The customer does not exist.'}}}
+INFO 2025-10-27 16:57:36,900 views 38384 33360 Rent callback - ResultCode: 2035, CheckoutRequestID: ws_CO_27102025165734378778211794
+ERROR 2025-10-27 16:57:36,901 views 38384 33360 Rent payment failed - ResultCode: 2035, Description: The customer does not exist.
+INFO 2025-10-27 17:01:41,916 views 38384 37676 Subscription callback received: {'Body': {'stkCallback': {'MerchantRequestID': 'cbd0-4edb-b227-4837dafdaa6225142', 'CheckoutRequestID': 'ws_CO_27102025170131899722714334', 'ResultCode': 1032, 'ResultDesc': 'Request Cancelled by user.'}}}
+INFO 2025-10-27 17:01:41,917 views 38384 37676 Subscription callback - ResultCode: 1032, CheckoutRequestID: ws_CO_27102025170131899722714334
+ERROR 2025-10-27 17:01:41,917 views 38384 37676 Subscription payment failed - ResultCode: 1032, Description: Request Cancelled by user.
+INFO 2025-10-27 21:44:00,279 autoreload 38384 10968 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-27 21:44:20,213 autoreload 30048 17804 Watching for file changes with StatReloader
+INFO 2025-10-27 21:47:19,530 autoreload 30048 17804 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-27 21:55:35,644 pesapal_service 5924 39804 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 21:55:39,124 pesapal_service 5924 39804 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+INFO 2025-10-27 21:58:10,794 pesapal_service 32776 23812 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 21:58:12,972 pesapal_service 32776 23812 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+INFO 2025-10-27 22:25:02,065 autoreload 42880 26992 Watching for file changes with StatReloader
+INFO 2025-10-27 22:25:03,555 pesapal_service 42880 26992 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-27 22:25:07,725 pesapal_service 45788 10596 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-27 22:25:07,727 pesapal_service 45788 10596 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 22:25:14,321 pesapal_service 45788 10596 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+INFO 2025-10-27 22:27:47,405 pesapal_service 30440 21848 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-27 22:27:47,410 pesapal_service 30440 21848 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 22:27:49,667 pesapal_service 30440 21848 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+INFO 2025-10-27 22:28:40,574 pesapal_service 31056 40312 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-27 22:28:40,577 pesapal_service 31056 40312 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 22:28:49,493 pesapal_service 31056 40312 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+INFO 2025-10-27 22:28:52,134 pesapal_service 31056 40312 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-27 22:29:13,229 pesapal_service 31056 40312 PesaPal token generation error: HTTPSConnectionPool(host='cybqa.pesapal.com', port=443): Max retries exceeded with url: /pesapalv3/api/Auth/RequestToken (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000001DC206A96A0>, 'Connection to cybqa.pesapal.com timed out. (connect timeout=30)'))
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\util\connection.py", line 85, in create_connection
+    raise err
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\util\connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connection.py", line 753, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connection.py", line 207, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.HTTPSConnection object at 0x000001DC206A96A0>, 'Connection to cybqa.pesapal.com timed out. (connect timeout=30)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\urllib3\util\retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='cybqa.pesapal.com', port=443): Max retries exceeded with url: /pesapalv3/api/Auth/RequestToken (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000001DC206A96A0>, 'Connection to cybqa.pesapal.com timed out. (connect timeout=30)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py", line 73, in get_access_token
+    response = requests.post(url, json=payload, headers=headers, timeout=30)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\George Mwangi\AppData\Local\Programs\Python\Python312\Lib\site-packages\requests\adapters.py", line 507, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='cybqa.pesapal.com', port=443): Max retries exceeded with url: /pesapalv3/api/Auth/RequestToken (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000001DC206A96A0>, 'Connection to cybqa.pesapal.com timed out. (connect timeout=30)'))
+ERROR 2025-10-27 22:29:13,640 pesapal_service 31056 40312 Failed to get access token for IPN registration
+INFO 2025-10-28 05:08:25,172 pesapal_service 40208 42592 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:08:25,178 pesapal_service 40208 42592 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:08:29,625 pesapal_service 40208 42592 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:09:13,283 autoreload 42880 26992 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py changed, reloading.
+INFO 2025-10-28 05:09:16,118 autoreload 33644 33736 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:16,874 pesapal_service 33644 33736 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:09:21,733 autoreload 33644 33736 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py changed, reloading.
+INFO 2025-10-28 05:09:24,643 autoreload 30672 38052 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:25,370 pesapal_service 30672 38052 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:09:29,346 autoreload 30672 38052 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:09:32,045 autoreload 32352 660 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:32,556 pesapal_service 32352 660 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:09:38,306 autoreload 32352 660 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:09:40,346 autoreload 35228 33376 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:40,825 pesapal_service 35228 33376 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:09:45,627 autoreload 35228 33376 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:09:48,597 autoreload 44600 37204 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:49,072 pesapal_service 44600 37204 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:09:52,699 autoreload 44600 37204 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:09:54,864 autoreload 18704 32656 Watching for file changes with StatReloader
+INFO 2025-10-28 05:09:55,459 pesapal_service 18704 32656 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:10:01,606 autoreload 18704 32656 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:10:04,146 autoreload 28756 7552 Watching for file changes with StatReloader
+INFO 2025-10-28 05:10:04,670 pesapal_service 28756 7552 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:10:08,335 autoreload 28756 7552 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:10:11,296 autoreload 15420 38632 Watching for file changes with StatReloader
+INFO 2025-10-28 05:10:11,899 pesapal_service 15420 38632 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:10:25,941 autoreload 15420 38632 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:10:28,179 autoreload 32392 30488 Watching for file changes with StatReloader
+INFO 2025-10-28 05:10:28,645 pesapal_service 32392 30488 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:11:49,299 autoreload 32392 30488 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py changed, reloading.
+INFO 2025-10-28 05:11:51,998 autoreload 19208 36076 Watching for file changes with StatReloader
+INFO 2025-10-28 05:11:52,605 pesapal_service 19208 36076 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:11:55,611 autoreload 19208 36076 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:11:58,733 autoreload 35292 25780 Watching for file changes with StatReloader
+INFO 2025-10-28 05:12:28,289 autoreload 35292 25780 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:12:30,584 autoreload 22952 40756 Watching for file changes with StatReloader
+INFO 2025-10-28 05:12:31,063 pesapal_service 22952 40756 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:12:45,565 pesapal_service 30392 5116 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:12:45,568 pesapal_service 30392 5116 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:12:47,563 pesapal_service 30392 5116 PesaPal access token generated and cached
+INFO 2025-10-28 05:12:49,266 autoreload 22952 40756 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py changed, reloading.
+INFO 2025-10-28 05:12:50,390 pesapal_service 30392 5116 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:12:51,380 pesapal_service 30392 5116 PesaPal access token generated and cached
+INFO 2025-10-28 05:12:51,742 autoreload 35080 39360 Watching for file changes with StatReloader
+INFO 2025-10-28 05:12:52,385 pesapal_service 35080 39360 PesaPal configured: env=sandbox, base_url=https://cybqa.pesapal.com/pesapalv3, key=GUSA***QYJu
+INFO 2025-10-28 05:12:52,506 pesapal_service 30392 5116 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+WARNING 2025-10-28 05:13:16,805 log 35080 26440 Not Found: /favicon.ico
+WARNING 2025-10-28 05:13:27,924 log 35080 39440 Unauthorized: /api/communication/reports/
+WARNING 2025-10-28 05:13:27,925 log 35080 28340 Unauthorized: /api/accounts/me/
+WARNING 2025-10-28 05:13:27,927 log 35080 16628 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 05:13:27,936 log 35080 29140 Unauthorized: /api/communication/reports/
+WARNING 2025-10-28 05:13:27,938 log 35080 16628 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 05:13:27,941 log 35080 28340 Unauthorized: /api/accounts/me/
+WARNING 2025-10-28 05:13:27,987 log 35080 28340 Unauthorized: /api/accounts/me/
+WARNING 2025-10-28 05:13:28,005 log 35080 28340 Unauthorized: /api/accounts/me/
+INFO 2025-10-28 05:25:22,977 pesapal_service 35080 10528 Requesting PesaPal token from: https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken
+ERROR 2025-10-28 05:25:25,027 pesapal_service 35080 10528 No token in response: {'error': {'error_type': 'api_error', 'code': 'invalid_consumer_key_or_secret_provided', 'message': ''}, 'status': '500'}
+ERROR 2025-10-28 05:25:25,029 pesapal_service 35080 10528 Failed to get access token for order submission
+WARNING 2025-10-28 05:25:25,100 log 35080 10528 Bad Request: /api/payments/initiate-rent-payment/70/
+INFO 2025-10-28 05:28:34,583 autoreload 29684 10656 Watching for file changes with StatReloader
+INFO 2025-10-28 05:28:35,409 pesapal_service 29684 10656 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:29:33,531 autoreload 38696 18160 Watching for file changes with StatReloader
+INFO 2025-10-28 05:29:34,002 pesapal_service 38696 18160 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:32:19,042 pesapal_service 38696 30512 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:32:20,844 pesapal_service 38696 30512 PesaPal access token generated and cached
+INFO 2025-10-28 05:32:20,846 pesapal_service 38696 30512 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:32:21,915 pesapal_service 38696 30512 PesaPal access token generated and cached
+INFO 2025-10-28 05:32:22,826 pesapal_service 38696 30512 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 05:32:22,830 pesapal_service 38696 30512 Submitting PesaPal order: RENT-108-FE19B8B4, Amount: 6005.0
+INFO 2025-10-28 05:32:22,830 pesapal_service 38696 30512 Payload: {
+  "id": "RENT-108-FE19B8B4",
+  "currency": "KES",
+  "amount": 6005.0,
+  "description": "Rent payment for 2",
+  "callback_url": "http://localhost:5173/tenant/payments?payment_id=108",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254778211794",
+    "email_address": "tenant5@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 05:32:25,097 pesapal_service 38696 30512 PesaPal order submitted: {'error': {'error_type': 'contractual_error', 'code': 'amount_exceeds_default_limit', 'message': 'Transaction amount exceeds limit.Contact support for assistance'}, 'status': '500'}
+INFO 2025-10-28 05:32:25,150 views_pesapal 38696 30512 PesaPal rent payment initiated: payment_id=108, tracking_id=None
+INFO 2025-10-28 05:36:21,495 autoreload 38696 18160 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:36:26,021 autoreload 17172 44108 Watching for file changes with StatReloader
+INFO 2025-10-28 05:36:26,726 pesapal_service 17172 44108 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:36:42,093 autoreload 17172 44108 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 05:36:44,383 autoreload 1560 14600 Watching for file changes with StatReloader
+INFO 2025-10-28 05:36:44,849 pesapal_service 1560 14600 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:37:06,478 autoreload 21008 41000 Watching for file changes with StatReloader
+INFO 2025-10-28 05:37:06,929 pesapal_service 21008 41000 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:39:06,871 pesapal_service 17448 31444 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:39:06,874 pesapal_service 17448 31444 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:39:08,731 pesapal_service 17448 31444 PesaPal access token generated and cached
+INFO 2025-10-28 05:39:09,614 pesapal_service 17448 31444 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 05:39:19,775 pesapal_service 30784 15632 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 05:39:19,779 pesapal_service 30784 15632 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:39:20,741 pesapal_service 30784 15632 PesaPal access token generated and cached
+INFO 2025-10-28 05:39:21,855 pesapal_service 30784 15632 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 05:39:47,774 pesapal_service 1560 19924 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:39:48,795 pesapal_service 1560 19924 PesaPal access token generated and cached
+INFO 2025-10-28 05:39:48,797 pesapal_service 1560 19924 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:39:49,777 pesapal_service 1560 19924 PesaPal access token generated and cached
+INFO 2025-10-28 05:39:50,701 pesapal_service 1560 19924 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 05:39:50,703 pesapal_service 1560 19924 Submitting PesaPal order: RENT-109-5865A4F2, Amount: 700.0
+INFO 2025-10-28 05:39:50,704 pesapal_service 1560 19924 Payload: {
+  "id": "RENT-109-5865A4F2",
+  "currency": "KES",
+  "amount": 700.0,
+  "description": "Rent payment for 2",
+  "callback_url": "http://localhost:5173/tenant/payments?payment_id=109",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254778211794",
+    "email_address": "tenant5@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 05:39:53,499 pesapal_service 1560 19924 PesaPal order submitted: {'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'merchant_reference': 'RENT-109-5865A4F2', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2', 'error': None, 'status': '200'}
+INFO 2025-10-28 05:39:53,554 views_pesapal 1560 19924 PesaPal rent payment initiated: payment_id=109, tracking_id=52d68008-fbe3-49eb-9783-db28ad8d66d2
+INFO 2025-10-28 05:40:44,563 pesapal_service 1560 43620 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:40:45,543 pesapal_service 1560 43620 PesaPal access token generated and cached
+INFO 2025-10-28 05:40:46,466 pesapal_service 1560 43620 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:40:47,548 pesapal_service 1560 43620 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:40:48,485 pesapal_service 1560 43620 PesaPal access token generated and cached
+INFO 2025-10-28 05:40:49,480 pesapal_service 1560 43620 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:40:50,550 pesapal_service 1560 43620 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:40:51,543 pesapal_service 1560 43620 PesaPal access token generated and cached
+INFO 2025-10-28 05:40:52,497 pesapal_service 1560 43620 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:40:53,555 pesapal_service 1560 43620 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:40:54,506 pesapal_service 1560 43620 PesaPal access token generated and cached
+INFO 2025-10-28 05:40:55,468 pesapal_service 1560 43620 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:40:56,561 pesapal_service 1560 43620 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:40:57,648 pesapal_service 1560 43620 PesaPal access token generated and cached
+INFO 2025-10-28 05:40:58,633 pesapal_service 1560 43620 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:40:59,863 pesapal_service 1560 41140 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:00,938 pesapal_service 1560 41140 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:02,046 pesapal_service 1560 41140 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:02,549 pesapal_service 1560 41140 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:03,564 pesapal_service 1560 41140 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:04,757 pesapal_service 1560 41140 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:06,342 pesapal_service 1560 41140 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:07,439 pesapal_service 1560 41140 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:08,388 pesapal_service 1560 41140 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:09,643 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:10,704 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:11,683 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:12,327 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:13,263 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:14,150 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:15,327 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:17,356 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:18,273 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:18,322 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:19,230 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:20,127 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:21,331 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:22,367 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:23,284 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:24,331 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:25,256 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:26,137 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:27,380 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:28,361 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:29,301 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:30,330 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:31,281 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:32,248 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:33,328 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:34,252 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:35,191 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:36,335 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:37,293 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:38,216 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:39,333 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:40,271 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:41,177 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:42,335 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:43,333 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:44,291 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:44,565 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:45,898 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:47,101 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:47,544 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:48,528 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:49,472 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:51,337 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:52,390 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:53,339 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:54,334 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:55,285 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:56,473 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:41:57,335 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:41:58,412 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:41:59,366 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:00,343 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:01,705 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:03,215 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:03,343 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:04,327 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:05,433 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:06,330 pesapal_service 1560 29712 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:07,350 pesapal_service 1560 29712 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:08,479 pesapal_service 1560 29712 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:09,645 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:10,662 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:12,548 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:12,577 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:14,578 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:18,837 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:18,906 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:21,528 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:23,844 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:23,883 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:25,135 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:26,260 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:26,285 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:27,539 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:28,610 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:28,645 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:29,847 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:31,489 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:31,514 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:33,175 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:34,164 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:34,183 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:35,295 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:36,666 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:36,691 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:37,786 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:39,165 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:39,186 pesapal_service 1560 35036 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:40,495 pesapal_service 1560 35036 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:41,746 pesapal_service 1560 35036 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:41,814 pesapal_service 1560 44068 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:42,925 pesapal_service 1560 44068 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:44,479 pesapal_service 1560 44068 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:44,527 pesapal_service 1560 44068 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:46,632 pesapal_service 1560 44068 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:48,508 pesapal_service 1560 44068 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:48,532 pesapal_service 1560 44068 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:49,846 pesapal_service 1560 44068 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:51,179 pesapal_service 1560 44068 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:42:51,204 pesapal_service 1560 44068 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:42:52,854 pesapal_service 1560 44068 PesaPal access token generated and cached
+INFO 2025-10-28 05:42:54,194 pesapal_service 1560 44068 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:43:23,635 pesapal_service 1560 17832 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:43:24,666 pesapal_service 1560 17832 PesaPal access token generated and cached
+INFO 2025-10-28 05:43:25,660 pesapal_service 1560 17832 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:44:23,646 pesapal_service 1560 26872 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:44:24,567 pesapal_service 1560 26872 PesaPal access token generated and cached
+INFO 2025-10-28 05:44:25,464 pesapal_service 1560 26872 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:45:23,672 pesapal_service 1560 14420 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:45:24,824 pesapal_service 1560 14420 PesaPal access token generated and cached
+INFO 2025-10-28 05:45:26,080 pesapal_service 1560 14420 Transaction status for 52d68008-fbe3-49eb-9783-db28ad8d66d2: {'payment_method': '', 'amount': 700.0, 'created_date': '2025-10-28T05:39:52.333', 'confirmation_code': '', 'order_tracking_id': '52d68008-fbe3-49eb-9783-db28ad8d66d2', 'payment_status_description': 'INVALID', 'description': None, 'message': 'Request processed successfully', 'payment_account': '', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2', 'status_code': 0, 'merchant_reference': 'RENT-109-5865A4F2', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': 'api_error', 'code': 'payment_details_not_found', 'message': 'Pending Payment', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=109&OrderTrackingId=52d68008-fbe3-49eb-9783-db28ad8d66d2&OrderMerchantReference=RENT-109-5865A4F2'}, 'status': '500'}
+INFO 2025-10-28 05:51:29,494 pesapal_service 1560 9288 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:51:31,210 pesapal_service 1560 9288 PesaPal access token generated and cached
+INFO 2025-10-28 05:51:31,212 pesapal_service 1560 9288 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:51:32,916 pesapal_service 1560 9288 PesaPal access token generated and cached
+INFO 2025-10-28 05:51:33,965 pesapal_service 1560 9288 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 05:51:33,967 pesapal_service 1560 9288 Submitting PesaPal order: RENT-110-4AB75068, Amount: 10.0
+INFO 2025-10-28 05:51:33,967 pesapal_service 1560 9288 Payload: {
+  "id": "RENT-110-4AB75068",
+  "currency": "KES",
+  "amount": 10.0,
+  "description": "Rent payment for 2",
+  "callback_url": "http://localhost:5173/tenant/payments?payment_id=110",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254778211794",
+    "email_address": "tenant5@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 05:51:36,340 pesapal_service 1560 9288 PesaPal order submitted: {'order_tracking_id': '69f6c282-8623-4ab9-a9ef-db28aee6e19a', 'merchant_reference': 'RENT-110-4AB75068', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=69f6c282-8623-4ab9-a9ef-db28aee6e19a', 'error': None, 'status': '200'}
+INFO 2025-10-28 05:51:36,415 views_pesapal 1560 9288 PesaPal rent payment initiated: payment_id=110, tracking_id=69f6c282-8623-4ab9-a9ef-db28aee6e19a
+INFO 2025-10-28 05:52:10,952 pesapal_service 1560 30812 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:52:11,933 pesapal_service 1560 30812 PesaPal access token generated and cached
+INFO 2025-10-28 05:52:12,864 pesapal_service 1560 30812 Transaction status for 69f6c282-8623-4ab9-a9ef-db28aee6e19a: {'payment_method': 'MpesaKE', 'amount': 10.0, 'created_date': '2025-10-28T05:52:09.607', 'confirmation_code': 'TJSPV8G2AK', 'order_tracking_id': '69f6c282-8623-4ab9-a9ef-db28aee6e19a', 'payment_status_description': 'Completed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx14334', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=110&OrderTrackingId=69f6c282-8623-4ab9-a9ef-db28aee6e19a&OrderMerchantReference=RENT-110-4AB75068', 'status_code': 1, 'merchant_reference': 'RENT-110-4AB75068', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+INFO 2025-10-28 05:52:12,867 views_pesapal 1560 30812 Transaction status: completed, method: MpesaKE, code: TJSPV8G2AK
+WARNING 2025-10-28 05:52:12,867 views_pesapal 1560 30812 No cached data found for 69f6c282-8623-4ab9-a9ef-db28aee6e19a
+INFO 2025-10-28 05:52:30,243 pesapal_service 1560 24176 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 05:52:31,170 pesapal_service 1560 24176 PesaPal access token generated and cached
+INFO 2025-10-28 05:52:32,191 pesapal_service 1560 24176 Transaction status for 69f6c282-8623-4ab9-a9ef-db28aee6e19a: {'payment_method': 'MpesaKE', 'amount': 10.0, 'created_date': '2025-10-28T05:52:09.607', 'confirmation_code': 'TJSPV8G2AK', 'order_tracking_id': '69f6c282-8623-4ab9-a9ef-db28aee6e19a', 'payment_status_description': 'Completed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx14334', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=110&OrderTrackingId=69f6c282-8623-4ab9-a9ef-db28aee6e19a&OrderMerchantReference=RENT-110-4AB75068', 'status_code': 1, 'merchant_reference': 'RENT-110-4AB75068', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+WARNING 2025-10-28 06:07:35,776 log 1560 36080 Bad Request: /api/payments/initiate-subscription-payment/
+INFO 2025-10-28 06:10:00,000 autoreload 1560 14600 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 06:10:06,510 autoreload 38964 13076 Watching for file changes with StatReloader
+INFO 2025-10-28 06:10:07,881 pesapal_service 38964 13076 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 06:10:20,552 autoreload 38964 13076 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\pesapal_service.py changed, reloading.
+INFO 2025-10-28 06:10:24,052 autoreload 38596 36284 Watching for file changes with StatReloader
+INFO 2025-10-28 06:10:24,529 pesapal_service 38596 36284 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 06:10:40,602 autoreload 38596 36284 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 06:10:43,026 autoreload 44820 45832 Watching for file changes with StatReloader
+INFO 2025-10-28 06:10:43,532 pesapal_service 44820 45832 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 06:11:24,439 autoreload 18800 37656 Watching for file changes with StatReloader
+INFO 2025-10-28 06:11:24,856 pesapal_service 18800 37656 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 06:12:44,618 pesapal_service 44820 8116 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 06:12:46,502 pesapal_service 44820 8116 PesaPal access token generated and cached
+INFO 2025-10-28 06:12:46,504 pesapal_service 44820 8116 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 06:12:47,428 pesapal_service 44820 8116 PesaPal access token generated and cached
+INFO 2025-10-28 06:12:48,338 pesapal_service 44820 8116 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 06:12:48,341 pesapal_service 44820 8116 Submitting PesaPal order: SUB-4-806DB17A, Amount: 2000.0
+INFO 2025-10-28 06:12:48,341 pesapal_service 44820 8116 Payload: {
+  "id": "SUB-4-806DB17A",
+  "currency": "KES",
+  "amount": 2000.0,
+  "description": "Subscription payment for starter plan",
+  "callback_url": "http://localhost:5173/landlord/subscription?payment_id=4",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254723456789",
+    "email_address": "landlord2@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 06:12:50,545 pesapal_service 44820 8116 PesaPal order submitted: {'order_tracking_id': '94ad2632-06af-42e2-b1b3-db28f15930db', 'merchant_reference': 'SUB-4-806DB17A', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=94ad2632-06af-42e2-b1b3-db28f15930db', 'error': None, 'status': '200'}
+INFO 2025-10-28 06:12:50,589 views_pesapal 44820 8116 PesaPal subscription payment initiated: id=4, tracking_id=94ad2632-06af-42e2-b1b3-db28f15930db
+INFO 2025-10-28 07:03:54,159 autoreload 44820 45832 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:03:58,505 autoreload 40856 11784 Watching for file changes with StatReloader
+INFO 2025-10-28 07:03:59,278 pesapal_service 40856 11784 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:04:07,023 autoreload 40856 11784 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:04:09,354 autoreload 44040 20172 Watching for file changes with StatReloader
+INFO 2025-10-28 07:04:10,013 pesapal_service 44040 20172 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:04:23,773 autoreload 44040 20172 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:04:25,926 autoreload 33964 3604 Watching for file changes with StatReloader
+INFO 2025-10-28 07:04:26,607 pesapal_service 33964 3604 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:04:42,690 autoreload 33964 3604 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:04:45,137 autoreload 45960 38196 Watching for file changes with StatReloader
+INFO 2025-10-28 07:04:45,656 pesapal_service 45960 38196 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:07:05,934 autoreload 45960 38196 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:07:08,371 autoreload 13296 36740 Watching for file changes with StatReloader
+INFO 2025-10-28 07:07:08,870 pesapal_service 13296 36740 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:31:10,260 autoreload 13296 36740 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:31:13,172 autoreload 17480 16132 Watching for file changes with StatReloader
+INFO 2025-10-28 07:31:13,648 pesapal_service 17480 16132 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:31:22,998 autoreload 17480 16132 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:31:25,053 autoreload 20716 3996 Watching for file changes with StatReloader
+INFO 2025-10-28 07:31:25,551 pesapal_service 20716 3996 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 07:32:02,285 log 20716 22428 Bad Request: /api/accounts/token/
+INFO 2025-10-28 07:32:36,931 payment_utils 20716 45944 Payment calculation - Amount: 12.0, Fee: 0.42, Total: 12.42
+ERROR 2025-10-28 07:32:36,934 views_pesapal 20716 45944 Rent payment initiation error: name 'amount' is not defined
+Traceback (most recent call last):
+  File "C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py", line 102, in initiate_rent_payment
+    amount=amount,
+           ^^^^^^
+NameError: name 'amount' is not defined
+ERROR 2025-10-28 07:32:36,970 log 20716 45944 Internal Server Error: /api/payments/initiate-rent-payment/70/
+INFO 2025-10-28 07:33:05,200 autoreload 20716 3996 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:33:09,998 autoreload 36748 30480 Watching for file changes with StatReloader
+INFO 2025-10-28 07:33:10,999 pesapal_service 36748 30480 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:33:58,153 autoreload 36748 30480 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:34:02,171 autoreload 16128 23860 Watching for file changes with StatReloader
+INFO 2025-10-28 07:34:04,725 pesapal_service 16128 23860 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:36:30,212 payment_utils 16128 18444 Payment calculation - Amount: 12.0, Fee: 0.42, Total: 12.42
+INFO 2025-10-28 07:36:30,396 pesapal_service 16128 18444 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 07:36:32,774 pesapal_service 16128 18444 PesaPal access token generated and cached
+INFO 2025-10-28 07:36:32,778 pesapal_service 16128 18444 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 07:36:34,266 pesapal_service 16128 18444 PesaPal access token generated and cached
+INFO 2025-10-28 07:36:35,681 pesapal_service 16128 18444 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 07:36:35,696 pesapal_service 16128 18444 Submitting PesaPal order: RENT-111-32BA80C0, Amount: 12.42
+INFO 2025-10-28 07:36:35,698 pesapal_service 16128 18444 Payload: {
+  "id": "RENT-111-32BA80C0",
+  "currency": "KES",
+  "amount": 12.42,
+  "description": "Rent payment for 2",
+  "callback_url": "http://localhost:5173/tenant/payments?payment_id=111",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254778211794",
+    "email_address": "tenant5@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 07:36:38,143 pesapal_service 16128 18444 PesaPal order submitted: {'order_tracking_id': '6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba', 'merchant_reference': 'RENT-111-32BA80C0', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba', 'error': None, 'status': '200'}
+INFO 2025-10-28 07:36:38,218 views_pesapal 16128 18444 PesaPal rent payment initiated: payment_id=111, tracking_id=6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba
+INFO 2025-10-28 07:37:32,701 pesapal_service 16128 19876 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 07:37:33,884 pesapal_service 16128 19876 PesaPal access token generated and cached
+INFO 2025-10-28 07:37:35,106 pesapal_service 16128 19876 Transaction status for 6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba: {'payment_method': 'MpesaKE', 'amount': 13.0, 'created_date': '2025-10-28T07:37:30.85', 'confirmation_code': '13139751', 'order_tracking_id': '6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba', 'payment_status_description': 'Failed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx14334', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=111&OrderTrackingId=6e9a8e2e-b7d7-4e8e-9c06-db2867cd3eba&OrderMerchantReference=RENT-111-32BA80C0', 'status_code': 2, 'merchant_reference': 'RENT-111-32BA80C0', 'account_number': None, 'payment_status_code': 'request_terminated_by_user', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+INFO 2025-10-28 07:37:35,117 views_pesapal 16128 19876 Transaction status: failed, method: MpesaKE, code: 13139751
+INFO 2025-10-28 07:37:35,178 views_pesapal 16128 19876 Payment 111 marked as failed: failed
+INFO 2025-10-28 07:38:12,782 autoreload 16128 23860 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:38:18,280 autoreload 42248 34572 Watching for file changes with StatReloader
+INFO 2025-10-28 07:38:19,574 pesapal_service 42248 34572 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:38:35,344 autoreload 42248 34572 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:38:39,205 autoreload 21920 42276 Watching for file changes with StatReloader
+INFO 2025-10-28 07:38:40,268 pesapal_service 21920 42276 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:38:54,840 autoreload 21920 42276 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:39:01,007 autoreload 2176 39716 Watching for file changes with StatReloader
+INFO 2025-10-28 07:39:01,891 pesapal_service 2176 39716 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:39:29,824 autoreload 2176 39716 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:39:35,547 autoreload 20464 41440 Watching for file changes with StatReloader
+INFO 2025-10-28 07:39:36,728 pesapal_service 20464 41440 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 07:39:52,408 autoreload 20464 41440 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-28 07:39:56,774 autoreload 35668 7712 Watching for file changes with StatReloader
+INFO 2025-10-28 07:39:57,797 pesapal_service 35668 7712 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu

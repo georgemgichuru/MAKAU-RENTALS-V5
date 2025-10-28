@@ -290,21 +290,11 @@ EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=5, cast=int)
 # Default to False to avoid dependency on Celery in development
 EMAIL_ASYNC_ENABLED = config('EMAIL_ASYNC_ENABLED', default=False, cast=bool)
 
-# Mpesa Configuration
-# TODO: Update these settings with your actual Mpesa credentials
-MPESA_ENV = "sandbox"  # or "production"
-MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY', default='')
-MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET', default='')
-MPESA_SHORTCODE = config('MPESA_SHORTCODE', default='')
-MPESA_PASSKEY = config('MPESA_PASSKEY', default='')
-MPESA_INITIATOR_NAME = config('MPESA_INITIATOR_NAME', default='')  # For B2C payments
-MPESA_SECURITY_CREDENTIAL = config('MPESA_SECURITY_CREDENTIAL', default='')  # For B2C payments
-# Provide explicit callback URLs expected by payment views. These are required and loaded from .env
-MPESA_RENT_CALLBACK_URL = config('MPESA_RENT_CALLBACK_URL')
-MPESA_SUBSCRIPTION_CALLBACK_URL = config('MPESA_SUBSCRIPTION_CALLBACK_URL')
-MPESA_DEPOSIT_CALLBACK_URL = config('MPESA_DEPOSIT_CALLBACK_URL')
-MPESA_B2C_RESULT_URL = config('MPESA_B2C_RESULT_URL')
-# MPESA_B2C_TIMEOUT_URL = config('MPESA_B2C_TIMEOUT_URL', default=MPESA_B2C_RESULT_URL)  # Not implemented yet
+# PesaPal Configuration
+PESAPAL_CONSUMER_KEY = config('PESAPAL_CONSUMER_KEY')
+PESAPAL_CONSUMER_SECRET = config('PESAPAL_CONSUMER_SECRET')
+PESAPAL_ENV = config('PESAPAL_ENV', default='sandbox')  # 'sandbox' or 'live'
+PESAPAL_IPN_URL = config('PESAPAL_IPN_URL')
 
 # Logging Configuration - Enhanced for payment callbacks
 LOGGING = {

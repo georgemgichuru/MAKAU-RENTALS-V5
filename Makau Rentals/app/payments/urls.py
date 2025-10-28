@@ -1,12 +1,9 @@
 from django.urls import path
-from .views import (
-    # STK Push + Callbacks
-    stk_push,
-    stk_push_subscription,
-    mpesa_rent_callback,
-    mpesa_subscription_callback,
-    mpesa_b2c_callback,
-    mpesa_deposit_callback,
+from .views_pesapal import (
+    # PesaPal Payment Initiation
+    initiate_rent_payment,
+    initiate_subscription_payment,
+    pesapal_ipn_callback,
 
     # DRF views
     PaymentListCreateView,
@@ -15,13 +12,14 @@ from .views import (
     SubscriptionPaymentDetailView,
     RentSummaryView,
     UnitTypeListView,
-    BulkRentUpdateView, UnitRentUpdateView,
+    BulkRentUpdateView, 
+    UnitRentUpdateView,
     InitiateDepositPaymentView,
     InitiateDepositPaymentRegistrationView,
     DepositPaymentStatusView,
     RentPaymentStatusView,
     CleanupPendingPaymentsView,
-    TestMpesaView,
+    TestPesaPalView,
 
     # CSV reports
     LandLordCSVView as landlord_csv,
@@ -32,14 +30,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     # ------------------------------
-    # M-PESA STK PUSH + CALLBACKS
+    # PESAPAL PAYMENT INITIATION
     # ------------------------------
-    path("stk-push/<int:unit_id>/", stk_push, name="stk-push"),
-    path("stk-push-subscription/", stk_push_subscription, name="stk-push-subscription"),
-    path("callback/rent/", mpesa_rent_callback, name="mpesa-rent-callback"),
-    path("callback/subscription/", mpesa_subscription_callback, name="mpesa-subscription-callback"),
-    path("callback/b2c/", mpesa_b2c_callback, name="mpesa-b2c-callback"),
-    path("callback/deposit/", mpesa_deposit_callback, name="mpesa-deposit-callback"),
+    path("initiate-rent-payment/<int:unit_id>/", initiate_rent_payment, name="initiate-rent-payment"),
+    path("initiate-subscription-payment/", initiate_subscription_payment, name="initiate-subscription-payment"),
+    path("callback/pesapal-ipn/", pesapal_ipn_callback, name="pesapal-ipn-callback"),
 
     # ------------------------------
     # RENT PAYMENTS (DRF)
@@ -66,6 +61,7 @@ urlpatterns = [
     path("initiate-deposit/", InitiateDepositPaymentView.as_view(), name="initiate-deposit"),
     path("initiate-deposit-registration/", InitiateDepositPaymentRegistrationView.as_view(), name="initiate-deposit-registration"),
     path('deposit-status/<int:payment_id>/', DepositPaymentStatusView.as_view(), name='deposit-status'),
+    
     # ------------------------------
     # CSV REPORTS
     # ------------------------------
@@ -77,10 +73,12 @@ urlpatterns = [
     # CLEANUP AND SIMULATION ENDPOINTS
     # ------------------------------
     path("cleanup-pending-payments/", CleanupPendingPaymentsView.as_view(), name="cleanup-pending-payments"),
+    
     # ------------------------------
     # TEST ENDPOINTS
     # ------------------------------
-    path("test-mpesa/", TestMpesaView.as_view(), name="test-mpesa"),
+    path("test-pesapal/", TestPesaPalView.as_view(), name="test-pesapal"),
+    
     # Bulk rent update
     path("bulk-rent-update/", BulkRentUpdateView.as_view(), name="bulk-rent-update"),
     path("unit-rent-update/<int:unit_id>/", UnitRentUpdateView.as_view(), name="unit-rent-update"),

@@ -4,6 +4,7 @@ import { useTenantToast } from "../../context/TenantToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { AppContext } from "../../context/AppContext";
 import { paymentsAPI } from "../../services/api";
+import PesaPalPaymentModal from "../PesaPalPaymentModal";
 import {
   FaMobileAlt,
   FaCreditCard,
@@ -24,7 +25,6 @@ const TenantPaymentCenter = () => {
 
   const [formData, setFormData] = useState({
     amount: "",
-    phoneNumber: "",
     months: 0
   });
   const [isProcessing, setIsProcessing] = useState(false);
@@ -33,6 +33,12 @@ const TenantPaymentCenter = () => {
   const [tenantPayments, setTenantPayments] = useState([]);
   const [errors, setErrors] = useState({});
   const [pollingPaymentId, setPollingPaymentId] = useState(null);
+  
+  // PesaPal Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pesapalUrl, setPesapalUrl] = useState('');
+  const [currentPaymentId, setCurrentPaymentId] = useState(null);
+  const [currentPaymentAmount, setCurrentPaymentAmount] = useState(null);
 
   const getEffectiveRentDue = (tenant) => {
     if (!tenant) return 0;
@@ -68,18 +74,12 @@ const TenantPaymentCenter = () => {
             date: payment.date || payment.created_at,
             status: payment.status_display || payment.status,
             reference: payment.reference_number || payment.mpesa_receipt,
-            phone: payment.phone,
-            paymentMethod: 'M-PESA',
+            paymentMethod: 'PesaPal',
             mpesa_receipt: payment.mpesa_receipt
           }))
           .sort((a, b) => new Date(b.date) - new Date(a.date));
         
         setTenantPayments(payments);
-
-        // Set default phone number
-        if (tenant?.phone && !formData.phoneNumber) {
-          setFormData(prev => ({ ...prev, phoneNumber: tenant.phone }));
-        }
       } catch (err) {
         console.error('Error fetching tenant data:', err);
         showToast('Failed to load payment history', 'error');
@@ -91,6 +91,20 @@ const TenantPaymentCenter = () => {
       fetchTenantData();
     }
   }, [user]);
+
+  // Check for payment status on component mount (after redirect return)
+  useEffect(() => {
+    const pendingPaymentId = localStorage.getItem('pending_payment_id');
+    const paymentType = localStorage.getItem('payment_type');
+    
+    if (pendingPaymentId && paymentType === 'rent') {
+      // Start polling for this payment
+      setPollingPaymentId(parseInt(pendingPaymentId));
+      // Clear stored data
+      localStorage.removeItem('pending_payment_id');
+      localStorage.removeItem('payment_type');
+    }
+  }, []);
 
   // Poll payment status
   useEffect(() => {
@@ -109,6 +123,7 @@ const TenantPaymentCenter = () => {
           });
           showToast('Payment completed successfully!', 'success');
           setPollingPaymentId(null);
+          setIsProcessing(false);
           
           // Refresh payment history
           const historyRes = await paymentsAPI.getPaymentHistory();
@@ -119,8 +134,7 @@ const TenantPaymentCenter = () => {
               date: payment.date || payment.created_at,
               status: payment.status_display || payment.status,
               reference: payment.reference_number || payment.mpesa_receipt,
-              phone: payment.phone,
-              paymentMethod: 'M-PESA',
+              paymentMethod: 'PesaPal',
               mpesa_receipt: payment.mpesa_receipt
             }))
             .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -137,6 +151,7 @@ const TenantPaymentCenter = () => {
           });
           showToast('Payment failed', 'error');
           setPollingPaymentId(null);
+          setIsProcessing(false);
         }
       } catch (error) {
         console.error('Error polling payment status:', error);
@@ -146,6 +161,7 @@ const TenantPaymentCenter = () => {
     // Stop polling after 5 minutes
     const timeout = setTimeout(() => {
       setPollingPaymentId(null);
+      setIsProcessing(false);
       if (paymentStatus?.type !== 'success') {
         setPaymentStatus({
           type: 'error',
@@ -176,12 +192,6 @@ const TenantPaymentCenter = () => {
       }
     } else if (effectiveRentDue !== 0 && Number(formData.months) === 0 && parseFloat(formData.amount) > effectiveRentDue) {
       newErrors.amount = "Amount cannot exceed outstanding balance (or use the months option to prepay)";
-    }
-
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = "Phone number is required";
-    } else if (!/^\+254[0-9]{9}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid Kenyan phone number (+254XXXXXXXXX)";
     }
 
     setErrors(newErrors);
@@ -240,43 +250,64 @@ const TenantPaymentCenter = () => {
     setErrors({});
 
     try {
-      const formattedPhone = formatPhoneNumber(formData.phoneNumber);
-      
-      // Call backend STK push endpoint
-      const response = await paymentsAPI.stkPush(currentTenant.unitId, {
-        phone_number: formattedPhone,
+      // Call PesaPal payment initiation endpoint
+      const response = await paymentsAPI.initiateRentPayment(currentTenant.unitId, {
         amount: parseFloat(formData.amount)
       });
 
-      if (response.data.success) {
-        const paymentId = response.data.payment_id;
-        const checkoutRequestId = response.data.checkout_request_id;
-
+      if (response.data.success && response.data.redirect_url) {
+        // Store payment ID for status checking
+        localStorage.setItem('pending_payment_id', response.data.payment_id);
+        localStorage.setItem('payment_type', 'rent');
+        
         setPaymentStatus({
-          type: 'pending',
-          message: 'Payment request sent. Please check your phone for the M-Pesa prompt.',
-          transactionId: checkoutRequestId
+          type: 'redirecting',
+          message: 'Opening payment gateway...',
+          transactionId: response.data.order_tracking_id
         });
-        showToast('Payment request sent. Check your phone for M-Pesa prompt.', 'info');
-
-        // Start polling for payment status
-        setPollingPaymentId(paymentId);
-
-        // Reset form
-        setFormData({ amount: "", phoneNumber: formattedPhone, months: 0 });
+        
+        // Show modal instead of redirecting
+        setCurrentPaymentId(response.data.payment_id);
+        setCurrentPaymentAmount(parseFloat(formData.amount));
+        setPesapalUrl(response.data.redirect_url);
+        setShowPaymentModal(true);
+        setIsProcessing(false);
+        
       } else {
         const errorMsg = response.data.error || response.data.details || 'Payment failed. Please try again.';
         setPaymentStatus({ type: 'error', message: errorMsg });
         showToast(errorMsg, 'error');
+        setIsProcessing(false);
       }
     } catch (error) {
       console.error('Payment error:', error);
       const errorMsg = error.response?.data?.error || error.response?.data?.details || 'An error occurred while processing your payment.';
       setPaymentStatus({ type: 'error', message: errorMsg });
       showToast(errorMsg, 'error');
-    } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Handle payment modal close
+  const handleCloseModal = () => {
+    setShowPaymentModal(false);
+    setPesapalUrl('');
+    setPaymentStatus(null);
+  };
+
+  // Handle payment completion from modal
+  const handlePaymentComplete = (paymentId) => {
+    setShowPaymentModal(false);
+    setPesapalUrl('');
+    
+    // Start polling for payment status
+    setPollingPaymentId(paymentId);
+    setPaymentStatus({
+      type: 'pending',
+      message: 'Verifying payment...'
+    });
+    
+    showToast('Payment completed! Verifying...', 'success');
   };
 
   const effectiveRentDue = getEffectiveRentDue(currentTenant);
@@ -407,61 +438,42 @@ const TenantPaymentCenter = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-600 mb-1">M-Pesa Phone Number</label>
-                  <input
-                    name="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="+254712345678"
-                    className={`w-full px-3 py-2 border rounded-md text-sm ${errors.phoneNumber ? 'border-rose-300' : 'border-gray-200'}`}
-                    disabled={isProcessing}
-                  />
-                  {errors.phoneNumber && <p className="text-xs text-rose-600 mt-1">{errors.phoneNumber}</p>}
-                  <p className="text-xs text-slate-500 mt-1">Use your M-Pesa registered number</p>
-                </div>
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  type="submit"
+                  disabled={isProcessing || pollingPaymentId || (effectiveRentDue === 0 && Number(formData.months) === 0)}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-md text-white bg-slate-700 hover:bg-slate-800 text-sm disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <>
+                      <FaSpinner className="animate-spin" /> Processing
+                    </>
+                  ) : pollingPaymentId ? (
+                    <>
+                      <FaSpinner className="animate-spin" /> Verifying
+                    </>
+                  ) : (
+                    <>
+                      <FaCreditCard /> Pay Now
+                    </>
+                  )}
+                </button>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="submit"
-                    disabled={isProcessing || pollingPaymentId || (effectiveRentDue === 0 && Number(formData.months) === 0)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-white bg-slate-700 hover:bg-slate-800 text-sm disabled:opacity-50"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <FaSpinner className="animate-spin" /> Processing
-                      </>
-                    ) : pollingPaymentId ? (
-                      <>
-                        <FaSpinner className="animate-spin" /> Verifying
-                      </>
-                    ) : (
-                      <>
-                        <FaCreditCard /> Pay with M-Pesa
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { 
-                      const currentPhone = formData.phoneNumber || currentTenant?.phone || '';
-                      setFormData({ 
-                        amount: '', 
-                        phoneNumber: currentPhone, 
-                        months: 0 
-                      }); 
-                      setErrors({}); 
-                      setPaymentStatus(null);
-                    }}
-                    className="px-4 py-2 rounded-md border text-sm text-slate-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isProcessing || pollingPaymentId}
-                  >
-                    Reset
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => { 
+                    setFormData({ 
+                      amount: '', 
+                      months: 0 
+                    }); 
+                    setErrors({}); 
+                    setPaymentStatus(null);
+                  }}
+                  className="px-4 py-2 rounded-md border text-sm text-slate-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isProcessing || pollingPaymentId}
+                >
+                  Reset
+                </button>
               </div>
 
               {effectiveRentDue === 0 && Number(formData.months) === 0 && (
@@ -471,8 +483,26 @@ const TenantPaymentCenter = () => {
               )}
             </form>
 
-            <div className="text-xs text-slate-500">
-              <FaInfoCircle className="inline-block mr-2" /> You will receive the M-Pesa prompt on your phone—enter your PIN to complete.
+            <div className="text-xs text-slate-500 bg-blue-50 border border-blue-100 rounded p-3">
+              <FaInfoCircle className="inline-block mr-2" /> You will be redirected to PesaPal to complete your payment securely using M-Pesa, card, or other payment methods.
+            </div>
+
+            {/* Payment Tip */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mt-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-green-800 mb-1">💡 Save Time & Money</h3>
+                  <p className="text-xs text-green-700 leading-relaxed">
+                    <strong>Pro Tip:</strong> Pay for multiple months at once to reduce the number of transactions and save yourself the hassle of monthly payments. 
+                    It's more convenient and helps you budget better!
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -517,9 +547,7 @@ const TenantPaymentCenter = () => {
                     {payment.mpesa_receipt && (
                       <p className="text-xs text-slate-500">Receipt: {payment.mpesa_receipt}</p>
                     )}
-                    {payment.phone && (
-                      <p className="text-xs text-slate-500">{payment.phone} • {payment.paymentMethod || 'M-PESA'}</p>
-                    )}
+                    <p className="text-xs text-slate-500">{payment.paymentMethod || 'PesaPal'}</p>
                   </div>
                 </div>
               </div>
@@ -527,6 +555,16 @@ const TenantPaymentCenter = () => {
           </div>
         </div>
       </div>
+
+      {/* PesaPal Payment Modal */}
+      <PesaPalPaymentModal
+        isOpen={showPaymentModal}
+        redirectUrl={pesapalUrl}
+        onClose={handleCloseModal}
+        onPaymentComplete={handlePaymentComplete}
+        paymentId={currentPaymentId}
+        amount={currentPaymentAmount}
+      />
     </div>
   );
 };

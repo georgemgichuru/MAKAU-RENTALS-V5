@@ -55,7 +55,6 @@ const LoginForm = ({ onLogin }) => {
     monthlyRent: 0,
     depositAmount: 0,
     idDocument: null,
-    mpesaPhone: '',
     password: '',
     confirmPassword: ''
   });
@@ -372,16 +371,12 @@ const LoginForm = ({ onLogin }) => {
     }
   };
 
-  // REAL API: Process tenant deposit payment
+  // REAL API: Process tenant deposit payment using PesaPal
   const processTenantDepositPayment = async () => {
     setIsLoading(true);
     setPaymentStatus(null);
 
     try {
-      if (!validateKenyanPhone(tenantData.mpesaPhone)) {
-        throw new Error('Invalid M-Pesa phone number');
-      }
-
       // Ensure we have a session ID
       const currentSessionId = sessionId || generateUUID();
       if (!sessionId) {
@@ -391,15 +386,13 @@ const LoginForm = ({ onLogin }) => {
       console.log('Processing deposit payment:', {
         unit_id: tenantData.selectedRoom,
         amount: tenantData.depositAmount,
-        phone: tenantData.mpesaPhone,
         session_id: currentSessionId
       });
 
       // Real payment processing for registration (use unauthenticated endpoint)
       const paymentData = {
-        unit_id: parseInt(tenantData.selectedRoom), // Ensure it's a number
-        phone_number: tenantData.mpesaPhone.replace(/\s+/g, ''), // Remove spaces
-        amount: Math.round(tenantData.depositAmount), // ✅ SEND AMOUNT EXPLICITLY
+        unit_id: parseInt(tenantData.selectedRoom),
+        amount: Math.round(tenantData.depositAmount),
         session_id: currentSessionId
       };
 
@@ -407,13 +400,25 @@ const LoginForm = ({ onLogin }) => {
 
       console.log('Payment response:', response.data);
 
-      setPaymentStatus({
-        type: 'success',
-        message: 'Deposit payment initiated successfully! Check your phone for M-Pesa prompt.',
-        transactionId: response.data.checkout_request_id,
-        paymentId: response.data.payment_id
-      });
-      return true;
+      if (response.data.success && response.data.redirect_url) {
+        // Store payment info for status checking after redirect
+        localStorage.setItem('pending_payment_id', response.data.payment_id);
+        localStorage.setItem('payment_type', 'deposit');
+        localStorage.setItem('registration_session_id', currentSessionId);
+        
+        setPaymentStatus({
+          type: 'redirecting',
+          message: 'Redirecting to payment gateway...',
+          transactionId: response.data.order_tracking_id,
+          paymentId: response.data.payment_id
+        });
+        
+        // Redirect to PesaPal
+        window.location.href = response.data.redirect_url;
+        return true;
+      } else {
+        throw new Error(response.data.error || 'Payment initiation failed');
+      }
     } catch (err) {
       console.error('Payment error:', err);
       const errorMessage = err.response?.data?.error ||
@@ -584,7 +589,6 @@ const LoginForm = ({ onLogin }) => {
       monthlyRent: 0,
       depositAmount: 0,
       idDocument: null,
-      mpesaPhone: '',
       password: '',
       confirmPassword: ''
     });
@@ -1338,27 +1342,12 @@ const LoginForm = ({ onLogin }) => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">M-Pesa Phone Number *</label>
-          <input
-            type="tel"
-            value={tenantData.mpesaPhone}
-            onChange={(e) => setTenantData(prev => ({ ...prev, mpesaPhone: e.target.value }))}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="+254712345678"
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            You will receive an M-Pesa prompt on this number
-          </p>
-        </div>
-
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <CreditCard className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-blue-700 text-sm">
-                Click "Pay Now" to initiate the M-Pesa payment. You will receive a prompt on your phone to complete the payment.
+                Click "Pay Now" to be redirected to PesaPal payment gateway. You can pay using M-Pesa, cards, or other available payment methods.
               </p>
             </div>
           </div>
@@ -1374,7 +1363,7 @@ const LoginForm = ({ onLogin }) => {
         </button>
         <button
           onClick={handleTenantNext}
-          disabled={isLoading || !tenantData.mpesaPhone}
+          disabled={isLoading}
           className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center"
         >
           {isLoading ? (
@@ -2181,7 +2170,7 @@ const LoginForm = ({ onLogin }) => {
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
             <div className="flex items-center justify-center mb-2">
               <Building className="w-8 h-8 mr-2" />
-              <h1 className="text-2xl font-bold">RentFlow</h1>
+              <h1 className="text-2xl font-bold">Makao Rentals</h1>
             </div>
             <p className="opacity-90">Streamlined Rental Management</p>
           </div>

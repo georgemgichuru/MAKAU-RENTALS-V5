@@ -8,6 +8,19 @@ import {
 
 const AdminSettings = () => {
   const navigate = useNavigate();
+  
+  // Get user data from localStorage
+  const userData = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')) : {};
+
+  // Account info state
+  const [firstName, setFirstName] = useState(userData.first_name || '');
+  const [lastName, setLastName] = useState(userData.last_name || '');
+  const [email, setEmail] = useState(userData.email || '');
+  const [phone, setPhone] = useState(userData.phone_number || '');
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [accountSuccess, setAccountSuccess] = useState('');
+  
   const [selectedReminderDates, setSelectedReminderDates] = useState([]);
   const [reminderTemplate, setReminderTemplate] = useState({
     subject: 'Rent Reminder',
@@ -44,6 +57,42 @@ Makao Center`
     { value: '20', label: '20th' },
     { value: '25', label: '25th' },
   ];
+
+  // Update account info handler
+  const handleAccountUpdate = async (e) => {
+    e.preventDefault();
+    setAccountLoading(true);
+    setAccountError('');
+    setAccountSuccess('');
+    try {
+      const response = await api.put(`/accounts/users/${userData.id}/update/`, {
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone_number: phone,
+      });
+      
+      if (response && response.data) {
+        setAccountSuccess('Account information updated successfully.');
+        // Update localStorage with new data
+        const updatedUserData = {
+          ...userData,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone_number: phone
+        };
+        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        
+        // Auto-clear success message after 4 seconds
+        setTimeout(() => setAccountSuccess(''), 4000);
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Failed to update account information.';
+      setAccountError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
+    setAccountLoading(false);
+  };
 
   const handleDateToggle = (date) => {
     setSelectedReminderDates(prev => 
@@ -172,6 +221,73 @@ Makao Center`,
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
       <p className="text-gray-600">Manage your account settings and preferences</p>
+
+      {/* Account Settings */}
+      <form className="bg-white p-6 rounded-lg shadow" onSubmit={handleAccountUpdate}>
+        <h2 className="text-xl font-semibold mb-4">Account Information</h2>
+        <div className="space-y-4">
+          {(accountError || accountSuccess) && (
+            <div className={`p-3 border rounded text-sm ${accountError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+              {accountError || accountSuccess}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          
+          <div className="flex justify-end pt-2">
+            <button 
+              type="submit" 
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={accountLoading}
+            >
+              {accountLoading ? 'Updating...' : 'Update Information'}
+            </button>
+          </div>
+        </div>
+      </form>
 
       {/* Billing Section */}
       <div className="bg-white p-6 rounded-lg shadow">
