@@ -89,19 +89,18 @@ def setup_database(request):
         import os
         
         User = get_user_model()
-        username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
         email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
         password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
         
-        if User.objects.filter(username=username).exists():
-            results['steps'].append(f'✅ Superuser "{username}" already exists')
-        elif all([username, email, password]):
+        # CustomUser uses email as username, not a separate username field
+        if User.objects.filter(email=email).exists():
+            results['steps'].append(f'✅ Superuser with email "{email}" already exists')
+        elif all([email, password]):
             User.objects.create_superuser(
-                username=username,
                 email=email,
                 password=password
             )
-            results['steps'].append(f'✅ Superuser "{username}" created')
+            results['steps'].append(f'✅ Superuser with email "{email}" created')
         else:
             results['steps'].append('⚠️  Superuser not created (missing credentials)')
         
