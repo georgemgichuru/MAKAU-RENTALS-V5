@@ -1,0 +1,57 @@
+# Vercel
+.vercel
+
+# Environment files with sensitive data
+.env
+.env.*
+*.env
+
+# Database files
+*.sqlite3
+*.db
+test_db.sqlite3*
+
+# Database exports (contain sensitive data)
+database_export_*.json
+data_dump.json
+
+# Sensitive documentation files
+VERCEL_ENV_UPDATED.md
+VERCEL_ENV_VARIABLES.txt
+ADD_ENV_VARIABLES_NOW.md
+.env.vercel.template
+
+# Migration and backup files
+*.backup_*
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

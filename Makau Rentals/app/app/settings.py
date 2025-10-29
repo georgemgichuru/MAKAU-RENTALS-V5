@@ -58,9 +58,11 @@ CELERY_BEAT_SCHEDULE = {
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Ensure logs directory exists
-logs_dir = BASE_DIR / 'logs'
-logs_dir.mkdir(parents=True, exist_ok=True)
+# Ensure logs directory exists (only for local development, not on Vercel)
+# Vercel has a read-only filesystem, so we skip this in production
+if not os.environ.get('VERCEL'):
+    logs_dir = BASE_DIR / 'logs'
+    logs_dir.mkdir(parents=True, exist_ok=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -76,6 +78,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev',
+    '.vercel.app',  # Allow all Vercel subdomains
+    'makau-rentals-v5.vercel.app',  # Add your specific Vercel domain
 ]
 
 
@@ -132,10 +136,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev",
+    "https://makao-center-v4.vercel.app",  # Add your Vercel frontend URL
 ]
 
 # For development - allow all origins (easier but less secure)
-CORS_ALLOW_ALL_ORIGINS = True
+# IMPORTANT: Set to False in production for security
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 
 # Allow credentials
 CORS_ALLOW_CREDENTIALS = True
@@ -162,26 +168,28 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 #Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Commented out for testing - PostgreSQL configuration
-# tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': tmpPostgres.path.replace('/', ''),
-#         'USER': tmpPostgres.username,
-#         'PASSWORD': tmpPostgres.password,
-#         'HOST': tmpPostgres.hostname,
-#         'PORT': 5432,
-#         'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
-#     }
-# }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'test_db.sqlite3',
+# PostgreSQL configuration for production
+tmpPostgres = urlparse(os.getenv("DATABASE_URL", ""))
+if tmpPostgres.hostname:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': tmpPostgres.path.replace('/', ''),
+            'USER': tmpPostgres.username,
+            'PASSWORD': tmpPostgres.password,
+            'HOST': tmpPostgres.hostname,
+            'PORT': 5432,
+            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        }
     }
-}
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        }
+    }
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -297,6 +305,9 @@ PESAPAL_ENV = config('PESAPAL_ENV', default='sandbox')  # 'sandbox' or 'live'
 PESAPAL_IPN_URL = config('PESAPAL_IPN_URL')
 
 # Logging Configuration - Enhanced for payment callbacks
+# Use /tmp for log files on Vercel (serverless environment)
+LOG_DIR = '/tmp' if os.environ.get('VERCEL') else os.path.join(BASE_DIR, 'logs')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -317,22 +328,22 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'payments.log'),
+            'filename': os.path.join(LOG_DIR, 'payments.log'),
             'formatter': 'verbose',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],  # Only console in production to avoid file system issues
         'level': 'INFO',
     },
     'loggers': {
         'accounts.views': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'payments.views': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },

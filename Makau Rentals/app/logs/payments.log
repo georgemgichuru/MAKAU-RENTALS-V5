@@ -3118,3 +3118,42 @@ INFO 2025-10-29 10:06:21,212 autoreload 43432 17720 C:\Users\George Mwangi\Deskt
 INFO 2025-10-29 10:06:29,104 autoreload 12684 19828 Watching for file changes with StatReloader
 INFO 2025-10-29 10:06:30,116 pesapal_service 12684 19828 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
 INFO 2025-10-29 10:08:12,138 pesapal_service 44288 13388 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:08:17,449 payment_utils 12684 20220 Payment calculation - Amount: 2000.0, Fee: 70.00, Total: 2070.00
+INFO 2025-10-29 10:08:17,501 pesapal_service 12684 20220 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-29 10:08:20,876 pesapal_service 12684 20220 PesaPal access token generated and cached
+INFO 2025-10-29 10:08:20,896 pesapal_service 12684 20220 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-29 10:08:23,338 pesapal_service 12684 20220 PesaPal access token generated and cached
+INFO 2025-10-29 10:08:25,731 pesapal_service 12684 20220 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-29 10:08:25,739 pesapal_service 12684 20220 Submitting PesaPal order: SUB-7-362DA5F9, Amount: 2070.0
+INFO 2025-10-29 10:08:25,740 pesapal_service 12684 20220 Payload: {
+  "id": "SUB-7-362DA5F9",
+  "currency": "KES",
+  "amount": 2070.0,
+  "description": "Subscription payment for starter plan",
+  "callback_url": "http://localhost:5173/landlord/subscription?payment_id=7",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254722714334",
+    "email_address": "ggichuru@usiu.ac.ke",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-29 10:08:29,739 pesapal_service 12684 20220 PesaPal order submitted: {'order_tracking_id': '644db1c5-d585-490e-b73c-db27aca5a3de', 'merchant_reference': 'SUB-7-362DA5F9', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=644db1c5-d585-490e-b73c-db27aca5a3de', 'error': None, 'status': '200'}
+INFO 2025-10-29 10:08:29,795 views_pesapal 12684 20220 PesaPal subscription payment initiated: id=7, tracking_id=644db1c5-d585-490e-b73c-db27aca5a3de
+INFO 2025-10-29 10:14:39,208 autoreload 12684 19828 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-29 10:14:46,004 autoreload 29096 7892 Watching for file changes with StatReloader
+INFO 2025-10-29 10:14:48,105 pesapal_service 29096 7892 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:15:09,391 autoreload 29096 7892 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-29 10:15:13,791 autoreload 39036 24804 Watching for file changes with StatReloader
+INFO 2025-10-29 10:15:15,535 pesapal_service 39036 24804 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:23:43,131 autoreload 39036 24804 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-29 10:23:55,823 autoreload 6728 23452 Watching for file changes with StatReloader
+INFO 2025-10-29 10:23:57,734 pesapal_service 6728 23452 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 10:38:14,192 log 6728 34076 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-29 10:38:14,195 log 6728 42776 Unauthorized: /api/accounts/me/
+WARNING 2025-10-29 10:38:14,197 log 6728 21944 Unauthorized: /api/communication/reports/
+WARNING 2025-10-29 10:38:14,963 log 6728 42776 Unauthorized: /api/accounts/me/
+INFO 2025-10-29 10:48:34,833 autoreload 6728 23452 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.
+INFO 2025-10-29 10:48:46,531 autoreload 21256 23560 Watching for file changes with StatReloader
+INFO 2025-10-29 10:48:51,343 pesapal_service 21256 23560 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:49:15,430 autoreload 21256 23560 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\settings.py changed, reloading.

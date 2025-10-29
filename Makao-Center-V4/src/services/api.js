@@ -18,8 +18,8 @@ const resolveApiBaseUrl = () => {
     return 'http://localhost:8000/api';
   }
 
-  // Final fallback (remote)
-  return 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api';
+  // Final fallback (production backend on Vercel)
+  return 'https://makau-rentals-v5.vercel.app/api';
 };
 
 const API_BASE_URL = resolveApiBaseUrl();

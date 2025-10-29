@@ -1,0 +1,53 @@
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment files
+.env
+.env.local
+
+# Database files
+*.sqlite3
+*.db
+test_db.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Media files (use S3 for production)
+media/
+
+# Test files
+test_*.py
+check_*.py
+debug_*.py
+fix_*.py
+verify_*.py
+reset_*.py
+
+# Documentation
+docs.txt
+TODO.md
+*.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
