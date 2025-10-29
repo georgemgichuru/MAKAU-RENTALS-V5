@@ -37,6 +37,10 @@ Makao Center`
   const [reminderError, setReminderError] = useState('');
   const [reminderSuccess, setReminderSuccess] = useState('');
 
+  // Subscription state
+  const [subscription, setSubscription] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
   // Security settings state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -217,6 +221,78 @@ Makao Center`,
     };
   }, []);
 
+  // Load subscription data on mount
+  useEffect(() => {
+    let isMounted = true;
+    setSubscriptionLoading(true);
+    api
+      .get('/accounts/subscription/status/')
+      .then((res) => {
+        if (!isMounted) return;
+        setSubscription(res.data);
+      })
+      .catch((err) => {
+        console.warn('Failed to load subscription:', err?.message || err);
+      })
+      .finally(() => {
+        if (isMounted) setSubscriptionLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Helper function to get plan display info
+  const getPlanDisplayInfo = () => {
+    if (!subscription) {
+      return {
+        name: 'Loading...',
+        description: 'Fetching subscription details...',
+        status: 'loading'
+      };
+    }
+
+    const plan = subscription.plan?.toLowerCase() || 'free';
+    const isActive = subscription.is_active;
+    const isTrial = plan === 'free';
+    
+    let planName, description, status;
+
+    if (isTrial) {
+      const daysRemaining = subscription.days_remaining || 0;
+      planName = 'Free Trial';
+      description = `${daysRemaining} days remaining • Up to 2 properties, 10 units`;
+      status = isActive ? 'Active' : 'Expired';
+    } else {
+      switch (plan) {
+        case 'starter':
+          planName = 'Starter Plan';
+          description = 'Up to 3 properties, 10 units • Monthly';
+          break;
+        case 'basic':
+          planName = 'Basic Plan';
+          description = 'Up to 10 properties, 50 units • Monthly';
+          break;
+        case 'professional':
+          planName = 'Professional Plan';
+          description = 'Up to 25 properties, 100 units • Monthly';
+          break;
+        case 'onetime':
+          planName = 'One-Time Purchase';
+          description = 'Unlimited properties & units • Lifetime access';
+          break;
+        default:
+          planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+          description = 'Custom plan';
+      }
+      status = isActive ? 'Active' : 'Inactive';
+    }
+
+    return { name: planName, description, status };
+  };
+
+  const planInfo = getPlanDisplayInfo();
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
@@ -296,16 +372,28 @@ Makao Center`,
         <div className="space-y-4">
           {/* Current Plan Info */}
           <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Current Plan</p>
-                <p className="text-lg font-semibold text-gray-900">One-Time Purchase</p>
-                <p className="text-sm text-gray-600 mt-1">Up to 50 units • Lifetime access</p>
+            {subscriptionLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-              <span className="bg-green-50 text-green-700 text-xs font-medium px-2 py-1 rounded">
-                Active
-              </span>
-            </div>
+            ) : (
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Current Plan</p>
+                  <p className="text-lg font-semibold text-gray-900">{planInfo.name}</p>
+                  <p className="text-sm text-gray-600 mt-1">{planInfo.description}</p>
+                </div>
+                <span className={`text-xs font-medium px-2 py-1 rounded ${
+                  planInfo.status === 'Active' 
+                    ? 'bg-green-50 text-green-700' 
+                    : planInfo.status === 'Expired'
+                    ? 'bg-red-50 text-red-700'
+                    : 'bg-gray-50 text-gray-700'
+                }`}>
+                  {planInfo.status}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}

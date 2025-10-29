@@ -5,6 +5,7 @@ Utilities for subscription management, tracking, and notifications
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 from decimal import Decimal
 import logging
@@ -166,6 +167,19 @@ def check_subscription_limits(landlord, action_type='property'):
             Unit.objects.filter(property_obj__landlord=landlord).count()
         )
         
+        # For free trial, allow creation but notify about tier change
+        if subscription.plan == 'free':
+            return {
+                'can_create': True,
+                'current_count': current_count,
+                'limit': limit,
+                'message': f'Creating this {limit_type[:-1]} will change your subscription tier.',
+                'upgrade_needed': True,
+                'suggested_plan': suggestion['suggested_plan'],
+                'is_free_trial': True,
+                'tier_change_warning': True
+            }
+        
         return {
             'can_create': False,
             'current_count': current_count,
@@ -191,6 +205,7 @@ def check_subscription_limits(landlord, action_type='property'):
 def send_limit_reached_email(landlord, limit_type='property', current_plan=None, suggested_plan=None):
     """
     Send email to landlord when they reach subscription limits
+    Rate limited to prevent sending duplicate emails within 1 hour.
     
     Args:
         landlord: CustomUser instance
@@ -198,6 +213,14 @@ def send_limit_reached_email(landlord, limit_type='property', current_plan=None,
         current_plan: Current subscription plan name
         suggested_plan: Suggested plan to upgrade to
     """
+    # Check if we've recently sent a limit reached email to this landlord
+    cache_key = f"limit_email_sent:{landlord.id}:{limit_type}"
+    last_sent = cache.get(cache_key)
+    
+    if last_sent:
+        logger.info(f"Skipping limit reached email to {landlord.email} - already sent within the last hour")
+        return False
+    
     subject = f'🚨 Subscription Limit Reached - Upgrade Required'
     
     plan_info = get_plan_limits(suggested_plan) if suggested_plan else {}
@@ -244,6 +267,8 @@ This is an automated notification. Please do not reply to this email.
             recipient_list=[landlord.email],
             fail_silently=False,
         )
+        # Set cache to prevent duplicate emails for 1 hour
+        cache.set(cache_key, True, 3600)  # 3600 seconds = 1 hour
         logger.info(f"Limit reached email sent to {landlord.email}")
         return True
     except Exception as e:

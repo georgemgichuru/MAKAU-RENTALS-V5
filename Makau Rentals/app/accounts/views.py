@@ -425,8 +425,11 @@ class CreatePropertyView(APIView):
         # Use new subscription limit checker
         limit_check = check_subscription_limits(user, action_type='property')
         
-        if not limit_check['can_create']:
-            # Send email notification about limit reached
+        # For free trial users at limit, allow creation with tier change warning
+        if limit_check.get('is_free_trial') and limit_check.get('tier_change_warning'):
+            logger.info(f"Free trial user {user.id} creating property beyond limit - will show tier change warning")
+        elif not limit_check['can_create']:
+            # Send email notification about limit reached (rate limited to once per hour)
             send_limit_reached_email(
                 landlord=user,
                 limit_type='property',
@@ -493,6 +496,9 @@ class CreatePropertyView(APIView):
                 # Calculate total units
                 total_units = Unit.objects.filter(property_obj__landlord=user).count()
                 
+                # Calculate total properties including this new one
+                total_properties = tracker.total_properties_after
+                
                 # Determine which tier they'll be charged for
                 suggested_tier = None
                 suggested_price = 0
@@ -514,15 +520,24 @@ class CreatePropertyView(APIView):
                 
                 days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
                 
+                # Check if this creation exceeds the free plan property limit
+                tier_changed = total_properties > 2
+                
+                warning_message = f'Property created successfully! You are on a free trial with {days_remaining} days remaining.'
+                if tier_changed:
+                    warning_message = f'Property created! You now have {total_properties} properties. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
+                
                 response_data['trial_warning'] = {
-                    'message': f'Property created successfully! You are on a free trial with {days_remaining} days remaining.',
+                    'message': warning_message,
                     'billing_info': {
+                        'total_properties': total_properties,
                         'total_units': total_units,
                         'suggested_tier': suggested_tier,
                         'monthly_cost': suggested_price,
-                        'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None
+                        'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
+                        'tier_changed': tier_changed
                     },
-                    'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                    'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
                 }
             
             return Response(response_data, status=201)
@@ -576,8 +591,11 @@ class CreateUnitView(APIView):
             # Check subscription limits BEFORE creating unit
             limit_check = check_subscription_limits(request.user, action_type='unit')
             
-            if not limit_check['can_create']:
-                # Send email notification about limit reached
+            # For free trial users at limit, allow creation with tier change warning
+            if limit_check.get('is_free_trial') and limit_check.get('tier_change_warning'):
+                logger.info(f"Free trial user {request.user.id} creating unit beyond limit - will show tier change warning")
+            elif not limit_check['can_create']:
+                # Send email notification about limit reached (rate limited to once per hour)
                 send_limit_reached_email(
                     landlord=request.user,
                     limit_type='unit',
@@ -681,6 +699,9 @@ class CreateUnitView(APIView):
                     # Calculate total units including this new one
                     total_units = tracker.total_units_after
                     
+                    # Calculate total properties
+                    total_properties = Property.objects.filter(landlord=request.user).count()
+                    
                     # Determine which tier they'll be charged for
                     suggested_tier = None
                     suggested_price = 0
@@ -702,15 +723,24 @@ class CreateUnitView(APIView):
                     
                     days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
                     
+                    # Check if this creation exceeds the free plan unit limit
+                    tier_changed = total_units > 10
+                    
+                    warning_message = f'Unit created successfully! You are on a free trial with {days_remaining} days remaining.'
+                    if tier_changed:
+                        warning_message = f'Unit created! You now have {total_units} units. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
+                    
                     response_data['trial_warning'] = {
-                        'message': f'Unit created successfully! You are on a free trial with {days_remaining} days remaining.',
+                        'message': warning_message,
                         'billing_info': {
+                            'total_properties': total_properties,
                             'total_units': total_units,
                             'suggested_tier': suggested_tier,
                             'monthly_cost': suggested_price,
-                            'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None
+                            'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
+                            'tier_changed': tier_changed
                         },
-                        'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                        'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
                     }
                 
                 return Response(response_data, status=201)
