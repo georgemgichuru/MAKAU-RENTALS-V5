@@ -171,6 +171,13 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 # PostgreSQL configuration for production
 tmpPostgres = urlparse(os.getenv("DATABASE_URL", ""))
 if tmpPostgres.hostname:
+    # Parse query parameters from URL
+    db_options = dict(parse_qsl(tmpPostgres.query))
+    
+    # Ensure SSL is required for Supabase
+    if 'sslmode' not in db_options:
+        db_options['sslmode'] = 'require'
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -179,7 +186,8 @@ if tmpPostgres.hostname:
             'PASSWORD': tmpPostgres.password,
             'HOST': tmpPostgres.hostname,
             'PORT': 5432,
-            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+            'OPTIONS': db_options,
+            'CONN_MAX_AGE': 0,  # Don't persist connections on serverless
         }
     }
 else:

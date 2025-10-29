@@ -26,6 +26,21 @@ def setup_database(request):
     try:
         # Step 1: Test connection
         results['steps'].append('Testing database connection...')
+        
+        # Add database configuration info for debugging
+        from django.conf import settings
+        import os
+        
+        db_config = settings.DATABASES['default']
+        results['db_config_debug'] = {
+            'ENGINE': db_config.get('ENGINE'),
+            'HOST': db_config.get('HOST'),
+            'PORT': db_config.get('PORT'),
+            'NAME': db_config.get('NAME'),
+            'OPTIONS': db_config.get('OPTIONS', {}),
+            'DATABASE_URL_from_env': os.environ.get('DATABASE_URL', '')[:50] + '...' if os.environ.get('DATABASE_URL') else None
+        }
+        
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT version();")
