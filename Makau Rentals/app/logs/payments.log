@@ -3104,3 +3104,17 @@ INFO 2025-10-29 03:12:21,811 pesapal_service 42792 44520 PesaPal configured: env
 INFO 2025-10-29 03:12:24,102 autoreload 42792 44520 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
 INFO 2025-10-29 03:12:26,055 autoreload 40932 36332 Watching for file changes with StatReloader
 INFO 2025-10-29 03:12:26,539 pesapal_service 40932 36332 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 09:12:46,263 autoreload 43304 1332 Watching for file changes with StatReloader
+INFO 2025-10-29 09:12:48,386 pesapal_service 43304 1332 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 09:13:27,622 log 43304 20248 Bad Request: /api/accounts/token/
+WARNING 2025-10-29 09:20:21,179 log 43304 5104 Bad Request: /api/accounts/token/
+INFO 2025-10-29 10:05:35,587 autoreload 43304 1332 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 10:05:46,693 autoreload 3412 43060 Watching for file changes with StatReloader
+INFO 2025-10-29 10:05:50,709 pesapal_service 3412 43060 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:05:59,425 autoreload 3412 43060 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 10:06:07,982 autoreload 43432 17720 Watching for file changes with StatReloader
+INFO 2025-10-29 10:06:09,293 pesapal_service 43432 17720 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:06:21,212 autoreload 43432 17720 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 10:06:29,104 autoreload 12684 19828 Watching for file changes with StatReloader
+INFO 2025-10-29 10:06:30,116 pesapal_service 12684 19828 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 10:08:12,138 pesapal_service 44288 13388 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu

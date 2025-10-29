@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Check,
@@ -10,12 +10,19 @@ import {
   Zap,
   Star,
   Phone,
-  Mail
+  Mail,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
+import { subscriptionAPI, propertiesAPI } from '../../services/api';
 
 const SubscriptionPage = () => {
   const navigate = useNavigate();
-  const [currentPlan] = useState('onetime');
+  const [currentPlan, setCurrentPlan] = useState(null);
+  const [subscriptionData, setSubscriptionData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [totalUnits, setTotalUnits] = useState(0);
+  const [daysRemaining, setDaysRemaining] = useState(null);
 
   // unified features for monthly subscription tiers
   const commonFeatures = [
@@ -166,6 +173,77 @@ const SubscriptionPage = () => {
     window.location.href = 'mailto:makaorentalmanagementsystem@gmail.com?subject=Enterprise%20Plan%20Inquiry';
   };
 
+  // Fetch subscription status and unit count on mount
+  useEffect(() => {
+    const fetchSubscriptionData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch subscription status
+        const subResponse = await subscriptionAPI.getStatus();
+        setSubscriptionData(subResponse.data);
+        
+        // Map backend plan to frontend plan ID
+        const backendPlan = subResponse.data.plan?.toLowerCase();
+        if (backendPlan === 'onetime') {
+          setCurrentPlan('onetime');
+        } else if (backendPlan === 'free') {
+          // Free trial - set as no current paid plan
+          setCurrentPlan('free');
+        } else {
+          // Map monthly plans to tiers
+          setCurrentPlan(backendPlan);
+        }
+        
+        // Calculate days remaining for free trial
+        if (backendPlan === 'free' && subResponse.data.expiry_date) {
+          const expiryDate = new Date(subResponse.data.expiry_date);
+          const today = new Date();
+          const diffTime = expiryDate - today;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          setDaysRemaining(diffDays > 0 ? diffDays : 0);
+        }
+        
+        // Fetch total units to determine billing tier
+        const unitsResponse = await propertiesAPI.getUnits();
+        const units = unitsResponse.data || [];
+        setTotalUnits(units.length);
+        
+      } catch (error) {
+        console.error('Error fetching subscription data:', error);
+        // Set default to free if error
+        setCurrentPlan('free');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionData();
+  }, []);
+
+  // Calculate suggested plan based on unit count
+  const getSuggestedPlan = () => {
+    if (totalUnits <= 10) return pricingTiers[0];
+    if (totalUnits <= 20) return pricingTiers[1];
+    if (totalUnits <= 50) return pricingTiers[2];
+    if (totalUnits <= 100) return pricingTiers[3];
+    return pricingTiers[4]; // Enterprise
+  };
+
+  const suggestedPlan = getSuggestedPlan();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading subscription details...</p>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -174,6 +252,45 @@ const SubscriptionPage = () => {
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Subscription Plans</h1>
           <p className="text-base sm:text-lg text-gray-600 px-4">Choose the plan that fits your property portfolio</p>
         </div>
+
+        {/* Free Trial Banner */}
+        {currentPlan === 'free' && daysRemaining !== null && (
+          <div className="mb-6 sm:mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <Clock className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Free Trial Active - {daysRemaining} Days Remaining
+                </h3>
+                <p className="text-gray-700 mb-3">
+                  You're currently on a <strong>60-day free trial</strong>. 
+                  {totalUnits > 0 && (
+                    <> You have <strong>{totalUnits} unit{totalUnits !== 1 ? 's' : ''}</strong> created.</>
+                  )}
+                </p>
+                {totalUnits > 0 && (
+                  <div className="bg-white rounded-md p-3 border border-blue-100">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          After your trial ends:
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          You'll be automatically enrolled in the <strong>{suggestedPlan.label}</strong> plan 
+                          at <strong>KES {suggestedPlan.price.toLocaleString()}/month</strong> based on your current {totalUnits} unit{totalUnits !== 1 ? 's' : ''}.
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          You can add more properties during your trial. Your billing will be adjusted based on your total units when the trial ends.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* One-Time Purchase - Professional Design */}
         <div className="mb-8 sm:mb-12">

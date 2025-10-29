@@ -488,6 +488,43 @@ class CreatePropertyView(APIView):
                 'limit_reached': tracker.limit_reached
             }
             
+            # Add free trial warning if user is on free plan
+            if subscription.plan == 'free':
+                # Calculate total units
+                total_units = Unit.objects.filter(property_obj__landlord=user).count()
+                
+                # Determine which tier they'll be charged for
+                suggested_tier = None
+                suggested_price = 0
+                if total_units <= 10:
+                    suggested_tier = "Tier 1 (1-10 Units)"
+                    suggested_price = 2000
+                elif total_units <= 20:
+                    suggested_tier = "Tier 2 (11-20 Units)"
+                    suggested_price = 2500
+                elif total_units <= 50:
+                    suggested_tier = "Tier 3 (21-50 Units)"
+                    suggested_price = 4500
+                elif total_units <= 100:
+                    suggested_tier = "Tier 4 (51-100 Units)"
+                    suggested_price = 7500
+                else:
+                    suggested_tier = "Enterprise (100+ Units)"
+                    suggested_price = "Custom"
+                
+                days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
+                
+                response_data['trial_warning'] = {
+                    'message': f'Property created successfully! You are on a free trial with {days_remaining} days remaining.',
+                    'billing_info': {
+                        'total_units': total_units,
+                        'suggested_tier': suggested_tier,
+                        'monthly_cost': suggested_price,
+                        'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None
+                    },
+                    'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                }
+            
             return Response(response_data, status=201)
 
         logger.error(f"Serializer errors: {serializer.errors}")
@@ -630,6 +667,44 @@ class CreateUnitView(APIView):
                     'approaching_limit': limit_check.get('upgrade_needed', False),
                     'limit_reached': tracker.limit_reached
                 }
+                
+                # Add free trial warning if user is on free plan
+                subscription = request.user.subscription if hasattr(request.user, 'subscription') else None
+                if subscription and subscription.plan == 'free':
+                    # Calculate total units including this new one
+                    total_units = tracker.total_units_after
+                    
+                    # Determine which tier they'll be charged for
+                    suggested_tier = None
+                    suggested_price = 0
+                    if total_units <= 10:
+                        suggested_tier = "Tier 1 (1-10 Units)"
+                        suggested_price = 2000
+                    elif total_units <= 20:
+                        suggested_tier = "Tier 2 (11-20 Units)"
+                        suggested_price = 2500
+                    elif total_units <= 50:
+                        suggested_tier = "Tier 3 (21-50 Units)"
+                        suggested_price = 4500
+                    elif total_units <= 100:
+                        suggested_tier = "Tier 4 (51-100 Units)"
+                        suggested_price = 7500
+                    else:
+                        suggested_tier = "Enterprise (100+ Units)"
+                        suggested_price = "Custom"
+                    
+                    days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
+                    
+                    response_data['trial_warning'] = {
+                        'message': f'Unit created successfully! You are on a free trial with {days_remaining} days remaining.',
+                        'billing_info': {
+                            'total_units': total_units,
+                            'suggested_tier': suggested_tier,
+                            'monthly_cost': suggested_price,
+                            'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None
+                        },
+                        'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                    }
                 
                 return Response(response_data, status=201)
             else:
