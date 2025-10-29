@@ -248,13 +248,15 @@ Makao Center`,
       return {
         name: 'Loading...',
         description: 'Fetching subscription details...',
-        status: 'loading'
+        status: 'loading',
+        expiryDate: null
       };
     }
 
     const plan = subscription.plan?.toLowerCase() || 'free';
     const isActive = subscription.is_active;
     const isTrial = plan === 'free';
+    const expiryDate = subscription.expiry_date;
     
     let planName, description, status;
 
@@ -288,7 +290,7 @@ Makao Center`,
       status = isActive ? 'Active' : 'Inactive';
     }
 
-    return { name: planName, description, status };
+    return { name: planName, description, status, expiryDate };
   };
 
   const planInfo = getPlanDisplayInfo();
@@ -377,21 +379,37 @@ Makao Center`,
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Current Plan</p>
-                  <p className="text-lg font-semibold text-gray-900">{planInfo.name}</p>
-                  <p className="text-sm text-gray-600 mt-1">{planInfo.description}</p>
+              <div>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Current Plan</p>
+                    <p className="text-lg font-semibold text-gray-900">{planInfo.name}</p>
+                    <p className="text-sm text-gray-600 mt-1">{planInfo.description}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    planInfo.status === 'Active' 
+                      ? 'bg-green-50 text-green-700' 
+                      : planInfo.status === 'Expired'
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-gray-50 text-gray-700'
+                  }`}>
+                    {planInfo.status}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded ${
-                  planInfo.status === 'Active' 
-                    ? 'bg-green-50 text-green-700' 
-                    : planInfo.status === 'Expired'
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-gray-50 text-gray-700'
-                }`}>
-                  {planInfo.status}
-                </span>
+                {planInfo.expiryDate && planInfo.name !== 'One-Time Purchase' && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-600">
+                      {planInfo.status === 'Expired' ? 'Expired on' : 'Expires on'}:{' '}
+                      <span className="font-medium text-gray-900">
+                        {new Date(planInfo.expiryDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -17,9 +17,9 @@ PLAN_LIMITS = {
     "free": {
         "properties": 2,
         "units": 10,
-        "duration_days": 60,
+        "duration_days": 30,
         "price": 0,
-        "description": "Free Trial (60 days)"
+        "description": "Free Trial (30 days)"
     },
     "starter": {
         "properties": 3,
@@ -44,9 +44,9 @@ PLAN_LIMITS = {
     },
     "onetime": {
         "properties": None,  # Unlimited
-        "units": None,       # Unlimited
+        "units": 50,       # Unlimited
         "duration_days": None,  # Lifetime
-        "price": 50000,
+        "price": 40000,
         "description": "One-time Payment (Unlimited)"
     }
 }

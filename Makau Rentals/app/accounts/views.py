@@ -2083,7 +2083,7 @@ class CompleteLandlordRegistrationView(APIView):
             - Email: {landlord.email}
             - M-Pesa Till: {landlord.mpesa_till_number}
 
-            Your 60-day free trial has been activated. You can now:
+            Your 30-day free trial has been activated. You can now:
             - Manage your properties
             - Add units and set rents
             - Receive rent payments via M-Pesa
