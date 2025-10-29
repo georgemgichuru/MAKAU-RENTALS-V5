@@ -263,7 +263,7 @@ const SubscriptionPage = () => {
                   Free Trial Active - {daysRemaining} Days Remaining
                 </h3>
                 <p className="text-gray-700 mb-3">
-                  You're currently on a <strong>60-day free trial</strong>. 
+                  You're currently on a <strong>30-day free trial</strong>. 
                   {totalUnits > 0 && (
                     <> You have <strong>{totalUnits} unit{totalUnits !== 1 ? 's' : ''}</strong> created.</>
                   )}
