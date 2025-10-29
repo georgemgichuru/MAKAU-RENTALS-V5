@@ -9,11 +9,12 @@ import {
   Building2,
   Plus,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Upload
 } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { propertiesAPI, communicationAPI, tenantsAPI } from '../../services/api';
 
 // Confirmation Dialog Component
@@ -100,6 +101,7 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
   const [roomType, setRoomType] = useState({
     name: '',
     baseRent: '',
+    deposit: '',
     description: ''
   });
 
@@ -114,7 +116,7 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
     const payload = {
       name: roomType.name,
       rent: Number(roomType.baseRent),  // Backend expects 'rent', not 'base_rent'
-      deposit: 0,  // Required field with default
+      deposit: Number(roomType.deposit) || 0,  // Deposit field
       description: roomType.description || '',
       number_of_units: 0  // Required field with default
     };
@@ -123,7 +125,7 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
     
     // Let the parent component handle the API call
     if (onAdd) onAdd(payload);
-    setRoomType({ name: '', baseRent: '', description: '' });
+    setRoomType({ name: '', baseRent: '', deposit: '', description: '' });
     onClose();
   };
 
@@ -163,13 +165,25 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Deposit Amount (KSh)
+            </label>
+            <input
+              type="number"
+              value={roomType.deposit}
+              onChange={(e) => setRoomType({ ...roomType, deposit: e.target.value })}
+              placeholder="25000"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
             <input
               type="text"
               value={roomType.description}
               onChange={(e) => setRoomType({ ...roomType, description: e.target.value })}
-              placeholder="Short description of room type"
+              placeholder="Optional description"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -193,23 +207,144 @@ const AddRoomTypeDialog = ({ isOpen, onClose, onAdd }) => {
   );
 };
 
+// Edit Room Type Dialog
+const EditRoomTypeDialog = ({ isOpen, onClose, onUpdate, roomType }) => {
+  const [editData, setEditData] = useState({
+    name: '',
+    baseRent: '',
+    deposit: '',
+    description: ''
+  });
+
+  useEffect(() => {
+    if (isOpen && roomType) {
+      setEditData({
+        name: roomType.name || '',
+        baseRent: String(roomType.rent || roomType.baseRent || ''),
+        deposit: String(roomType.deposit || '0'),
+        description: roomType.description || ''
+      });
+    }
+  }, [isOpen, roomType]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async () => {
+    if (!editData.name || !editData.baseRent) {
+      alert('Please provide both name and base rent.');
+      return;
+    }
+    // Prepare payload for backend
+    const payload = {
+      name: editData.name,
+      rent: Number(editData.baseRent),
+      deposit: Number(editData.deposit) || 0,
+      description: editData.description || ''
+    };
+    
+    console.log('🔧 Updating unit type with payload:', payload);
+    
+    // Let the parent component handle the API call
+    if (onUpdate) onUpdate(roomType.id, payload);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 ">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h3 className="text-lg font-semibold">Edit Room Type</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Room Type Name
+            </label>
+            <input
+              type="text"
+              value={editData.name}
+              onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+              placeholder="e.g., Studio, 1 Bedroom"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Base Rent (KSh)
+            </label>
+            <input
+              type="number"
+              value={editData.baseRent}
+              onChange={(e) => setEditData({ ...editData, baseRent: e.target.value })}
+              placeholder="25000"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Deposit Amount (KSh)
+            </label>
+            <input
+              type="number"
+              value={editData.deposit}
+              onChange={(e) => setEditData({ ...editData, deposit: e.target.value })}
+              placeholder="25000"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <input
+              type="text"
+              value={editData.description}
+              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+              placeholder="Optional description"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 p-6 border-t bg-gray-50">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          >
+            Update Room Type
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Add Rental Unit Dialog
 const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) => {
   const [unitData, setUnitData] = useState({
     unitNumber: '',
     type: '',
-    rent: ''
+    rent: '',
+    deposit: ''
   });
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
     if (!unitData.unitNumber || !unitData.type || !unitData.rent) {
-      alert('Please fill in all fields');
+      alert('Please fill in all required fields');
       return;
     }
     onAdd(unitData);
-    setUnitData({ unitNumber: '', type: '', rent: '' });
+    setUnitData({ unitNumber: '', type: '', rent: '', deposit: '' });
   };
 
   return (
@@ -221,59 +356,72 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
             <X className="w-5 h-5" />
           </button>
         </div>
-        
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Unit Number
+              Unit Number *
             </label>
             <input
               type="text"
               value={unitData.unitNumber}
-              onChange={(e) => setUnitData({...unitData, unitNumber: e.target.value})}
-              placeholder="e.g., A101"
+              onChange={(e) => setUnitData({ ...unitData, unitNumber: e.target.value })}
+              placeholder="e.g., 101, A1"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Room Type
+              Unit Type *
             </label>
             <select
-              value={unitData.type || ''}
-              onChange={(e) => {
-                // Store the unit_type ID in state and derive rent from selected type
-                const selectedType = roomTypes.find(rt => `${rt.id}` === e.target.value);
-                setUnitData({
-                  ...unitData, 
-                  type: e.target.value, // id as string
-                  rent: selectedType ? (selectedType.rent ?? selectedType.baseRent ?? unitData.rent) : unitData.rent
-                });
-              }}
+              value={unitData.type}
+              onChange={(e) => setUnitData({ ...unitData, type: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select room type</option>
-              {roomTypes.map(rt => (
-                <option key={rt.id} value={`${rt.id}`}>{rt.name}</option>
+              <option value="">Select a type</option>
+              <option value="studio">Studio</option>
+              <option value="1-bedroom">1 Bedroom</option>
+              <option value="2-bedroom">2 Bedroom</option>
+              <option value="3-bedroom">3 Bedroom</option>
+              <option value="4-bedroom">4 Bedroom</option>
+              <option value="5-bedroom">5 Bedroom</option>
+              <option value="6-bedroom">6 Bedroom</option>
+              <option value="7-bedroom">7 Bedroom</option>
+              <option value="8-bedroom">8 Bedroom</option>
+              {(roomTypes || []).length > 0 && <option disabled>──────────</option>}
+              {(roomTypes || []).map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name} (Custom)
+                </option>
               ))}
             </select>
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rent (KSh)
+              Monthly Rent (KSh) *
             </label>
             <input
               type="number"
               value={unitData.rent}
-              onChange={(e) => setUnitData({...unitData, rent: e.target.value})}
+              onChange={(e) => setUnitData({ ...unitData, rent: e.target.value })}
               placeholder="25000"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Deposit Amount (KSh)
+            </label>
+            <input
+              type="number"
+              value={unitData.deposit}
+              onChange={(e) => setUnitData({ ...unitData, deposit: e.target.value })}
+              placeholder="25000"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Leave empty to use monthly rent as deposit</p>
+          </div>
         </div>
-
         <div className="flex gap-3 p-6 border-t bg-gray-50">
           <button
             onClick={onClose}
@@ -293,6 +441,294 @@ const AddRentalUnitDialog = ({ isOpen, onClose, onAdd, roomTypes, propertyId }) 
   );
 };
 
+// Bulk Add Units Dialog
+const BulkAddUnitsDialog = ({ isOpen, onClose, onBulkAdd, roomTypes, propertyId }) => {
+  const [bulkData, setBulkData] = useState({
+    type: '',
+    rent: '',
+    deposit: '',
+    startNumber: '',
+    endNumber: '',
+    prefix: ''
+  });
+  const [previewUnits, setPreviewUnits] = useState([]);
+
+  useEffect(() => {
+    if (bulkData.startNumber && bulkData.endNumber && bulkData.type) {
+      const start = parseInt(bulkData.startNumber);
+      const end = parseInt(bulkData.endNumber);
+      
+      if (start <= end && !isNaN(start) && !isNaN(end)) {
+        // Check if it's a custom room type
+        const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                                  '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+        const isCustomType = !predefinedTypes.includes(bulkData.type);
+        const customType = isCustomType ? roomTypes?.find(rt => rt.id?.toString() === bulkData.type) : null;
+        
+        // Use custom room type defaults if no rent/deposit provided
+        const rentToUse = bulkData.rent || (customType?.rent || customType?.baseRent) || '';
+        const depositToUse = bulkData.deposit || (customType?.deposit || customType?.rent || customType?.baseRent) || rentToUse;
+        
+        const units = [];
+        for (let i = start; i <= end; i++) {
+          units.push({
+            unitNumber: `${bulkData.prefix}${i}`,
+            type: bulkData.type,
+            rent: rentToUse,
+            deposit: depositToUse
+          });
+        }
+        setPreviewUnits(units);
+      } else {
+        setPreviewUnits([]);
+      }
+    } else {
+      setPreviewUnits([]);
+    }
+  }, [bulkData, roomTypes]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    // Check if it's a custom room type
+    const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                              '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+    const isCustomType = !predefinedTypes.includes(bulkData.type);
+    const customType = isCustomType ? roomTypes?.find(rt => rt.id?.toString() === bulkData.type) : null;
+    
+    // For custom types, rent is optional (will use default from room type)
+    // For predefined types, rent is required
+    if (!bulkData.type || !bulkData.startNumber || !bulkData.endNumber) {
+      alert('Please fill in unit type and number range');
+      return;
+    }
+    
+    if (!isCustomType && !bulkData.rent) {
+      alert('Please enter monthly rent');
+      return;
+    }
+    
+    const start = parseInt(bulkData.startNumber);
+    const end = parseInt(bulkData.endNumber);
+    
+    if (start > end) {
+      alert('Start number must be less than or equal to end number');
+      return;
+    }
+    
+    if (end - start > 99) {
+      alert('Cannot add more than 100 units at once');
+      return;
+    }
+    
+    // Close dialog immediately
+    onClose();
+    
+    // Then process the units
+    onBulkAdd(previewUnits);
+    setBulkData({ type: '', rent: '', deposit: '', startNumber: '', endNumber: '', prefix: '' });
+    setPreviewUnits([]);
+  };
+
+  // Check if it's a custom room type (ID) or predefined type (string)
+  const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                            '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+  const selectedType = predefinedTypes.includes(bulkData.type) 
+    ? null // Predefined types don't have associated room type objects
+    : roomTypes?.find(rt => rt.id?.toString() === bulkData.type);
+
+  return (
+    <div className="fixed inset-0 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
+          <div>
+            <h3 className="text-lg font-semibold">Bulk Add Rental Units</h3>
+            <p className="text-sm text-gray-500 mt-1">Add multiple units with sequential numbering</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Unit Number Prefix (Optional)
+              </label>
+              <input
+                type="text"
+                value={bulkData.prefix}
+                onChange={(e) => setBulkData({ ...bulkData, prefix: e.target.value })}
+                placeholder="e.g., A, B, Floor1-"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Leave empty for just numbers</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Unit Type *
+              </label>
+              <select
+                value={bulkData.type}
+                onChange={(e) => {
+                  const selectedValue = e.target.value;
+                  const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                                            '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+                  
+                  // Check if it's a custom room type
+                  if (!predefinedTypes.includes(selectedValue) && selectedValue) {
+                    const customType = roomTypes?.find(rt => rt.id?.toString() === selectedValue);
+                    if (customType) {
+                      // Auto-fill rent and deposit from custom room type
+                      setBulkData({ 
+                        ...bulkData, 
+                        type: selectedValue,
+                        rent: customType.rent || customType.baseRent || '',
+                        deposit: customType.deposit || customType.rent || customType.baseRent || ''
+                      });
+                      return;
+                    }
+                  }
+                  
+                  // For predefined types or no selection, just update the type
+                  setBulkData({ ...bulkData, type: selectedValue });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a type</option>
+                <option value="studio">Studio</option>
+                <option value="1-bedroom">1 Bedroom</option>
+                <option value="2-bedroom">2 Bedroom</option>
+                <option value="3-bedroom">3 Bedroom</option>
+                <option value="4-bedroom">4 Bedroom</option>
+                <option value="5-bedroom">5 Bedroom</option>
+                <option value="6-bedroom">6 Bedroom</option>
+                <option value="7-bedroom">7 Bedroom</option>
+                <option value="8-bedroom">8 Bedroom</option>
+                {(roomTypes || []).length > 0 && <option disabled>──────────</option>}
+                {(roomTypes || []).map(type => (
+                  <option key={type.id} value={type.id}>
+                    {type.name} (Custom)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Number
+              </label>
+              <input
+                type="number"
+                value={bulkData.startNumber}
+                onChange={(e) => setBulkData({ ...bulkData, startNumber: e.target.value })}
+                placeholder="101"
+                min="1"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Number
+              </label>
+              <input
+                type="number"
+                value={bulkData.endNumber}
+                onChange={(e) => setBulkData({ ...bulkData, endNumber: e.target.value })}
+                placeholder="110"
+                min="1"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Monthly Rent (KSh) {selectedType && <span className="text-gray-500 font-normal">(Optional - defaults to {(selectedType.rent || selectedType.baseRent)?.toLocaleString()})</span>}
+            </label>
+            <input
+              type="number"
+              value={bulkData.rent}
+              onChange={(e) => setBulkData({ ...bulkData, rent: e.target.value })}
+              placeholder={selectedType ? `Default: ${selectedType.rent || selectedType.baseRent}` : '25000'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            {selectedType && (
+              <p className="text-xs text-green-600 mt-1">
+                ✓ Using base rent from {selectedType.name}: KSh {(selectedType.rent || selectedType.baseRent)?.toLocaleString()} (you can override)
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Deposit Amount (KSh) {selectedType && <span className="text-gray-500 font-normal">(Optional - defaults to {(selectedType.deposit || selectedType.rent || selectedType.baseRent)?.toLocaleString()})</span>}
+            </label>
+            <input
+              type="number"
+              value={bulkData.deposit}
+              onChange={(e) => setBulkData({ ...bulkData, deposit: e.target.value })}
+              placeholder={selectedType ? `Default: ${selectedType.deposit || selectedType.rent || selectedType.baseRent}` : '25000'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to use monthly rent as deposit
+            </p>
+          </div>
+
+          {/* Preview Section */}
+          {previewUnits.length > 0 && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-gray-900 mb-3">
+                Preview ({previewUnits.length} units will be created)
+              </h4>
+              <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {previewUnits.map((unit, index) => (
+                    <div key={index} className="text-sm bg-white px-3 py-2 rounded border border-gray-200">
+                      <span className="font-medium">{unit.unitNumber}</span>
+                      <span className="text-gray-500 text-xs ml-2">
+                        KSh {parseInt(unit.rent).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {previewUnits.length > 50 && (
+                <p className="text-xs text-yellow-600 mt-2">
+                  ⚠️ Creating {previewUnits.length} units. This may take a moment.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 p-6 border-t bg-gray-50 sticky bottom-0">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={previewUnits.length === 0}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Create {previewUnits.length} Unit{previewUnits.length !== 1 ? 's' : ''}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main AdminOrganisation Component
 const AdminOrganisation = () => {
   // Safe context access with error handling
   let contextValue;
@@ -326,6 +762,7 @@ const AdminOrganisation = () => {
   } = contextValue || {};
   
   const { showToast = () => {} } = useToast() || {};
+  const navigate = useNavigate();
   
   const [currentProperty, setCurrentProperty] = useState(null);
   const [apiPropertyUnits, setApiPropertyUnits] = useState([]);
@@ -339,7 +776,9 @@ const AdminOrganisation = () => {
   const [rooms, setRooms] = useState(allPropertyUnits);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, room: null });
   const [roomTypeDialog, setRoomTypeDialog] = useState(false);
+  const [editRoomTypeDialog, setEditRoomTypeDialog] = useState({ isOpen: false, roomType: null });
   const [addUnitDialog, setAddUnitDialog] = useState(false);
+  const [bulkAddDialog, setBulkAddDialog] = useState(false);
 
   // Get current property
   const contextCurrentProperty = properties?.find(p => {
@@ -476,6 +915,7 @@ const AdminOrganisation = () => {
             type: typeName,
             typeId,
             rent: unit.rent || unit.baseRent || 0,
+            deposit: unit.deposit || unit.rent || unit.baseRent || 0,
             propertyId: unit.property_obj?.id?.toString() || selectedPropertyId,
             tenant: tenantName || unit.tenant || null,
             tenant_obj: unit.tenant_obj,
@@ -746,6 +1186,23 @@ const AdminOrganisation = () => {
     }
   };
 
+  // Handle updating room type
+  const handleUpdateRoomType = async (roomTypeId, updatedData) => {
+    try {
+      await propertiesAPI.updateUnitType(roomTypeId, updatedData);
+      showToast('Room type updated successfully', 'success', 3000);
+      setEditRoomTypeDialog({ isOpen: false, roomType: null });
+      // Refresh the room types data
+      await fetchPropertyData();
+    } catch (error) {
+      console.error('Error updating room type:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Failed to update room type.';
+      showToast(errorMessage, 'error', 3000);
+    }
+  };
+
   // Handle adding rental unit
   const handleAddUnit = async (unitData) => {
     try {
@@ -754,27 +1211,51 @@ const AdminOrganisation = () => {
         return;
       }
 
-      // Resolve selected type: unitData.type is an ID (string)
-      const selectedType = (roomTypes || []).find(rt => `${rt.id}` === `${unitData.type}`) ||
-                           (roomTypes || []).find(rt => rt.name === unitData.type);
+      // Predefined unit types (strings)
+      const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                                '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+      
+      let unitTypeToSend;
+      let displayName;
+      
+      // Check if it's a predefined type or a custom room type ID
+      if (predefinedTypes.includes(unitData.type)) {
+        // It's a predefined type - send the string value
+        unitTypeToSend = unitData.type;
+        // Format display name (e.g., "1-bedroom" -> "1 Bedroom")
+        displayName = unitData.type
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      } else {
+        // It's a custom room type ID - find it in roomTypes
+        const selectedType = (roomTypes || []).find(rt => `${rt.id}` === `${unitData.type}`);
+        unitTypeToSend = selectedType?.id || unitData.type;
+        displayName = selectedType?.name || 'N/A';
+      }
 
       // Call the API to create the unit
-      const response = await propertiesAPI.createUnit({
+      const unitPayload = {
         unit_number: unitData.unitNumber,
-        unit_type: selectedType?.id || unitData.type, // send ID to backend
+        unit_type: unitTypeToSend,
         rent: parseInt(unitData.rent),
-        property: selectedPropertyId,
+        deposit: parseInt(unitData.deposit || unitData.rent),
+        property_obj: parseInt(selectedPropertyId),
         is_available: true
-      });
+      };
+      
+      console.log('📤 Creating single unit with payload:', unitPayload);
+      
+      const response = await propertiesAPI.createUnit(unitPayload);
 
       // If API call successful, update local state
       const newUnit = {
         id: response.data.id,
         unitNumber: response.data.unit_number,
-        // Prefer the resolved name for display; fall back to API echo
-        type: selectedType?.name || response.data.unit_type?.name || response.data.unit_type || 'N/A',
-        typeId: selectedType?.id || response.data.unit_type?.id || response.data.unit_type || null,
+        type: response.data.unit_type?.name || displayName,
+        typeId: response.data.unit_type?.id || unitTypeToSend,
         rent: parseInt(response.data.rent),
+        deposit: parseInt(response.data.deposit || response.data.rent),
         status: 'available',
         isAvailable: true,
         tenant: null,
@@ -791,6 +1272,191 @@ const AdminOrganisation = () => {
     } catch (error) {
       console.error('Error adding unit:', error);
       showToast('Failed to add unit. Please try again.', 'error', 3000);
+    }
+  };
+
+  // Handle bulk adding rental units
+  const handleBulkAddUnits = async (unitsArray) => {
+    try {
+      if (!selectedPropertyId) {
+        showToast('Please select a property first', 'error', 3000);
+        return;
+      }
+
+      console.log('🏢 Selected Property ID:', selectedPropertyId);
+      console.log('📦 Units to create:', unitsArray);
+      console.log('🏷️ Available room types:', roomTypes);
+
+      showToast(`Creating ${unitsArray.length} units...`, 'info', 2000);
+      
+      let successCount = 0;
+      let failCount = 0;
+      const errors = [];
+
+      // Predefined unit types (strings)
+      const predefinedTypes = ['studio', '1-bedroom', '2-bedroom', '3-bedroom', '4-bedroom', 
+                                '5-bedroom', '6-bedroom', '7-bedroom', '8-bedroom'];
+      
+      // Determine if we're using predefined or custom type
+      const firstUnitType = unitsArray[0].type;
+      let unitTypeToSend;
+      let displayName;
+      
+      console.log('🔍 First unit type value:', firstUnitType);
+      console.log('🔍 Type of firstUnitType:', typeof firstUnitType);
+      
+      if (predefinedTypes.includes(firstUnitType)) {
+        // It's a predefined type
+        unitTypeToSend = firstUnitType;
+        displayName = firstUnitType
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        console.log('✅ Using predefined type:', unitTypeToSend);
+      } else {
+        // It's a custom room type ID
+        const selectedType = (roomTypes || []).find(rt => `${rt.id}` === `${firstUnitType}`);
+        
+        if (!selectedType) {
+          console.error('❌ Room type ID not found:', firstUnitType);
+          showToast(`Invalid room type selected (ID: ${firstUnitType}). Please select a valid room type.`, 'error', 5000);
+          return;
+        }
+        
+        unitTypeToSend = selectedType.id;
+        displayName = selectedType.name;
+        console.log('✅ Using custom room type:', { id: unitTypeToSend, name: displayName });
+      }
+
+      console.log('🎯 Unit type to send:', unitTypeToSend);
+      console.log('📝 Display name:', displayName);
+
+      // Process units in batches to avoid overwhelming the server
+      const batchSize = 10;
+      let shouldStop = false; // Flag to stop processing when subscription limit is hit
+      
+      for (let i = 0; i < unitsArray.length && !shouldStop; i += batchSize) {
+        const batch = unitsArray.slice(i, i + batchSize);
+        
+        const batchPromises = batch.map(async (unitData) => {
+          if (shouldStop) return { success: false, unitNumber: unitData.unitNumber, skipped: true };
+          
+          try {
+            const unitPayload = {
+              unit_number: unitData.unitNumber,
+              unit_type: unitTypeToSend,
+              rent: parseInt(unitData.rent),
+              deposit: parseInt(unitData.deposit || unitData.rent),
+              property_obj: parseInt(selectedPropertyId),
+              is_available: true
+            };
+            
+            console.log('📤 Sending unit data:', unitPayload);
+            
+            const response = await propertiesAPI.createUnit(unitPayload);
+
+            // Update local state
+            const newUnit = {
+              id: response.data.id,
+              unitNumber: response.data.unit_number,
+              type: response.data.unit_type?.name || displayName,
+              typeId: response.data.unit_type?.id || unitTypeToSend,
+              rent: parseInt(response.data.rent),
+              deposit: parseInt(response.data.deposit || response.data.rent),
+              status: 'available',
+              isAvailable: true,
+              tenant: null,
+              propertyId: selectedPropertyId
+            };
+            
+            addUnit(newUnit);
+            successCount++;
+            return { success: true, unitNumber: unitData.unitNumber };
+          } catch (error) {
+            console.error('❌ Error creating unit:', unitData.unitNumber, error.response?.data || error.message);
+            failCount++;
+            
+            const errorData = error.response?.data || {};
+            const errorMessage = errorData.error || error.message;
+            const isSubscriptionLimit = error.response?.status === 403 && errorData.upgrade_needed;
+            
+            errors.push({ 
+              unitNumber: unitData.unitNumber, 
+              error: errorMessage,
+              isSubscriptionLimit: isSubscriptionLimit,
+              errorDetails: errorData
+            });
+            
+            // Stop processing if subscription limit is hit
+            if (isSubscriptionLimit) {
+              shouldStop = true;
+            }
+            
+            return { 
+              success: false, 
+              unitNumber: unitData.unitNumber,
+              isSubscriptionLimit: isSubscriptionLimit
+            };
+          }
+        });
+
+        await Promise.all(batchPromises);
+      }
+
+      // Check if any errors are subscription limit errors
+      const subscriptionLimitError = errors.find(e => e.isSubscriptionLimit);
+      
+      // Always close the dialog after processing
+      setBulkAddDialog(false);
+      
+      // Refresh the units data only if some units were created
+      if (successCount > 0) {
+        await fetchPropertyData();
+      }
+      
+      // Show results AFTER closing dialog and refreshing
+      if (failCount === 0) {
+        showToast(`✅ Successfully created all ${successCount} units!`, 'success', 5000);
+      } else if (subscriptionLimitError) {
+        // Special handling for subscription limit errors
+        const limitDetails = subscriptionLimitError.errorDetails;
+        const upgradeMessage = successCount > 0 
+          ? `✅ Created ${successCount} units successfully.\n\n🚫 Subscription Limit Reached!\n\nYou have reached your plan limit of ${limitDetails.limit} units (current: ${limitDetails.current_count}).\n\nPlease upgrade your subscription to add more units.`
+          : `🚫 Subscription Limit Reached!\n\nYou have reached your plan limit of ${limitDetails.limit} units (current: ${limitDetails.current_count}).\n\nPlease upgrade your subscription to add more units.`;
+        
+        // Show toast
+        showToast(upgradeMessage, 'error', 8000);
+        
+        // Also show alert as fallback (guaranteed to be visible)
+        alert(upgradeMessage);
+        
+        // Log detailed info for debugging
+        console.warn('🚫 Subscription Limit Reached:', {
+          currentCount: limitDetails.current_count,
+          limit: limitDetails.limit,
+          suggestedPlan: limitDetails.suggested_plan,
+          successfullyCreated: successCount,
+          failed: failCount,
+          message: 'Please upgrade your subscription or delete some units to continue.'
+        });
+      } else {
+        const errorMsg = `Created ${successCount} units. ${failCount} failed. Check console for details.`;
+        showToast(errorMsg, failCount > successCount / 2 ? 'error' : 'warning', 5000);
+        
+        // Show alert for visibility
+        if (failCount > 0) {
+          alert(errorMsg);
+        }
+        
+        if (errors.length > 0) {
+          console.error('Failed units:', errors);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error in bulk add:', error);
+      setBulkAddDialog(false);
+      showToast('Failed to complete bulk add. Please try again.', 'error', 3000);
     }
   };
 
@@ -828,10 +1494,25 @@ const AdminOrganisation = () => {
         onAdd={handleAddRoomType}
       />
 
+      <EditRoomTypeDialog
+        isOpen={editRoomTypeDialog.isOpen}
+        onClose={() => setEditRoomTypeDialog({ isOpen: false, roomType: null })}
+        onUpdate={handleUpdateRoomType}
+        roomType={editRoomTypeDialog.roomType}
+      />
+
       <AddRentalUnitDialog
         isOpen={addUnitDialog}
         onClose={() => setAddUnitDialog(false)}
         onAdd={handleAddUnit}
+        roomTypes={roomTypes}
+        propertyId={selectedPropertyId}
+      />
+
+      <BulkAddUnitsDialog
+        isOpen={bulkAddDialog}
+        onClose={() => setBulkAddDialog(false)}
+        onBulkAdd={handleBulkAddUnits}
         roomTypes={roomTypes}
         propertyId={selectedPropertyId}
       />
@@ -997,23 +1678,38 @@ const AdminOrganisation = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {roomTypes.map(roomType => (
             <div key={roomType.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{roomType.name}</h3>
                   <p className="text-lg text-blue-600 font-bold mt-1">
-                    KSh {roomType.baseRent?.toLocaleString() || roomType.rent?.toLocaleString()}
+                    Rent: KSh {roomType.baseRent?.toLocaleString() || roomType.rent?.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-green-600 font-medium mt-1">
+                    Deposit: KSh {roomType.deposit?.toLocaleString() || '0'}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
                     {(unitsCountByTypeKey.get(`${roomType.id}`) || 0)} units
                   </p>
+                  {roomType.description && (
+                    <p className="text-xs text-gray-500 mt-2">{roomType.description}</p>
+                  )}
                 </div>
-                <button 
-                  onClick={() => handleDeleteRoomType(roomType.id)}
-                  className="text-red-400 hover:text-red-600"
-                  title="Delete room type"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setEditRoomTypeDialog({ isOpen: true, roomType })}
+                    className="text-blue-400 hover:text-blue-600"
+                    title="Edit room type"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteRoomType(roomType.id)}
+                    className="text-red-400 hover:text-red-600"
+                    title="Delete room type"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -1035,13 +1731,22 @@ const AdminOrganisation = () => {
               {displayUnits.length} units total • {occupiedUnits} occupied • {availableUnits} available
             </p>
           </div>
-          <button
-            onClick={() => setAddUnitDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            <Plus className="w-4 h-4" />
-            Add Rental Unit
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setBulkAddDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Add Units
+            </button>
+            <button
+              onClick={() => setAddUnitDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Rental Unit
+            </button>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -1051,6 +1756,7 @@ const AdminOrganisation = () => {
                 <th className="text-left py-3 px-4">Room</th>
                 <th className="text-left py-3 px-4">Type</th>
                 <th className="text-left py-3 px-4">Rent (KSh)</th>
+                <th className="text-left py-3 px-4">Deposit (KSh)</th>
                 <th className="text-left py-3 px-4">Tenant</th>
                 <th className="text-left py-3 px-4">Status</th>
                 <th className="text-left py-3 px-4">Availability</th>
@@ -1066,6 +1772,7 @@ const AdminOrganisation = () => {
                     <td className="py-3 px-4 font-medium">{room.unitNumber}</td>
                     <td className="py-3 px-4">{room.type}</td>
                     <td className="py-3 px-4">{room.rent?.toLocaleString()}</td>
+                    <td className="py-3 px-4">{(room.deposit || room.rent)?.toLocaleString()}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{room.tenant || '-'}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${

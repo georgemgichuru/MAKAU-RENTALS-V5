@@ -76,10 +76,41 @@
    python manage.py createsuperuser
    ```
 
+
 7. **Run the development server:**
    ```bash
    python manage.py runserver
    ```
+
+### Exposing Backend with Ngrok
+
+To allow external access to your local backend (for mobile apps, webhooks, or remote frontend), use [ngrok](https://ngrok.com/):
+
+#### Install Ngrok
+1. Download ngrok from [ngrok.com/download](https://ngrok.com/download)
+2. Unzip and place the executable in a folder (add to PATH for convenience)
+3. (Optional) Sign up at ngrok.com and run:
+   ```bash
+   ngrok config add-authtoken <YOUR_AUTH_TOKEN>
+   ```
+
+#### Run Ngrok with Django
+After starting your Django server (default: http://127.0.0.1:8000), run:
+```bash
+ngrok http 8000
+```
+Ngrok will provide a public HTTPS URL forwarding to your local backend. Use this URL for API calls, webhooks, or frontend development.
+
+#### Example Workflow
+1. Start Django backend:
+   ```bash
+   python manage.py runserver
+   ```
+2. In a new terminal, start ngrok:
+   ```bash
+   ngrok http 8000
+   ```
+3. Use the HTTPS URL shown by ngrok for external access.
 
 8. **Run Celery worker (in a separate terminal):**
    ```bash

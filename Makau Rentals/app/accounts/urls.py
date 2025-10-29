@@ -42,6 +42,11 @@ from .views import (
     # ADD THE NEW VIEWS
     TenantRegistrationView,
     LandlordTenantsView,
+    PendingTenantApplicationsView,
+    ApproveTenantApplicationView,
+    DeclineTenantApplicationView,
+    SubscriptionSuggestionView,
+    SubscriptionTrackingHistoryView,
 )
 
 urlpatterns = [
@@ -53,6 +58,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:user_id>/', UserDetailView.as_view(), name='user-detail'),
     path('users/<int:user_id>/update/', UpdateUserView.as_view(), name='user-update'),
+    path('users/<int:user_id>/delete/', UpdateUserView.as_view(), name='user-delete'),
     path('register/', UserCreateView.as_view(), name='user-create'),
     path('me/', MeView.as_view(), name='me'),
     
@@ -87,6 +93,8 @@ urlpatterns = [
     
     # Subscription
     path('subscription/status/', SubscriptionStatusView.as_view(), name='subscription-status'),
+    path('subscription/suggestion/', SubscriptionSuggestionView.as_view(), name='subscription-suggestion'),
+    path('subscription/tracking/', SubscriptionTrackingHistoryView.as_view(), name='subscription-tracking'),
     path('till-number/update/', UpdateTillNumberView.as_view(), name='update-till-number'),
     
     # Tenant preferences
@@ -120,6 +128,11 @@ urlpatterns = [
     path('admin/subscription-status/', AdminLandlordSubscriptionStatusView.as_view(), name='admin-subscription-status'),
     path('applications/pending/', PendingApplicationsView.as_view(), name='pending-applications'),
     path('tenants/evicted/', EvictedTenantsView.as_view(), name='evicted-tenants'),
+    
+    # Tenant application management
+    path('tenant-applications/pending/', PendingTenantApplicationsView.as_view(), name='pending-tenant-applications'),
+    path('tenant-applications/<int:application_id>/approve/', ApproveTenantApplicationView.as_view(), name='approve-tenant-application'),
+    path('tenant-applications/<int:application_id>/decline/', DeclineTenantApplicationView.as_view(), name='decline-tenant-application'),
     
     # Welcome
     path('welcome/', WelcomeView.as_view(), name='welcome'),

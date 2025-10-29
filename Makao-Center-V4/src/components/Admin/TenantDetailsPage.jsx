@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
+import { buildMediaUrl } from '../../services/api';
 
 const TenantDetails = () => {
   const { tenantId } = useParams();
@@ -143,6 +144,20 @@ const TenantDetails = () => {
   }
 
   const details = detailedTenantData[tenantId] || {};
+
+  // Prefer real ID document from API if available
+  const realDocPath = tenant?.id_document;
+  let apiDocuments = [];
+  if (realDocPath) {
+    const url = buildMediaUrl(realDocPath);
+    const name = (() => {
+      try { return url.split('/').pop() || 'ID Document'; } catch { return 'ID Document'; }
+    })();
+    const ext = name.split('.').pop()?.toLowerCase();
+    const type = ext === 'pdf' ? 'application/pdf' : (ext ? `image/${ext}` : 'application/octet-stream');
+    // Size is unknown without HEAD request; leave undefined
+    apiDocuments = [{ name, type, size: undefined, uploadedAt: undefined, url }];
+  }
   
   // Get tenant name safely
   const tenantName = tenant.full_name || tenant.name || 'Unknown Tenant';
@@ -401,9 +416,9 @@ const TenantDetails = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900 flex items-center">
               <FileText className="w-6 h-6 mr-2 text-blue-600" />
-              Documents ({details.documents?.length || 0})
+              Documents ({(apiDocuments.length || 0) + (details.documents?.length || 0)})
             </h2>
-            {details.documents?.length > 0 && (
+            {(apiDocuments.length > 0 || (details.documents?.length > 0)) && (
               <button
                 onClick={handleDownloadAll}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -414,14 +429,14 @@ const TenantDetails = () => {
             )}
           </div>
 
-          {!details.documents || details.documents.length === 0 ? (
+          {apiDocuments.length === 0 && (!details.documents || details.documents.length === 0) ? (
             <div className="text-center py-12">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No documents available</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {details.documents.map((doc, index) => (
+              {[...apiDocuments, ...(details.documents || [])].map((doc, index) => (
                 <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -442,14 +457,31 @@ const TenantDetails = () => {
                   
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handlePreviewDocument(doc)}
+                      onClick={() => {
+                        if (doc.url) {
+                          window.open(doc.url, '_blank');
+                        } else {
+                          handlePreviewDocument(doc);
+                        }
+                      }}
                       className="flex-1 flex items-center justify-center px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Preview
                     </button>
                     <button
-                      onClick={() => handleDownloadDocument(doc)}
+                      onClick={() => {
+                        if (doc.url) {
+                          const a = document.createElement('a');
+                          a.href = doc.url;
+                          a.download = doc.name || 'document';
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        } else {
+                          handleDownloadDocument(doc);
+                        }
+                      }}
                       className="flex-1 flex items-center justify-center px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
                     >
                       <Download className="w-4 h-4 mr-1" />

@@ -241,3 +241,121 @@ def send_monthly_payment_reminders_task():
         sent_count += len(tenant_ids)
 
     return f"Queued monthly reminders for {sent_count} tenant(s)"
+
+
+@shared_task
+def check_subscription_expiry_task():
+    """
+    Daily task to check for expiring subscriptions and send reminder emails.
+    Runs daily and sends reminders at 7, 3, and 1 day(s) before expiry.
+    Also sends notifications for expired subscriptions.
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    from accounts.models import CustomUser, Subscription
+    from accounts.subscription_utils import (
+        send_subscription_expiry_reminder,
+        send_subscription_expired_email
+    )
+    
+    today = timezone.now()
+    landlords = CustomUser.objects.filter(user_type='landlord', is_active=True)
+    
+    reminders_sent = 0
+    expired_notified = 0
+    
+    for landlord in landlords:
+        try:
+            subscription = Subscription.objects.get(user=landlord)
+        except Subscription.DoesNotExist:
+            continue
+        
+        # Skip if no expiry date (one-time plan)
+        if not subscription.expiry_date:
+            continue
+        
+        # Calculate days until expiry
+        time_diff = subscription.expiry_date - today
+        days_until_expiry = time_diff.days
+        
+        # Already expired
+        if days_until_expiry < 0:
+            send_subscription_expired_email(landlord)
+            expired_notified += 1
+            continue
+        
+        # Send reminders at specific intervals
+        reminder_days = [7, 3, 1]
+        
+        if days_until_expiry in reminder_days:
+            send_subscription_expiry_reminder(landlord, days_until_expiry)
+            reminders_sent += 1
+        
+        # Also send on expiry day (0 days)
+        elif days_until_expiry == 0:
+            send_subscription_expiry_reminder(landlord, 0)
+            reminders_sent += 1
+    
+    return f"Sent {reminders_sent} expiry reminders and {expired_notified} expired notifications"
+
+
+@shared_task
+def notify_landlords_approaching_limits_task():
+    """
+    Weekly task to check landlords approaching their subscription limits
+    and send proactive upgrade suggestions.
+    """
+    from accounts.models import CustomUser, Property, Unit, Subscription
+    from accounts.subscription_utils import (
+        get_plan_limits,
+        send_approaching_limit_email,
+        suggest_plan_upgrade
+    )
+    
+    landlords = CustomUser.objects.filter(user_type='landlord', is_active=True)
+    notifications_sent = 0
+    
+    for landlord in landlords:
+        try:
+            subscription = Subscription.objects.get(user=landlord)
+        except Subscription.DoesNotExist:
+            continue
+        
+        # Skip if subscription is not active or unlimited plan
+        if not subscription.is_active() or subscription.plan == 'onetime':
+            continue
+        
+        plan_limits = get_plan_limits(subscription.plan)
+        property_limit = plan_limits.get('properties')
+        unit_limit = plan_limits.get('units')
+        
+        current_properties = Property.objects.filter(landlord=landlord).count()
+        current_units = Unit.objects.filter(property_obj__landlord=landlord).count()
+        
+        # Check if within 80% of limit (approaching)
+        property_threshold = property_limit * 0.8 if property_limit else None
+        unit_threshold = unit_limit * 0.8 if unit_limit else None
+        
+        # Send property limit warning
+        if property_limit and current_properties >= property_threshold:
+            send_approaching_limit_email(
+                landlord=landlord,
+                limit_type='property',
+                current_count=current_properties,
+                limit=property_limit,
+                current_plan=subscription.plan
+            )
+            notifications_sent += 1
+        
+        # Send unit limit warning
+        if unit_limit and current_units >= unit_threshold:
+            send_approaching_limit_email(
+                landlord=landlord,
+                limit_type='unit',
+                current_count=current_units,
+                limit=unit_limit,
+                current_plan=subscription.plan
+            )
+            notifications_sent += 1
+    
+    return f"Sent {notifications_sent} limit approach notifications"

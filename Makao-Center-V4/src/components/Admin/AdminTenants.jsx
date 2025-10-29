@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmailFormModal from './Modals/EmailFormModal';
 import WhatsAppFormModal from './Modals/WhatsAppFormModal';
@@ -31,9 +31,13 @@ import {
   Clock,
   Bed,
   Key,
-  DollarSign
+  DollarSign,
+  UserCheck,
+  UserX,
+  CalendarDays
 } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
+import { tenantsAPI, propertiesAPI } from '../../services/api';
 
 const AdminTenants = () => {
   const navigate = useNavigate();
@@ -46,7 +50,12 @@ const AdminTenants = () => {
   const [isCustomMessageModalOpen, setIsCustomMessageModalOpen] = useState(false);
   const [isShiftTenantModalOpen, setIsShiftTenantModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState(null);
+  const [isEditDeadlineModalOpen, setIsEditDeadlineModalOpen] = useState(false);
+  const [editingDueDate, setEditingDueDate] = useState('');
+  const [savingDeadline, setSavingDeadline] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [pendingApplications, setPendingApplications] = useState([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
 
   // safe defaults from context to avoid undefined errors
   const {
@@ -57,11 +66,134 @@ const AdminTenants = () => {
     transactions = []
   } = useContext(AppContext);
 
+  // Fetch pending applications from API
+  useEffect(() => {
+    const fetchPendingApplications = async () => {
+      setLoadingApplications(true);
+      try {
+        console.log('📋 Fetching pending applications...');
+        const response = await tenantsAPI.getPendingApplications();
+        console.log('✅ Pending applications response:', response.data);
+        // Backend returns { status, count, applications: [...] }
+        const apps = response.data.applications || response.data || [];
+        console.log('📋 Extracted applications:', apps);
+
+        // Fetch units once to help robustly resolve unit IDs and vacancy
+        console.log('🏘️ Fetching units to map application selections to IDs...');
+        let units = [];
+        try {
+          const unitsResp = await propertiesAPI.getUnits();
+          units = unitsResp?.data || [];
+          console.log('🏘️ Units fetched:', units.length);
+        } catch (uErr) {
+          console.warn('⚠️ Failed to fetch units for mapping:', uErr);
+        }
+
+        const normalize = (v) => (v == null ? '' : String(v).trim().toLowerCase());
+        const extractDigits = (str) => (str || '').match(/\d+/g)?.join('-') || '';
+
+        const findUnitFromHints = (app) => {
+          if (!Array.isArray(units) || units.length === 0) return null;
+          const unitHintNumber = app.unit_number || extractDigits(app.unit_label || app.property_unit || app.property_unit_label) || '';
+          const propertyHintId = app.property_id || app.property_obj?.id || null;
+          const propertyHintName = app.property_name || app.property_obj?.name || '';
+
+          // Strategy 1: strict number + property id/name
+          let match = units.find(u => {
+            const uNum = String(u.unit_number || u.number || u.name || '');
+            const uDigits = extractDigits(uNum);
+            const uPropId = u.property_obj?.id || u.property_obj || u.property?.id || null;
+            const uPropName = normalize(u.property_obj?.name || u.property?.name || '');
+            const numberMatch = unitHintNumber ? normalize(uDigits) === normalize(unitHintNumber) || normalize(uNum) === normalize(unitHintNumber) : false;
+            const propMatch = propertyHintId ? String(uPropId) === String(propertyHintId) : (propertyHintName ? uPropName === normalize(propertyHintName) : true);
+            return numberMatch && propMatch;
+          });
+          // Strategy 2: number-only match
+          if (!match && unitHintNumber) {
+            match = units.find(u => {
+              const uNum = String(u.unit_number || u.number || u.name || '');
+              const uDigits = extractDigits(uNum);
+              return normalize(uDigits) === normalize(unitHintNumber) || normalize(uNum) === normalize(unitHintNumber);
+            });
+          }
+          // Strategy 3: contains match with label
+          if (!match && app.unit_label) {
+            const labelNorm = normalize(app.unit_label);
+            match = units.find(u => normalize(u.unit_number || u.number || u.name || '').includes(labelNorm));
+          }
+          return match || null;
+        };
+
+        // Transform backend data to match UI expectations (with unit mapping and vacancy flag)
+        const transformedApps = apps.map(app => {
+          // direct fields
+          let resolvedUnitId = app.unit_id || app.unit?.id || app.unit_obj?.id || app.unit || app.selected_unit_id || null;
+          const resolvedTenantId = app.tenant_id || app.tenant?.id || app.tenant || app.user_id || app.user?.id || null;
+
+          // derive match from units data if missing
+          let matchedUnit = null;
+          if (!resolvedUnitId) {
+            matchedUnit = findUnitFromHints(app);
+            if (matchedUnit?.id) resolvedUnitId = matchedUnit.id;
+          } else {
+            matchedUnit = (units || []).find(u => String(u.id) === String(resolvedUnitId)) || null;
+          }
+
+          const isUnitVacant = matchedUnit ? (matchedUnit.is_available ?? matchedUnit.isAvailable ?? true) : undefined;
+
+          return {
+            id: app.id,
+            name: app.tenant_name,
+            email: app.tenant_email,
+            phone: app.tenant_phone,
+            governmentId: app.tenant_national_id,
+            roomTypeLabel: app.unit_number ? `Unit ${app.unit_number}` : 'Unit Not Assigned',
+            roomType: app.property_name || 'N/A',
+            submittedAt: app.applied_at,
+            depositRequired: app.deposit_required,
+            depositPaid: app.deposit_paid,
+            alreadyLiving: app.already_living_in_property,
+            unitId: resolvedUnitId,
+            tenantId: resolvedTenantId,
+            // Hints and matching results
+            selectedUnitNumber: app.unit_number,
+            selectedPropertyId: app.property_id || app.property_obj?.id || null,
+            selectedPropertyName: app.property_name || app.property_obj?.name || null,
+            resolvedUnitIsVacant: isUnitVacant,
+            status: app.status,
+            notes: app.notes,
+            documents: [], // Documents would need to be fetched separately
+            paymentAmount: app.deposit_paid ? 'Deposit Paid' : 'No Deposit',
+            transactionId: 'N/A', // Would come from payment records
+            emergencyContact: 'N/A' // Not in current backend response
+          };
+        });
+
+        console.log('🧭 Transformed applications with unit mapping:', transformedApps);
+        setPendingApplications(transformedApps);
+      } catch (error) {
+        console.error('❌ Error fetching pending applications:', error);
+        // Fallback to mock data if API fails
+        setPendingApplications(mockPendingApplications || []);
+      } finally {
+        setLoadingApplications(false);
+      }
+    };
+
+    fetchPendingApplications();
+  }, []);
+
   // Log to debug data structure
   console.log('🔍 mockTenants data:', mockTenants);
   console.log('🔍 First tenant sample:', mockTenants[0]);
   console.log('🔍 Transactions:', transactions);
   console.log('🔍 Transactions count:', transactions?.length || 0);
+  
+  // 🆕 DEBUG: Log each tenant's is_active status
+  console.log('👥 TENANT ACTIVE STATUS CHECK:');
+  mockTenants.forEach(tenant => {
+    console.log(`  - ${tenant.full_name || tenant.name} (${tenant.email}): is_active = ${tenant.is_active}`);
+  });
   
   // Log deposit and rent type transactions for debugging
   const depositTransactions = (transactions || []).filter(t => t.type === 'deposit');
@@ -137,7 +269,11 @@ const AdminTenants = () => {
     const depositPaid = hasDepositPaid(tenant);
     const rentStatus = getRentStatus(tenant);
     
+    // FIXED: Tenant status should be based on is_active field from backend
+    const isActive = tenant.is_active === true || tenant.is_active === 'true';
+    
     console.log(`🏠 Tenant: ${tenant.full_name || tenant.name}`);
+    console.log(`   - is_active: ${tenant.is_active} -> ${isActive}`);
     console.log(`   - Has unit: ${hasUnit}`);
     console.log(`   - Deposit paid: ${depositPaid} (from API: ${tenant.deposit_paid})`);
     console.log(`   - Rent status: ${rentStatus} (from API: ${tenant.rent_status})`);
@@ -152,8 +288,8 @@ const AdminTenants = () => {
       rentAmount: unit?.rent || unit?.rent_amount || 0,
       bookingId: tenant.id,
       joinDate: tenant.created_at || tenant.date_joined || '2024-01-01',
-      // Tenant is active only if they have paid deposit
-      status: depositPaid ? 'active' : 'inactive',
+      // FIXED: Tenant is active if their account is activated (is_active=True)
+      status: isActive ? 'active' : 'inactive',
       // Determine rent status from payments or unit data
       rentStatus: rentStatus,
       isEstimated: tenant.isEstimated || false,
@@ -332,6 +468,196 @@ const AdminTenants = () => {
   const handleDownloadDocument = (document, applicantName) => {
     console.log('Downloading document:', document.name, 'for', applicantName);
     alert(`Downloading ${document.name} for ${applicantName}`);
+  };
+
+  // Handle approve tenant application (+ assign to selected unit)
+  const handleApproveTenant = async (application) => {
+    if (!window.confirm(`Are you sure you want to approve ${application.name}'s application?`)) {
+      return;
+    }
+
+    try {
+      console.log('✅ Approving application:', application.id);
+      const response = await tenantsAPI.approveTenantApplication(application.id);
+      console.log('✅ Approval response:', response?.data);
+
+      // If we already know the selected unit is not vacant from the list view, stop early
+      if (application.unitId && application.resolvedUnitIsVacant === false) {
+        alert(`Cannot assign ${application.name} to ${application.roomTypeLabel || 'the selected unit'} because it is not vacant.`);
+        // Still approved, but no assignment
+        window.location.reload();
+        return;
+      }
+
+      // Helpers to robustly resolve unit and tenant IDs
+      const extractDigits = (str) => (str || '').match(/\d+/g)?.join('-') || '';
+      const normalize = (v) => (v == null ? '' : String(v).trim().toLowerCase());
+
+      const resolveUnitId = async () => {
+        // Direct fields first
+        let id = application.unitId || application.unit_id || application.unit?.id || application.unit_obj?.id || application.unit || application.selected_unit_id;
+        if (id) return id;
+
+        // Try to resolve by unit number and optional property
+        const unitHintNumber = application.selectedUnitNumber || extractDigits(application.roomTypeLabel) || extractDigits(application.roomType) || '';
+        const propertyHintId = application.selectedPropertyId;
+        const propertyHintName = application.selectedPropertyName || application.roomType || '';
+        console.log('🔎 Resolving unitId using hints:', { unitHintNumber, propertyHintId, propertyHintName });
+        try {
+          const unitsResp = await propertiesAPI.getUnits();
+          const units = unitsResp?.data || [];
+          // Strategy 1: strict number + property id/name
+          let match = units.find(u => {
+            const uNum = String(u.unit_number || u.number || u.name || '');
+            const uDigits = extractDigits(uNum);
+            const uPropId = u.property_obj?.id || u.property_obj || u.property?.id || null;
+            const uPropName = normalize(u.property_obj?.name || u.property?.name || '');
+            const numberMatch = unitHintNumber ? normalize(uDigits) === normalize(unitHintNumber) || normalize(uNum) === normalize(application.selectedUnitNumber) : false;
+            const propMatch = propertyHintId ? String(uPropId) === String(propertyHintId) : (propertyHintName ? uPropName === normalize(propertyHintName) : true);
+            return numberMatch && propMatch;
+          });
+          // Strategy 2: number-only match
+          if (!match && unitHintNumber) {
+            match = units.find(u => {
+              const uNum = String(u.unit_number || u.number || u.name || '');
+              const uDigits = extractDigits(uNum);
+              return normalize(uDigits) === normalize(unitHintNumber) || normalize(uNum) === normalize(application.selectedUnitNumber);
+            });
+          }
+          // Strategy 3: contains match (very lenient)
+          if (!match && application.roomTypeLabel) {
+            const labelNorm = normalize(application.roomTypeLabel);
+            match = units.find(u => normalize(u.unit_number || u.number || u.name || '').includes(labelNorm));
+          }
+          if (match?.id) {
+            // Ensure vacancy before returning
+            const vacant = match.is_available ?? match.isAvailable ?? true;
+            if (!vacant) {
+              console.warn('🚫 Selected unit is not vacant:', match);
+              return null;
+            }
+            return match.id;
+          }
+        } catch (e) {
+          console.warn('⚠️ Unit list resolution failed:', e);
+        }
+        return null;
+      };
+
+      const resolveTenantId = async () => {
+        // Direct fields and response fallbacks
+        let id = application.tenantId || application.tenant_id || response?.data?.tenant?.id || response?.data?.tenant_id || response?.data?.user?.id || response?.data?.user_id || response?.data?.approved_tenant_id || response?.data?.id;
+        if (id) return id;
+        try {
+          const tenantsResp = await tenantsAPI.getTenants();
+          const list = tenantsResp?.data || [];
+          // Strategy 1: match on email
+          let match = application.email ? list.find(t => normalize(t.email) === normalize(application.email)) : null;
+          // Strategy 2: match on national ID if available
+          if (!match && application.governmentId) {
+            match = list.find(t => normalize(t.national_id || t.id_number || t.tenant_national_id) === normalize(application.governmentId));
+          }
+          // Strategy 3: match on full name
+          if (!match && application.name) {
+            match = list.find(t => normalize(t.full_name || t.name) === normalize(application.name));
+          }
+          if (match?.id) return match.id;
+        } catch (e) {
+          console.warn('⚠️ Tenant list resolution failed:', e);
+        }
+        return null;
+      };
+
+  let unitId = await resolveUnitId();
+      let resolvedTenantId = await resolveTenantId();
+
+      console.log('📌 Assignment candidates (resolved) -> unitId:', unitId, 'tenantId:', resolvedTenantId, 'application:', application);
+
+
+      if (unitId && resolvedTenantId) {
+        try {
+          console.log(`🔗 Assigning tenant ${resolvedTenantId} to unit ${unitId}...`);
+          const assignRes = await tenantsAPI.assignTenant(unitId, resolvedTenantId);
+          console.log('✅ Assignment response:', assignRes?.data ?? assignRes);
+          alert(`${application.name} has been approved and assigned to Unit ${application.roomTypeLabel || unitId}.`);
+        } catch (assignError) {
+          console.error('❌ Failed to assign tenant to unit:', assignError);
+          const msg = assignError.response?.data?.error || assignError.response?.data?.message || assignError.message || 'Assignment failed';
+          alert(`${application.name} was approved, but assignment to the selected unit failed: ${msg}`);
+        }
+      } else {
+        console.warn('⚠️ Missing unitId or tenantId for assignment.', { unitId, resolvedTenantId, application, response: response?.data });
+        // Try a last-resort manual hint for unit number if tenant is known
+        if (!unitId && resolvedTenantId) {
+          const manualUnit = window.prompt("We couldn't detect the unit automatically. Enter the exact Unit Number to assign (leave blank to skip):", application.selectedUnitNumber || '');
+          if (manualUnit && manualUnit.trim().length > 0) {
+            try {
+              const unitsResp = await propertiesAPI.getUnits();
+              const units = unitsResp?.data || [];
+              const mn = manualUnit.trim();
+              const match = units.find(u => String(u.unit_number || u.number || u.name || '').toLowerCase() === mn.toLowerCase());
+              if (match?.id) {
+                // Vacancy check
+                const vacant = match.is_available ?? match.isAvailable ?? true;
+                if (!vacant) {
+                  alert(`The unit "${mn}" is not vacant. Please select a vacant unit.`);
+                  throw new Error('Unit not vacant');
+                }
+                unitId = match.id;
+                console.log('✅ Resolved unitId from manual input:', unitId, match);
+                const assignRes = await tenantsAPI.assignTenant(unitId, resolvedTenantId);
+                console.log('✅ Assignment response (manual):', assignRes?.data ?? assignRes);
+                alert(`${application.name} has been approved and assigned to Unit ${mn}.`);
+              } else {
+                alert(`No unit found with number "${mn}". Approval kept; assignment skipped.`);
+              }
+            } catch (e) {
+              console.warn('Manual unit assignment failed:', e);
+              alert(`${application.name} has been approved! (Manual assignment failed)`);
+            }
+          } else {
+            alert(`${application.name} has been approved! (No unit assignment performed — missing unit/tenant id)`);
+          }
+        } else {
+          // Still inform the admin approval succeeded
+          alert(`${application.name} has been approved! (No unit assignment performed — missing unit/tenant id)`);
+        }
+      }
+
+      // Refresh to pull the latest tenant + unit state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error approving application:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to approve application';
+      alert(`Error: ${errorMessage}`);
+    }
+  };
+
+  // Handle decline tenant application
+  const handleDeclineTenant = async (application) => {
+    const reason = window.prompt(
+      `Are you sure you want to decline ${application.name}'s application?\n\nPlease enter a reason (optional):`
+    );
+    
+    // User clicked cancel
+    if (reason === null) {
+      return;
+    }
+
+    try {
+      console.log('Declining application:', application.id);
+      const response = await tenantsAPI.declineTenantApplication(application.id);
+      console.log('Decline response:', response.data);
+      
+      alert(`${application.name}'s application has been declined and removed from the system.`);
+      
+      // Reload the page to refresh all tenant data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error declining application:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to decline application';
+      alert(`Error: ${errorMessage}`);
+    }
   };
 
   const handlePreviewDocument = (document) => {
@@ -537,8 +863,8 @@ const AdminTenants = () => {
                 onClick={() => {
                   setSelectedTenant(tenant);
                   setDropdownOpen(null);
-                  // Open Email modal for custom message
-                  setIsEmailModalOpen(true);
+                  // Open CustomMessageModal for this tenant
+                  setIsCustomMessageModalOpen(true);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
@@ -559,18 +885,159 @@ const AdminTenants = () => {
               <button
                 onClick={() => {
                   setSelectedTenant(tenant);
+                  // Prefill current due date if available
+                  const unit = tenant.current_unit || tenant.unit_data || tenant.unit;
+                  const current = unit?.rent_due_date;
+                  // Normalize to YYYY-MM-DD
+                  let initial = '';
+                  if (current) {
+                    try {
+                      const d = new Date(current);
+                      if (!isNaN(d)) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        initial = `${y}-${m}-${day}`;
+                      }
+                    } catch (_) {}
+                  }
+                  setEditingDueDate(initial);
+                  setIsEditDeadlineModalOpen(true);
                   setDropdownOpen(null);
-                  // Open Email modal to notify tenant about shift
-                  setIsEmailModalOpen(true);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Edit Rent Deadline
+              </button>
+
+              <button
+                disabled
+                title="This feature is coming soon"
+                className="w-full text-left px-4 py-2 text-sm text-gray-400 flex items-center cursor-not-allowed opacity-60"
+              >
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Shift Tenant (via Email)
+                Shift Tenant (Coming Soon)
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (window.confirm(`Are you sure you want to evict and delete ${tenant.name}? This action cannot be undone.`)) {
+                    try {
+                      // Call backend API to delete tenant account
+                      // Adjust endpoint and method as needed for your backend
+                      await tenantsAPI.deleteTenantAccount(tenant.id);
+                      alert(`Tenant ${tenant.name} has been evicted and deleted from the system.`);
+                      setDropdownOpen(null);
+                      window.location.reload();
+                    } catch (error) {
+                      alert(`Failed to evict tenant: ${error?.response?.data?.error || error?.message || 'Unknown error'}`);
+                    }
+                  }
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center"
+              >
+                <UserX className="w-4 h-4 mr-2" />
+                Evict Tenant
               </button>
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // Edit Rent Deadline Modal
+  const EditRentDeadlineModal = () => {
+    if (!isEditDeadlineModalOpen || !selectedTenant) return null;
+
+    const unit = selectedTenant.current_unit || selectedTenant.unit_data || selectedTenant.unit;
+    const unitId = unit?.id || unit?.unit_id || unit?.unit || null;
+
+    const save = async () => {
+      if (!unitId) {
+        alert('This tenant is not assigned to a unit. Assign a unit first to set a rent deadline.');
+        return;
+      }
+      if (!editingDueDate) {
+        alert('Please select a valid rent deadline date.');
+        return;
+      }
+      setSavingDeadline(true);
+      try {
+        console.log('🗓️ Updating rent_due_date for unit:', unitId, 'to', editingDueDate);
+        await propertiesAPI.updateUnit(unitId, { rent_due_date: editingDueDate });
+        alert('Rent deadline updated successfully.');
+        // Easiest consistent refresh with existing patterns
+        window.location.reload();
+      } catch (error) {
+        console.error('Failed to update rent deadline:', error);
+        const msg = error.response?.data?.error || error.response?.data?.message || 'Failed to update rent deadline';
+        alert(`Error: ${msg}`);
+      } finally {
+        setSavingDeadline(false);
+        setIsEditDeadlineModalOpen(false);
+      }
+    };
+
+    // Pretty display of current date
+    let currentPretty = 'Not set';
+    if (unit?.rent_due_date) {
+      try {
+        currentPretty = new Date(unit.rent_due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (_) {}
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg w-full max-w-md overflow-hidden">
+          <div className="flex justify-between items-center p-5 border-b">
+            <h3 className="text-lg font-semibold flex items-center">
+              <CalendarDays className="w-5 h-5 mr-2 text-blue-600" />
+              Edit Rent Deadline
+            </h3>
+            <button onClick={() => setIsEditDeadlineModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Tenant</p>
+              <p className="font-medium">{selectedTenant.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Current deadline</p>
+              <p className="font-medium">{currentPretty}</p>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1" htmlFor="rent-deadline-date">New deadline</label>
+              <input
+                id="rent-deadline-date"
+                type="date"
+                value={editingDueDate}
+                onChange={(e) => setEditingDueDate(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">This sets the unit's rent_due_date used by reminders.</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 p-5 border-t bg-gray-50">
+            <button
+              onClick={() => setIsEditDeadlineModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              disabled={savingDeadline}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={save}
+              className={`px-4 py-2 text-sm font-medium text-white rounded-lg ${savingDeadline ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+              disabled={savingDeadline}
+            >
+              {savingDeadline ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -701,7 +1168,7 @@ const AdminTenants = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Recently Joined Tenants ({(mockPendingApplications || []).length})
+            Recently Joined Tenants ({(pendingApplications || []).length})
           </button>
           <button
             onClick={() => setActiveTab('all')}
@@ -737,6 +1204,9 @@ const AdminTenants = () => {
                           <p className="font-medium">{tenant.name}</p>
                           <p className="text-sm text-gray-600">{tenant.email}</p>
                           <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
+                          {tenant.move_in_date && (
+                            <p className="text-xs text-blue-600">Move-in: {formatDate(tenant.move_in_date)}</p>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -763,6 +1233,11 @@ const AdminTenants = () => {
                             {tenant.rentStatus === 'paid' ? 'Paid' : 
                              tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
                           </span>
+                          { (tenant.current_unit?.rent_due_date || tenant.unit_data?.rent_due_date || tenant.unit?.rent_due_date) && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Due on {formatDate(tenant.current_unit?.rent_due_date || tenant.unit_data?.rent_due_date || tenant.unit?.rent_due_date)}
+                            </p>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -788,14 +1263,19 @@ const AdminTenants = () => {
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Clock className="mr-2 text-yellow-600" />
               Recent Tenants
-              {(mockPendingApplications || []).length > 0 && (
+              {(pendingApplications || []).length > 0 && (
                 <span className="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                  {(mockPendingApplications || []).length} new
+                  {(pendingApplications || []).length} new
                 </span>
               )}
             </h3>
             
-            {(mockPendingApplications || []).length === 0 ? (
+            {loadingApplications ? (
+              <div className="text-center py-12">
+                <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-500">Loading pending applications...</p>
+              </div>
+            ) : (pendingApplications || []).length === 0 ? (
               <div className="text-center py-12">
                 <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Applications</h3>
@@ -810,7 +1290,7 @@ const AdminTenants = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {(mockPendingApplications || []).map(application => (
+                {(pendingApplications || []).map(application => (
                   <div key={application.id} className="border rounded-lg p-6 hover:bg-gray-50">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -895,6 +1375,23 @@ const AdminTenants = () => {
                           Download All
                         </button>
                       </div>
+                      
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => handleApproveTenant(application)}
+                          className="flex items-center bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg transition-colors"
+                        >
+                          <UserCheck className="w-4 h-4 mr-2" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleDeclineTenant(application)}
+                          className="flex items-center bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                        >
+                          <UserX className="w-4 h-4 mr-2" />
+                          Decline
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -925,6 +1422,9 @@ const AdminTenants = () => {
                             <p className="font-medium">{tenant.name}</p>
                             <p className="text-sm text-gray-600">{tenant.email}</p>
                             <p className="text-sm text-gray-600">ID: {tenant.bookingId}</p>
+                            {tenant.move_in_date && (
+                              <p className="text-xs text-blue-600">Move-in: {formatDate(tenant.move_in_date)}</p>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -951,6 +1451,11 @@ const AdminTenants = () => {
                               {tenant.rentStatus === 'paid' ? 'Paid' : 
                                tenant.rentStatus === 'due' ? 'Due' : 'Overdue'}
                             </span>
+                            { (tenant.current_unit?.rent_due_date || tenant.unit_data?.rent_due_date || tenant.unit?.rent_due_date) && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Due on {formatDate(tenant.current_unit?.rent_due_date || tenant.unit_data?.rent_due_date || tenant.unit?.rent_due_date)}
+                              </p>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -980,6 +1485,8 @@ const AdminTenants = () => {
 
       {/* Document Preview Modal */}
       <DocumentPreviewModal />
+  {/* Edit Rent Deadline Modal */}
+  <EditRentDeadlineModal />
       
       {/* All Modals */}
       <EmailFormModal 

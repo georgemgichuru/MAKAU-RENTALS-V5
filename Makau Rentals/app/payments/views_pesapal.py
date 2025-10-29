@@ -419,11 +419,13 @@ class InitiateDepositPaymentRegistrationView(APIView):
             phone_number = validation_result
 
             # Create payment without tenant (will be linked during registration)
+            # Store session_id and email in description for tracking even if cache expires
             payment = Payment.objects.create(
                 unit=unit,
                 amount=base_amount,
                 status="pending",
-                payment_type="deposit"
+                payment_type="deposit",
+                description=f"Registration deposit - Session: {session_id} - Email: {email}"  # ✅ Store session_id AND email for reliable tracking
             )
 
             merchant_reference = f"DEPOSIT-REG-{payment.id}-{uuid.uuid4().hex[:8].upper()}"

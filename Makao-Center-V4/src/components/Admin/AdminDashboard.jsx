@@ -19,11 +19,16 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import EmailFormModal from './Modals/EmailFormModal';
 import WhatsAppFormModal from './Modals/WhatsAppFormModal';
 import { useSubscription } from '../../hooks/useSubscription';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { Copy } from 'lucide-react';
 
 const AdminDashboard = ({ onEmailClick }) => {
   const navigate = useNavigate();
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const { user } = useAuth();
+  const { showToast } = useToast();
   
   // Get subscription status
   const { subscription, isExpired, daysUntilExpiry, loading: subLoading } = useSubscription();
@@ -147,6 +152,53 @@ const AdminDashboard = ({ onEmailClick }) => {
     alert("This Feature is not yet available. Coming soon !");
   };
 
+  const buildTenantInviteText = () => {
+    const landlordCode = user?.landlord_code || user?.landlordId || user?.landlordCode || 'YOUR-LANDLORD-CODE';
+    const signupUrl = `${window.location.origin}/login`;
+    const propertyNames = (properties || []).map(p => p.name).filter(Boolean);
+    const propertyLine = propertyNames.length > 0
+      ? `Property list: ${propertyNames.slice(0, 3).join(', ')}${propertyNames.length > 3 ? '…' : ''}`
+      : '';
+
+    return [
+      `Hello, please create your tenant account in Makao Center:`,
+      ``,
+      `1) Open: ${signupUrl}`,
+      `2) Tap "Sign up" then choose "Tenant"`,
+      `3) Enter my Landlord Code: ${landlordCode}`,
+      `4) Select the property and the exact unit/house you live in`,
+      `5) Complete your details and submit`,
+      propertyLine && ``,
+      propertyLine,
+      ``,
+      `If you can’t find your unit, reply here and I’ll assist.`
+    ].filter(Boolean).join('\n');
+  };
+
+  const handleCopyInvite = async () => {
+    try {
+      const text = buildTenantInviteText();
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for older browsers/insecure context
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast?.('Tenant invite copied to clipboard', 'success');
+    } catch (err) {
+      console.error('Failed to copy invite:', err);
+      showToast?.('Could not copy invite. Please try again.', 'error');
+    }
+  };
+
   // Show loading states
   if (loading || tenantsLoading || propertiesLoading || unitsLoading) {
     return (
@@ -222,6 +274,13 @@ const AdminDashboard = ({ onEmailClick }) => {
           <p className="text-gray-600">Overview of your property management</p>
         </div>
         <div className="flex gap-3 flex-col sm:flex-row">
+          <button
+            onClick={handleCopyInvite}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center"
+          >
+            <Copy className="w-5 h-5 mr-2" />
+            Copy Tenant Invite
+          </button>
           <button
             onClick={() => setIsEmailModalOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"

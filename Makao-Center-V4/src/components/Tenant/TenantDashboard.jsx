@@ -83,8 +83,47 @@ const TenantDashboard = () => {
   const paid = Math.max(0, (tenant.rentAmount || 0) - (tenant.rentDue || 0));
   const percent = tenant.rentAmount ? Math.min(100, Math.round((paid / tenant.rentAmount) * 100)) : 0;
 
+  // Compute days until due date if available from user context
+  const rentDueDateStr = user?.current_unit?.rent_due_date;
+  let daysToDue = null;
+  if (rentDueDateStr) {
+    try {
+      // Parse as UTC to avoid timezone drift
+      const [y, m, d] = rentDueDateStr.split('-').map(Number);
+      const dueDate = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
+      const today = new Date();
+      const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      const diffMs = dueDate.getTime() - todayUTC.getTime();
+      daysToDue = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    } catch (e) {
+      daysToDue = null;
+    }
+  }
+
+  const showDangerBanner =
+    typeof daysToDue === 'number' && daysToDue >= 0 && daysToDue <= 5 && (tenant.rentDue || 0) > 0;
+
   return (
     <div className="space-y-6">
+      {showDangerBanner && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 flex items-start gap-3 w-full">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800">
+              Please pay rent to prevent any inconviniences or contact us for support
+            </p>
+            {typeof daysToDue === 'number' && (
+              <p className="text-xs text-red-700 mt-1">Due in {daysToDue} day{daysToDue === 1 ? '' : 's'}.</p>
+            )}
+          </div>
+          <button
+            onClick={() => navigate('/tenant/payments')}
+            className="ml-auto inline-flex items-center bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-3 py-1.5 rounded-md"
+          >
+            Pay now
+          </button>
+        </div>
+      )}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome, {tenant.name}</h1>

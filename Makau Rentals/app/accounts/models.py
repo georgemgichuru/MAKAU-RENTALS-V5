@@ -56,7 +56,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=120, default='')
     national_id = models.CharField(max_length=20, blank=True, null=True)
-    id_document = models.ImageField(upload_to='id_documents/', null=True, blank=True)
+    # Use FileField to support both images and PDFs for ID documents
+    id_document = models.FileField(upload_to='id_documents/', null=True, blank=True)
     landlord_code = models.CharField(max_length=50, unique=True, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     type = [('landlord', 'Landlord'), ('tenant', 'Tenant')]
@@ -367,3 +368,231 @@ def sync_user_type_after_group_change(sender, instance: CustomUser, action, **kw
             instance.sync_user_type_from_groups(save=True)
         except Exception:
             pass
+
+
+# ===== Tenant Application Model =====
+class TenantApplication(models.Model):
+    """
+    Track tenant applications for units - handles both new and existing tenants
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('declined', 'Declined'),
+    ]
+    
+    tenant = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='applications',
+        limit_choices_to={'user_type': 'tenant'}
+    )
+    landlord = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='tenant_applications',
+        limit_choices_to={'user_type': 'landlord'}
+    )
+    unit = models.ForeignKey(
+        Unit,
+        on_delete=models.CASCADE,
+        related_name='applications',
+        null=True,
+        blank=True,
+        help_text="Unit the tenant is applying for"
+    )
+    
+    # Application details
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    already_living_in_property = models.BooleanField(
+        default=False,
+        help_text="True if tenant already lives in this landlord's property"
+    )
+    deposit_required = models.BooleanField(
+        default=True,
+        help_text="Whether deposit payment is required"
+    )
+    deposit_paid = models.BooleanField(
+        default=False,
+        help_text="Whether deposit has been paid"
+    )
+    
+    # Timestamps
+    applied_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_applications'
+    )
+    
+    # Additional info
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes from tenant")
+    landlord_notes = models.TextField(blank=True, null=True, help_text="Notes from landlord")
+    
+    class Meta:
+        ordering = ['-applied_at']
+        indexes = [
+            models.Index(fields=['landlord', 'status']),
+            models.Index(fields=['tenant', 'status']),
+        ]
+    
+    def __str__(self):
+        unit_info = f" for {self.unit.unit_number}" if self.unit else ""
+        return f"{self.tenant.full_name} → {self.landlord.full_name}{unit_info} ({self.status})"
+    
+    def clean(self):
+        """Validation logic"""
+        if self.tenant and not self.tenant.is_tenant:
+            raise ValidationError("Applicant must be a tenant")
+        if self.landlord and not self.landlord.is_landlord:
+            raise ValidationError("Landlord must have landlord role")
+        
+        # If already living in property, deposit should not be required
+        if self.already_living_in_property:
+            self.deposit_required = False
+    
+    def approve(self, reviewed_by_user=None):
+        """Approve the application and assign tenant to unit"""
+        self.status = 'approved'
+        self.reviewed_at = timezone.now()
+        self.reviewed_by = reviewed_by_user
+        self.save()
+        
+        # If unit is specified, assign tenant to it
+        if self.unit:
+            self.unit.tenant = self.tenant
+            self.unit.is_available = False
+            self.unit.assigned_date = timezone.now()
+            self.unit.save()
+            
+            # Update or create tenant profile
+            from accounts.models import TenantProfile
+            TenantProfile.objects.update_or_create(
+                tenant=self.tenant,
+                landlord=self.landlord,
+                defaults={
+                    'current_unit': self.unit,
+                    'move_in_date': timezone.now()
+                }
+            )
+    
+    def decline(self, reviewed_by_user=None, reason=None):
+        """Decline the application"""
+        self.status = 'declined'
+        self.reviewed_at = timezone.now()
+        self.reviewed_by = reviewed_by_user
+        if reason:
+            self.landlord_notes = reason
+        self.save()
+
+
+# ===== Property and Unit Tracking Model =====
+class PropertyUnitTracker(models.Model):
+    """
+    Track property and unit creation/deletion to manage subscription limits
+    and send upgrade/renewal notifications
+    """
+    ACTION_CHOICES = [
+        ('property_created', 'Property Created'),
+        ('property_deleted', 'Property Deleted'),
+        ('unit_created', 'Unit Created'),
+        ('unit_deleted', 'Unit Deleted'),
+    ]
+    
+    landlord = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='property_unit_tracking',
+        limit_choices_to={'user_type': 'landlord'}
+    )
+    
+    # Action details
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    
+    # Related objects (nullable in case they get deleted)
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tracking_events'
+    )
+    unit = models.ForeignKey(
+        Unit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tracking_events'
+    )
+    
+    # Snapshot of state at the time of action
+    subscription_plan = models.CharField(max_length=20, help_text="Plan at the time of action")
+    total_properties_after = models.IntegerField(help_text="Total properties after this action")
+    total_units_after = models.IntegerField(help_text="Total units after this action")
+    
+    # Notification tracking
+    upgrade_notification_sent = models.BooleanField(
+        default=False,
+        help_text="Whether upgrade notification was sent"
+    )
+    limit_reached = models.BooleanField(
+        default=False,
+        help_text="Whether limit was reached with this action"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Optional notes
+    notes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['landlord', 'action']),
+            models.Index(fields=['landlord', 'created_at']),
+            models.Index(fields=['limit_reached']),
+        ]
+    
+    def __str__(self):
+        return f"{self.landlord.full_name} - {self.action} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    @classmethod
+    def track_property_creation(cls, landlord, property_obj):
+        """Track when a property is created"""
+        subscription = getattr(landlord, 'subscription', None)
+        plan = subscription.plan if subscription else 'unknown'
+        
+        total_properties = Property.objects.filter(landlord=landlord).count()
+        total_units = Unit.objects.filter(property_obj__landlord=landlord).count()
+        
+        return cls.objects.create(
+            landlord=landlord,
+            action='property_created',
+            property=property_obj,
+            subscription_plan=plan,
+            total_properties_after=total_properties,
+            total_units_after=total_units
+        )
+    
+    @classmethod
+    def track_unit_creation(cls, landlord, unit):
+        """Track when a unit is created"""
+        subscription = getattr(landlord, 'subscription', None)
+        plan = subscription.plan if subscription else 'unknown'
+        
+        total_properties = Property.objects.filter(landlord=landlord).count()
+        total_units = Unit.objects.filter(property_obj__landlord=landlord).count()
+        
+        return cls.objects.create(
+            landlord=landlord,
+            action='unit_created',
+            unit=unit,
+            property=unit.property_obj,
+            subscription_plan=plan,
+            total_properties_after=total_properties,
+            total_units_after=total_units
+        )

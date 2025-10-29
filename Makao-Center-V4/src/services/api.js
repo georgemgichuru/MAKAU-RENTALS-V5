@@ -24,6 +24,18 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
+// Helper: get API host base (without trailing /api) for media/static URLs
+export const getApiBaseHost = () => API_BASE_URL.replace(/\/?api\/?$/, '');
+
+// Helper: build absolute media URL from a relative path returned by backend (e.g., /media/....)
+export const buildMediaUrl = (path) => {
+  if (!path) return '';
+  if (typeof path === 'string' && /^https?:\/\//i.test(path)) return path; // already absolute
+  const host = getApiBaseHost();
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${host}${normalized}`;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -327,13 +339,18 @@ export const tenantsAPI = {
   },
   
   // Also fix the getTenantDetails endpoint:
+  deleteTenantAccount: (tenantId) => api.delete(`/accounts/users/${tenantId}/delete/`),
   getTenantDetails: (tenantId) => api.get(`/accounts/users/${tenantId}/`), // FIXED: removed /api/ prefix
   
   getTenant: (id) => api.get(`/accounts/users/${id}/`),
   updateTenant: (id, data) => api.put(`/accounts/users/${id}/update/`, data),
   assignTenant: (unitId, tenantId) => api.post(`/accounts/units/${unitId}/assign/${tenantId}/`, {}),
   removeTenant: (unitId) => api.post(`/accounts/units/${unitId}/remove-tenant/`, {}),
-  getPendingApplications: () => api.get('/accounts/applications/pending/'),
+  getPendingApplications: () => api.get('/accounts/tenant-applications/pending/'),
+  
+  // Tenant application management
+  approveTenantApplication: (applicationId) => api.post(`/accounts/tenant-applications/${applicationId}/approve/`),
+  declineTenantApplication: (applicationId) => api.post(`/accounts/tenant-applications/${applicationId}/decline/`),
 };
 
 // Subscription API endpoints

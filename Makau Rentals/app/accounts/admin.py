@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, UnitType, Property, Unit, Subscription, TenantProfile
+from .models import CustomUser, UnitType, Property, Unit, Subscription, TenantProfile, TenantApplication
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -61,3 +61,27 @@ class TenantProfileAdmin(admin.ModelAdmin):
     list_filter = ['landlord', 'move_in_date']
     search_fields = ['tenant__email', 'tenant__full_name', 'landlord__email', 'landlord__full_name']
     raw_id_fields = ['tenant', 'landlord', 'current_unit']
+
+
+@admin.register(TenantApplication)
+class TenantApplicationAdmin(admin.ModelAdmin):
+    list_display = ['tenant', 'landlord', 'unit', 'status', 'already_living_in_property', 'deposit_required', 'deposit_paid', 'applied_at']
+    list_filter = ['status', 'already_living_in_property', 'deposit_required', 'deposit_paid', 'applied_at']
+    search_fields = ['tenant__email', 'tenant__full_name', 'landlord__email', 'landlord__full_name', 'unit__unit_number']
+    raw_id_fields = ['tenant', 'landlord', 'unit', 'reviewed_by']
+    readonly_fields = ['applied_at', 'reviewed_at']
+    
+    fieldsets = (
+        ('Application Info', {
+            'fields': ('tenant', 'landlord', 'unit', 'status')
+        }),
+        ('Deposit & Living Status', {
+            'fields': ('already_living_in_property', 'deposit_required', 'deposit_paid')
+        }),
+        ('Notes', {
+            'fields': ('notes', 'landlord_notes')
+        }),
+        ('Review Info', {
+            'fields': ('reviewed_at', 'reviewed_by')
+        }),
+    )

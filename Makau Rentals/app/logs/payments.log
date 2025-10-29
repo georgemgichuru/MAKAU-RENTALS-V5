@@ -2313,3 +2313,794 @@ INFO 2025-10-28 07:39:36,728 pesapal_service 20464 41440 PesaPal configured: env
 INFO 2025-10-28 07:39:52,408 autoreload 20464 41440 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
 INFO 2025-10-28 07:39:56,774 autoreload 35668 7712 Watching for file changes with StatReloader
 INFO 2025-10-28 07:39:57,797 pesapal_service 35668 7712 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 08:55:18,037 autoreload 35668 7712 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-28 08:55:40,720 autoreload 40832 36664 Watching for file changes with StatReloader
+INFO 2025-10-28 08:55:43,580 pesapal_service 40832 36664 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 08:55:54,474 autoreload 40832 36664 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 08:56:00,527 autoreload 34180 16584 Watching for file changes with StatReloader
+INFO 2025-10-28 08:56:01,781 pesapal_service 34180 16584 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 08:56:17,206 autoreload 34180 16584 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\admin.py changed, reloading.
+INFO 2025-10-28 08:56:22,802 autoreload 18360 37092 Watching for file changes with StatReloader
+INFO 2025-10-28 08:56:24,246 pesapal_service 18360 37092 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 09:08:11,523 autoreload 18360 37092 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-28 09:08:19,762 autoreload 8116 4380 Watching for file changes with StatReloader
+INFO 2025-10-28 09:08:20,949 pesapal_service 8116 4380 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 09:08:23,306 pesapal_service 31056 35360 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 09:23:59,845 payment_utils 8116 43228 Payment calculation - Amount: 5.0, Fee: 0.18, Total: 5.18
+WARNING 2025-10-28 09:23:59,850 log 8116 43228 Bad Request: /api/payments/initiate-rent-payment/70/
+INFO 2025-10-28 09:24:05,784 payment_utils 8116 43228 Payment calculation - Amount: 10.0, Fee: 0.35, Total: 10.35
+INFO 2025-10-28 09:24:05,876 pesapal_service 8116 43228 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 09:24:09,184 pesapal_service 8116 43228 PesaPal access token generated and cached
+INFO 2025-10-28 09:24:09,200 pesapal_service 8116 43228 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 09:24:11,025 pesapal_service 8116 43228 PesaPal access token generated and cached
+INFO 2025-10-28 09:24:13,771 pesapal_service 8116 43228 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 09:24:13,801 pesapal_service 8116 43228 Submitting PesaPal order: RENT-112-4001A743, Amount: 10.35
+INFO 2025-10-28 09:24:13,810 pesapal_service 8116 43228 Payload: {
+  "id": "RENT-112-4001A743",
+  "currency": "KES",
+  "amount": 10.35,
+  "description": "Rent payment for 2",
+  "callback_url": "http://localhost:5173/tenant/payments?payment_id=112",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254778211794",
+    "email_address": "tenant5@test.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 09:24:16,360 pesapal_service 8116 43228 PesaPal order submitted: {'order_tracking_id': '88aab82c-0c0b-4c52-bc94-db2860800da2', 'merchant_reference': 'RENT-112-4001A743', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=88aab82c-0c0b-4c52-bc94-db2860800da2', 'error': None, 'status': '200'}
+INFO 2025-10-28 09:24:16,460 views_pesapal 8116 43228 PesaPal rent payment initiated: payment_id=112, tracking_id=88aab82c-0c0b-4c52-bc94-db2860800da2
+INFO 2025-10-28 09:24:46,250 pesapal_service 8116 41164 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 09:24:48,852 pesapal_service 8116 41164 PesaPal access token generated and cached
+INFO 2025-10-28 09:24:50,444 pesapal_service 8116 41164 Transaction status for 88aab82c-0c0b-4c52-bc94-db2860800da2: {'payment_method': 'MpesaKE', 'amount': 11.0, 'created_date': '2025-10-28T09:24:44.417', 'confirmation_code': 'TJSPV8GJGA', 'order_tracking_id': '88aab82c-0c0b-4c52-bc94-db2860800da2', 'payment_status_description': 'Completed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx14334', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=112&OrderTrackingId=88aab82c-0c0b-4c52-bc94-db2860800da2&OrderMerchantReference=RENT-112-4001A743', 'status_code': 1, 'merchant_reference': 'RENT-112-4001A743', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+INFO 2025-10-28 09:24:50,459 views_pesapal 8116 41164 Transaction status: completed, method: MpesaKE, code: TJSPV8GJGA
+WARNING 2025-10-28 09:24:50,462 views_pesapal 8116 41164 No cached data found for 88aab82c-0c0b-4c52-bc94-db2860800da2
+INFO 2025-10-28 09:25:03,660 pesapal_service 8116 12644 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 09:25:05,589 pesapal_service 8116 12644 PesaPal access token generated and cached
+INFO 2025-10-28 09:25:07,173 pesapal_service 8116 12644 Transaction status for 88aab82c-0c0b-4c52-bc94-db2860800da2: {'payment_method': 'MpesaKE', 'amount': 11.0, 'created_date': '2025-10-28T09:24:44.417', 'confirmation_code': 'TJSPV8GJGA', 'order_tracking_id': '88aab82c-0c0b-4c52-bc94-db2860800da2', 'payment_status_description': 'Completed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx14334', 'call_back_url': 'http://localhost:5173/tenant/payments?payment_id=112&OrderTrackingId=88aab82c-0c0b-4c52-bc94-db2860800da2&OrderMerchantReference=RENT-112-4001A743', 'status_code': 1, 'merchant_reference': 'RENT-112-4001A743', 'account_number': None, 'payment_status_code': '', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+INFO 2025-10-28 10:38:43,681 views 8116 46992 Subscription already exists for user 46
+INFO 2025-10-28 10:38:43,683 views 8116 46992 Welcome email prepared for landlord6789@test.com: Welcome to Makao Rentals - Your Landlord Account is Ready!
+INFO 2025-10-28 10:42:56,268 views 8116 30944 Document uploaded for session 506e0418-8698-44a1-80fb-68776f90dbeb: Untitled design (1).png
+INFO 2025-10-28 10:42:57,623 views_pesapal 8116 30944 Registration deposit request: unit_id=229, phone=None, amount=40000
+WARNING 2025-10-28 10:42:57,625 log 8116 30944 Bad Request: /api/payments/initiate-deposit-registration/
+INFO 2025-10-28 10:44:46,872 views_pesapal 8116 34956 Registration deposit request: unit_id=229, phone=+254722714334, amount=40000
+INFO 2025-10-28 10:44:46,898 payment_utils 8116 34956 Payment calculation - Amount: 40000.0, Fee: 1400.00, Total: 41400.00
+INFO 2025-10-28 10:44:47,129 pesapal_service 8116 34956 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 10:44:49,828 pesapal_service 8116 34956 PesaPal access token generated and cached
+INFO 2025-10-28 10:44:49,834 pesapal_service 8116 34956 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 10:44:51,977 pesapal_service 8116 34956 PesaPal access token generated and cached
+INFO 2025-10-28 10:44:54,663 pesapal_service 8116 34956 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 10:44:54,679 pesapal_service 8116 34956 Submitting PesaPal order: DEPOSIT-REG-113-925903FF, Amount: 41400.0
+INFO 2025-10-28 10:44:54,681 pesapal_service 8116 34956 Payload: {
+  "id": "DEPOSIT-REG-113-925903FF",
+  "currency": "KES",
+  "amount": 41400.0,
+  "description": "Deposit payment for B204 (Registration)",
+  "callback_url": "http://localhost:5173/register/payment-success?payment_id=113&session_id=506e0418-8698-44a1-80fb-68776f90dbeb",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254722714334",
+    "email_address": "tenant@example.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 10:44:57,012 pesapal_service 8116 34956 PesaPal order submitted: {'error': {'error_type': 'contractual_error', 'code': 'amount_exceeds_default_limit', 'message': 'Transaction amount exceeds limit.Contact support for assistance'}, 'status': '500'}
+INFO 2025-10-28 10:44:57,062 views_pesapal 8116 34956 Registration deposit payment initiated: id=113, tracking_id=None
+INFO 2025-10-28 10:49:38,538 autoreload 8116 4380 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:49:53,410 autoreload 11964 28660 Watching for file changes with StatReloader
+INFO 2025-10-28 10:50:12,194 autoreload 11964 28660 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:50:16,808 autoreload 16756 7400 Watching for file changes with StatReloader
+INFO 2025-10-28 10:50:21,766 autoreload 16756 7400 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:50:25,972 autoreload 1860 13356 Watching for file changes with StatReloader
+INFO 2025-10-28 10:50:49,522 autoreload 1860 13356 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:50:54,367 autoreload 19596 32940 Watching for file changes with StatReloader
+INFO 2025-10-28 10:54:04,785 autoreload 19596 32940 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:54:11,550 autoreload 6552 13868 Watching for file changes with StatReloader
+INFO 2025-10-28 10:54:12,940 pesapal_service 6552 13868 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 10:56:29,231 autoreload 6552 13868 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 10:56:34,906 autoreload 21408 20724 Watching for file changes with StatReloader
+INFO 2025-10-28 10:56:36,032 pesapal_service 21408 20724 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 10:57:09,773 pesapal_service 31260 45392 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 10:57:23,323 pesapal_service 24920 40752 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 10:57:33,207 pesapal_service 31672 31696 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 10:57:43,025 pesapal_service 36636 9016 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:04:14,597 autoreload 39360 30284 Watching for file changes with StatReloader
+INFO 2025-10-28 11:04:15,314 pesapal_service 39360 30284 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:04:32,669 pesapal_service 37528 4296 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:04:43,320 autoreload 23124 9692 Watching for file changes with StatReloader
+INFO 2025-10-28 11:04:44,175 pesapal_service 23124 9692 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:05:30,513 views 23124 33200 Document uploaded for session a0a5d99f-b78a-479e-bd30-d9b8903a5e99: fiver-automation-gig.png
+INFO 2025-10-28 11:05:34,317 views_pesapal 23124 33200 Registration deposit request: unit_id=226, phone=+254722714334, amount=40000
+INFO 2025-10-28 11:05:34,335 payment_utils 23124 33200 Payment calculation - Amount: 40000.0, Fee: 1400.00, Total: 41400.00
+INFO 2025-10-28 11:05:34,391 pesapal_service 23124 33200 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 11:05:37,049 pesapal_service 23124 33200 PesaPal access token generated and cached
+INFO 2025-10-28 11:05:37,054 pesapal_service 23124 33200 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 11:05:39,121 pesapal_service 23124 33200 PesaPal access token generated and cached
+INFO 2025-10-28 11:05:41,664 pesapal_service 23124 33200 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 11:05:41,667 pesapal_service 23124 33200 Submitting PesaPal order: DEPOSIT-REG-114-FE4DD0FC, Amount: 41400.0
+INFO 2025-10-28 11:05:41,668 pesapal_service 23124 33200 Payload: {
+  "id": "DEPOSIT-REG-114-FE4DD0FC",
+  "currency": "KES",
+  "amount": 41400.0,
+  "description": "Deposit payment for B201 (Registration)",
+  "callback_url": "http://localhost:5173/register/payment-success?payment_id=114&session_id=a0a5d99f-b78a-479e-bd30-d9b8903a5e99",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254722714334",
+    "email_address": "tenant@example.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 11:05:45,140 pesapal_service 23124 33200 PesaPal order submitted: {'error': {'error_type': 'contractual_error', 'code': 'amount_exceeds_default_limit', 'message': 'Transaction amount exceeds limit.Contact support for assistance'}, 'status': '500'}
+INFO 2025-10-28 11:05:45,240 views_pesapal 23124 33200 Registration deposit payment initiated: id=114, tracking_id=None
+INFO 2025-10-28 11:08:32,354 views_pesapal 23124 6304 Registration deposit request: unit_id=226, phone=+254722714334, amount=40000
+INFO 2025-10-28 11:08:32,385 payment_utils 23124 6304 Payment calculation - Amount: 40000.0, Fee: 1400.00, Total: 41400.00
+INFO 2025-10-28 11:08:32,754 pesapal_service 23124 6304 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 11:08:35,666 pesapal_service 23124 6304 PesaPal access token generated and cached
+INFO 2025-10-28 11:08:35,684 pesapal_service 23124 6304 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 11:08:36,246 views 23124 34308 Document uploaded for session a0a5d99f-b78a-479e-bd30-d9b8903a5e99: fiver-automation-gig.png
+INFO 2025-10-28 11:08:38,413 pesapal_service 23124 6304 PesaPal access token generated and cached
+INFO 2025-10-28 11:08:40,934 pesapal_service 23124 6304 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 11:08:40,939 pesapal_service 23124 6304 Submitting PesaPal order: DEPOSIT-REG-115-8D15FAD7, Amount: 41400.0
+INFO 2025-10-28 11:08:40,940 pesapal_service 23124 6304 Payload: {
+  "id": "DEPOSIT-REG-115-8D15FAD7",
+  "currency": "KES",
+  "amount": 41400.0,
+  "description": "Deposit payment for B201 (Registration)",
+  "callback_url": "http://localhost:5173/register/payment-success?payment_id=115&session_id=a0a5d99f-b78a-479e-bd30-d9b8903a5e99",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254722714334",
+    "email_address": "tenant@example.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 11:08:43,572 pesapal_service 23124 6304 PesaPal order submitted: {'error': {'error_type': 'contractual_error', 'code': 'amount_exceeds_default_limit', 'message': 'Transaction amount exceeds limit.Contact support for assistance'}, 'status': '500'}
+INFO 2025-10-28 11:08:43,625 views_pesapal 23124 6304 Registration deposit payment initiated: id=115, tracking_id=None
+INFO 2025-10-28 11:09:00,700 views 23124 6304 Document uploaded for session a0a5d99f-b78a-479e-bd30-d9b8903a5e99: fiver-automation-gig.png
+WARNING 2025-10-28 11:09:28,538 views 23124 6304 Unit with code 227 not found for landlord L-AD42571609
+WARNING 2025-10-28 11:09:40,868 log 23124 6304 Bad Request: /api/accounts/token/
+INFO 2025-10-28 11:11:58,986 autoreload 23124 9692 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 11:12:05,978 autoreload 45568 26524 Watching for file changes with StatReloader
+INFO 2025-10-28 11:12:07,341 pesapal_service 45568 26524 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:13:49,440 autoreload 45568 26524 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 11:13:55,841 autoreload 15472 17056 Watching for file changes with StatReloader
+INFO 2025-10-28 11:13:57,155 pesapal_service 15472 17056 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:14:03,292 autoreload 15472 17056 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 11:14:08,779 autoreload 24860 17128 Watching for file changes with StatReloader
+INFO 2025-10-28 11:14:09,908 pesapal_service 24860 17128 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:14:41,645 autoreload 24860 17128 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 11:14:46,762 autoreload 27448 43812 Watching for file changes with StatReloader
+INFO 2025-10-28 11:14:47,641 pesapal_service 27448 43812 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:14:51,408 autoreload 27448 43812 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 11:14:56,032 autoreload 41588 42552 Watching for file changes with StatReloader
+INFO 2025-10-28 11:14:57,074 pesapal_service 41588 42552 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:16:23,577 autoreload 41588 42552 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 11:16:32,049 autoreload 18884 32016 Watching for file changes with StatReloader
+INFO 2025-10-28 11:16:34,033 pesapal_service 18884 32016 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:19:27,393 pesapal_service 21236 40868 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 11:20:31,126 log 18884 18464 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:20:57,565 log 18884 34340 Bad Request: /api/accounts/token/
+INFO 2025-10-28 11:21:52,225 autoreload 18884 32016 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 11:21:58,885 autoreload 46724 34940 Watching for file changes with StatReloader
+INFO 2025-10-28 11:21:59,700 pesapal_service 46724 34940 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 11:22:10,679 log 46724 17012 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:22:17,230 log 46724 17012 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:24:31,853 log 46724 39908 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:24:52,200 log 46724 28928 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:25:46,679 log 46724 40276 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:26:46,086 log 46724 25084 Bad Request: /api/accounts/token/
+INFO 2025-10-28 11:27:52,339 autoreload 46724 34940 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 11:27:57,833 autoreload 9592 14280 Watching for file changes with StatReloader
+INFO 2025-10-28 11:27:59,094 pesapal_service 9592 14280 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 11:28:17,235 autoreload 9592 14280 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 11:28:23,115 autoreload 34600 17152 Watching for file changes with StatReloader
+INFO 2025-10-28 11:28:23,862 pesapal_service 34600 17152 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 11:28:40,341 log 34600 20908 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:29:01,371 log 34600 28320 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:30:08,533 log 34600 27428 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:31:33,720 log 34600 39860 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:33:27,211 log 34600 28136 Bad Request: /api/accounts/token/
+INFO 2025-10-28 11:35:01,764 autoreload 34600 17152 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 11:35:09,056 autoreload 12292 34936 Watching for file changes with StatReloader
+INFO 2025-10-28 11:35:10,072 pesapal_service 12292 34936 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 11:35:28,237 log 12292 10484 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:35:51,861 log 12292 15624 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:36:01,986 log 12292 26016 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:36:08,160 log 12292 22036 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:36:35,915 log 12292 26600 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:54:20,280 log 12292 44436 Bad Request: /api/accounts/token/
+WARNING 2025-10-28 11:54:38,958 log 12292 44436 Bad Request: /api/accounts/token/
+INFO 2025-10-28 12:03:29,197 views 12292 4816 Subscription already exists for user 48
+INFO 2025-10-28 12:03:29,215 views 12292 4816 Welcome email prepared for tlegendfox@gmail.com: Welcome to Makao Rentals - Your Landlord Account is Ready!
+INFO 2025-10-28 12:05:49,006 payment_utils 12292 21560 Payment calculation - Amount: 2000.0, Fee: 70.00, Total: 2070.00
+INFO 2025-10-28 12:05:49,078 pesapal_service 12292 21560 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 12:05:51,721 pesapal_service 12292 21560 PesaPal access token generated and cached
+INFO 2025-10-28 12:05:51,742 pesapal_service 12292 21560 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 12:05:55,234 pesapal_service 12292 21560 PesaPal access token generated and cached
+INFO 2025-10-28 12:05:57,813 pesapal_service 12292 21560 IPN registered successfully: f0c86ceb-9eb8-446f-abfd-db2896bd6577
+INFO 2025-10-28 12:05:57,831 pesapal_service 12292 21560 Submitting PesaPal order: SUB-5-139A4331, Amount: 2070.0
+INFO 2025-10-28 12:05:57,834 pesapal_service 12292 21560 Payload: {
+  "id": "SUB-5-139A4331",
+  "currency": "KES",
+  "amount": 2070.0,
+  "description": "Subscription payment for starter plan",
+  "callback_url": "http://localhost:5173/landlord/subscription?payment_id=5",
+  "notification_id": "f0c86ceb-9eb8-446f-abfd-db2896bd6577",
+  "billing_address": {
+    "phone_number": "254794655264",
+    "email_address": "tlegendfox@gmail.com",
+    "country_code": "KE"
+  }
+}
+INFO 2025-10-28 12:06:02,479 pesapal_service 12292 21560 PesaPal order submitted: {'order_tracking_id': '8904f011-8a94-403f-9fb4-db28b36adb96', 'merchant_reference': 'SUB-5-139A4331', 'redirect_url': 'https://pay.pesapal.com/iframe/PesapalIframe3/Index?OrderTrackingId=8904f011-8a94-403f-9fb4-db28b36adb96', 'error': None, 'status': '200'}
+INFO 2025-10-28 12:06:02,583 views_pesapal 12292 21560 PesaPal subscription payment initiated: id=5, tracking_id=8904f011-8a94-403f-9fb4-db28b36adb96
+INFO 2025-10-28 12:06:59,827 pesapal_service 12292 18376 Requesting PesaPal token from: https://pay.pesapal.com/v3/api/Auth/RequestToken
+INFO 2025-10-28 12:07:02,318 pesapal_service 12292 18376 PesaPal access token generated and cached
+INFO 2025-10-28 12:07:05,048 pesapal_service 12292 18376 Transaction status for 8904f011-8a94-403f-9fb4-db28b36adb96: {'payment_method': 'MpesaKE', 'amount': 2070.0, 'created_date': '2025-10-28T12:06:57.013', 'confirmation_code': 'A6DEB665', 'order_tracking_id': '8904f011-8a94-403f-9fb4-db28b36adb96', 'payment_status_description': 'Failed', 'description': None, 'message': 'Request processed successfully', 'payment_account': '2547xxx55264', 'call_back_url': 'http://localhost:5173/landlord/subscription?payment_id=5&OrderTrackingId=8904f011-8a94-403f-9fb4-db28b36adb96&OrderMerchantReference=SUB-5-139A4331', 'status_code': 2, 'merchant_reference': 'SUB-5-139A4331', 'account_number': None, 'payment_status_code': 'request_terminated_by_user', 'currency': 'KES', 'error': {'error_type': None, 'code': None, 'message': None}, 'status': '200'}
+INFO 2025-10-28 12:07:05,066 views_pesapal 12292 18376 Transaction status: failed, method: MpesaKE, code: A6DEB665
+INFO 2025-10-28 12:07:05,413 views_pesapal 12292 18376 Subscription payment 5 marked as failed: failed
+INFO 2025-10-28 12:10:37,236 views 12292 21100 Document uploaded for session 37afe315-0d33-4bde-8d21-04dc65a24939: Untitled design (1).png
+WARNING 2025-10-28 12:10:52,845 views 12292 21100 Unit with code 237 not found for landlord L-FC9A9C23F0
+WARNING 2025-10-28 20:26:53,569 log 12292 7952 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 20:26:53,580 log 12292 7952 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 20:26:53,589 log 12292 7952 Unauthorized: /api/communication/reports/open/
+INFO 2025-10-28 20:55:59,108 autoreload 12292 34936 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 20:56:19,048 autoreload 5652 32656 Watching for file changes with StatReloader
+INFO 2025-10-28 20:56:25,965 pesapal_service 5652 32656 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 20:56:30,918 autoreload 5652 32656 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 20:56:35,643 autoreload 33336 27176 Watching for file changes with StatReloader
+INFO 2025-10-28 20:56:36,694 pesapal_service 33336 27176 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 20:57:53,675 autoreload 33336 27176 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 20:57:59,885 autoreload 31976 35360 Watching for file changes with StatReloader
+INFO 2025-10-28 20:58:00,931 pesapal_service 31976 35360 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 21:01:17,210 log 31976 24812 Bad Request: /api/accounts/token/
+INFO 2025-10-28 21:06:51,305 autoreload 31976 35360 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 21:06:56,738 autoreload 38572 35444 Watching for file changes with StatReloader
+INFO 2025-10-28 21:06:58,378 pesapal_service 38572 35444 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:07:27,614 autoreload 38572 35444 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 21:07:32,753 autoreload 19660 18076 Watching for file changes with StatReloader
+INFO 2025-10-28 21:07:33,646 pesapal_service 19660 18076 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:07:54,073 autoreload 19660 18076 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 21:08:00,165 autoreload 40880 45532 Watching for file changes with StatReloader
+INFO 2025-10-28 21:08:00,994 pesapal_service 40880 45532 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:08:17,827 autoreload 40880 45532 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 21:08:22,516 autoreload 38524 41404 Watching for file changes with StatReloader
+INFO 2025-10-28 21:08:23,387 pesapal_service 38524 41404 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:09:06,018 autoreload 38524 41404 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-28 21:09:09,205 autoreload 37548 756 Watching for file changes with StatReloader
+INFO 2025-10-28 21:09:09,822 pesapal_service 37548 756 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:09:48,577 autoreload 37548 756 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 21:09:54,116 autoreload 46388 32992 Watching for file changes with StatReloader
+INFO 2025-10-28 21:09:54,884 pesapal_service 46388 32992 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:09:59,278 autoreload 46388 32992 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 21:10:03,063 autoreload 29896 23476 Watching for file changes with StatReloader
+INFO 2025-10-28 21:10:03,891 pesapal_service 29896 23476 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 21:26:56,016 log 29896 19552 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 21:35:23,929 log 29896 21284 Not Found: /api/accounts/approve-application/32/
+INFO 2025-10-28 21:54:18,489 autoreload 29896 23476 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 21:54:21,163 autoreload 17532 43344 Watching for file changes with StatReloader
+INFO 2025-10-28 21:54:22,124 pesapal_service 17532 43344 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 21:54:25,778 autoreload 17532 43344 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 21:54:28,006 autoreload 40068 36056 Watching for file changes with StatReloader
+INFO 2025-10-28 21:54:28,457 pesapal_service 40068 36056 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 22:12:05,935 autoreload 40068 36056 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 22:12:11,419 autoreload 40768 33812 Watching for file changes with StatReloader
+INFO 2025-10-28 22:12:12,323 pesapal_service 40768 33812 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 22:12:18,041 autoreload 40768 33812 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 22:12:24,174 autoreload 37956 36412 Watching for file changes with StatReloader
+INFO 2025-10-28 22:12:25,069 pesapal_service 37956 36412 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-28 22:29:52,539 log 37956 29776 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-28 22:29:52,555 log 37956 10140 Unauthorized: /api/accounts/subscription/status/
+INFO 2025-10-28 22:44:11,774 views 37956 29152 Document uploaded for session 4f694c7d-bc07-4da3-9eff-6362282a9a34: fiver-automation-gig.png
+WARNING 2025-10-28 22:44:28,176 views 37956 29152 Unit with code 226 not found or not available
+WARNING 2025-10-28 22:44:51,874 log 37956 29152 Bad Request: /api/accounts/token/
+INFO 2025-10-28 22:50:13,697 views 37956 1904 Document uploaded for session 7a7c8ebd-2036-4950-95f0-fdb4d6a17b28: image-generator (1).png
+WARNING 2025-10-28 22:50:40,477 views 37956 1904 Unit with code 226 not found or not available
+INFO 2025-10-28 23:00:09,363 views 37956 33228 Document uploaded for session 97447b52-acc2-40cf-8f59-ed7c50a10c2c: image-generator (1).png
+WARNING 2025-10-28 23:00:28,370 views 37956 33228 Unit with code 226 not found or not available
+INFO 2025-10-28 23:55:23,269 autoreload 37956 36412 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\messaging.py changed, reloading.
+INFO 2025-10-28 23:55:28,579 autoreload 692 14992 Watching for file changes with StatReloader
+INFO 2025-10-28 23:55:29,635 pesapal_service 692 14992 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:55:41,164 autoreload 692 14992 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\messaging.py changed, reloading.
+INFO 2025-10-28 23:55:43,499 autoreload 38360 38532 Watching for file changes with StatReloader
+INFO 2025-10-28 23:55:43,924 pesapal_service 38360 38532 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:55:46,404 autoreload 38360 38532 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\communication\messaging.py changed, reloading.
+INFO 2025-10-28 23:55:48,614 autoreload 35908 40616 Watching for file changes with StatReloader
+INFO 2025-10-28 23:55:49,044 pesapal_service 35908 40616 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:56:09,098 autoreload 35908 40616 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:56:11,578 autoreload 24228 37704 Watching for file changes with StatReloader
+INFO 2025-10-28 23:56:12,117 pesapal_service 24228 37704 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:56:17,960 autoreload 24228 37704 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:56:20,060 autoreload 27732 25152 Watching for file changes with StatReloader
+INFO 2025-10-28 23:56:20,596 pesapal_service 27732 25152 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:56:26,704 autoreload 27732 25152 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:56:28,887 autoreload 1556 38448 Watching for file changes with StatReloader
+INFO 2025-10-28 23:56:29,307 pesapal_service 1556 38448 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:56:31,636 autoreload 1556 38448 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:56:33,630 autoreload 39868 41872 Watching for file changes with StatReloader
+INFO 2025-10-28 23:56:34,069 pesapal_service 39868 41872 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:56:52,482 autoreload 39868 41872 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:56:54,631 autoreload 14676 30344 Watching for file changes with StatReloader
+INFO 2025-10-28 23:56:55,078 pesapal_service 14676 30344 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-28 23:57:25,230 autoreload 14676 30344 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-28 23:57:27,550 autoreload 17552 45108 Watching for file changes with StatReloader
+INFO 2025-10-28 23:57:28,018 pesapal_service 17552 45108 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:04:40,594 autoreload 17552 45108 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:04:43,782 autoreload 34152 20784 Watching for file changes with StatReloader
+INFO 2025-10-29 00:04:44,339 pesapal_service 34152 20784 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:04:58,654 autoreload 34152 20784 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-29 00:05:01,331 autoreload 14280 28960 Watching for file changes with StatReloader
+INFO 2025-10-29 00:05:01,741 pesapal_service 14280 28960 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:05:26,319 autoreload 14280 28960 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-29 00:05:31,047 autoreload 45696 26648 Watching for file changes with StatReloader
+INFO 2025-10-29 00:05:31,678 pesapal_service 45696 26648 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:09:26,164 pesapal_service 43352 8268 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:11:58,887 pesapal_service 22524 37208 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:12:57,259 pesapal_service 23504 17704 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:18:25,049 autoreload 45696 26648 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-29 00:18:27,442 autoreload 38884 1108 Watching for file changes with StatReloader
+INFO 2025-10-29 00:18:27,869 pesapal_service 38884 1108 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:18:30,530 autoreload 38884 1108 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-29 00:18:32,484 autoreload 46544 32504 Watching for file changes with StatReloader
+INFO 2025-10-29 00:18:32,903 pesapal_service 46544 32504 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:18:38,689 autoreload 46544 32504 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-29 00:18:41,263 autoreload 24856 24672 Watching for file changes with StatReloader
+INFO 2025-10-29 00:18:41,731 pesapal_service 24856 24672 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:19:51,697 autoreload 24856 24672 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\serializers.py changed, reloading.
+INFO 2025-10-29 00:19:53,914 autoreload 42016 2324 Watching for file changes with StatReloader
+INFO 2025-10-29 00:19:54,439 pesapal_service 42016 2324 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:19:55,656 pesapal_service 21088 20016 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:32:11,787 autoreload 42016 2324 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:32:14,325 autoreload 40476 41324 Watching for file changes with StatReloader
+INFO 2025-10-29 00:32:14,828 pesapal_service 40476 41324 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:32:18,321 autoreload 40476 41324 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:32:21,079 autoreload 22928 16612 Watching for file changes with StatReloader
+INFO 2025-10-29 00:32:21,598 pesapal_service 22928 16612 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 00:35:41,435 log 22928 42436 Bad Request: /api/accounts/token/
+WARNING 2025-10-29 00:36:02,860 log 22928 47088 Not Found: /api/accounts/users/47/delete/
+INFO 2025-10-29 00:36:54,318 autoreload 22928 16612 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-29 00:36:57,135 autoreload 12504 38092 Watching for file changes with StatReloader
+INFO 2025-10-29 00:36:57,564 pesapal_service 12504 38092 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:37:28,963 autoreload 12504 38092 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:37:30,987 autoreload 24600 17520 Watching for file changes with StatReloader
+INFO 2025-10-29 00:37:31,569 pesapal_service 24600 17520 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:37:39,574 autoreload 24600 17520 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:37:42,280 autoreload 8772 15520 Watching for file changes with StatReloader
+INFO 2025-10-29 00:37:43,021 pesapal_service 8772 15520 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 00:37:57,442 log 8772 43316 Forbidden: /api/accounts/users/47/delete/
+WARNING 2025-10-29 00:38:30,805 log 8772 15972 Forbidden: /api/accounts/users/47/delete/
+INFO 2025-10-29 00:38:44,655 autoreload 8772 15520 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:38:47,084 autoreload 2144 15132 Watching for file changes with StatReloader
+INFO 2025-10-29 00:38:47,647 pesapal_service 2144 15132 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:39:11,681 autoreload 2144 15132 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:39:14,481 autoreload 45876 20784 Watching for file changes with StatReloader
+INFO 2025-10-29 00:39:15,205 pesapal_service 45876 20784 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:40:15,819 autoreload 45876 20784 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:40:18,707 autoreload 7564 12908 Watching for file changes with StatReloader
+INFO 2025-10-29 00:40:19,231 pesapal_service 7564 12908 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:40:44,854 autoreload 7564 12908 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:40:47,446 autoreload 776 15028 Watching for file changes with StatReloader
+INFO 2025-10-29 00:40:48,069 pesapal_service 776 15028 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:41:33,237 autoreload 776 15028 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:41:35,506 autoreload 17412 5556 Watching for file changes with StatReloader
+INFO 2025-10-29 00:41:36,083 pesapal_service 17412 5556 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:41:47,744 autoreload 17412 5556 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:41:50,458 autoreload 20828 6728 Watching for file changes with StatReloader
+INFO 2025-10-29 00:41:51,007 pesapal_service 20828 6728 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 00:42:03,429 autoreload 20828 6728 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 00:42:05,585 autoreload 18300 8644 Watching for file changes with StatReloader
+INFO 2025-10-29 00:42:06,072 pesapal_service 18300 8644 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 00:46:57,261 log 18300 27012 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-29 00:46:57,289 log 18300 27012 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-29 00:46:57,304 log 18300 27012 Unauthorized: /api/communication/reports/
+WARNING 2025-10-29 00:49:27,671 log 18300 27012 Bad Request: /api/accounts/token/
+WARNING 2025-10-29 00:49:47,161 log 18300 27012 Bad Request: /api/accounts/token/
+WARNING 2025-10-29 00:49:52,617 log 18300 27012 Bad Request: /api/accounts/token/
+INFO 2025-10-29 01:02:58,625 views 18300 45624 Subscription already exists for user 61
+INFO 2025-10-29 01:02:58,626 views 18300 45624 Welcome email prepared for ggichuru@usiu.ac.ke: Welcome to Makao Rentals - Your Landlord Account is Ready!
+INFO 2025-10-29 01:05:10,634 views 18300 30688 Document uploaded for session d092d0d1-edd1-4bd7-9768-eba53270a23d: Untitled design (1).png
+WARNING 2025-10-29 01:05:24,196 views 18300 30688 Unit with code 316 not found or not available
+WARNING 2025-10-29 01:05:32,999 log 18300 30688 Bad Request: /api/accounts/token/
+WARNING 2025-10-29 01:06:05,496 log 18300 30688 Bad Request: /api/accounts/token/
+INFO 2025-10-29 01:15:15,860 views 18300 6644 Document uploaded for session 3cab19e8-5626-4a67-bd48-322982504a7e: fiver-automation-gig.png
+INFO 2025-10-29 01:16:28,061 views 18300 6644 AssignTenantView: Landlord 61 attempting to assign tenant 63 to unit 313
+INFO 2025-10-29 01:16:28,064 views 18300 6644 Unit found: U-25-A011-a0a1d928, available: False, current tenant: Jeremy Ndirangu (georgem.gichuru@icloud.com)
+WARNING 2025-10-29 01:16:28,064 views 18300 6644 Unit 313 already has tenant 63 assigned
+WARNING 2025-10-29 01:16:28,065 log 18300 6644 Bad Request: /api/accounts/units/313/assign/63/
+INFO 2025-10-29 01:22:16,222 autoreload 18300 8644 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:22:20,834 autoreload 20324 22732 Watching for file changes with StatReloader
+INFO 2025-10-29 01:22:21,561 pesapal_service 20324 22732 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:23:11,633 autoreload 20324 22732 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:23:14,346 autoreload 25740 36724 Watching for file changes with StatReloader
+INFO 2025-10-29 01:23:14,869 pesapal_service 25740 36724 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:26:48,476 autoreload 25740 36724 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-29 01:26:51,389 autoreload 44456 44840 Watching for file changes with StatReloader
+INFO 2025-10-29 01:26:51,805 pesapal_service 44456 44840 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:27:00,914 autoreload 44456 44840 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\models.py changed, reloading.
+INFO 2025-10-29 01:27:03,805 autoreload 25212 44088 Watching for file changes with StatReloader
+INFO 2025-10-29 01:27:04,231 pesapal_service 25212 44088 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:29:03,310 autoreload 25212 44088 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:29:06,276 autoreload 43972 23428 Watching for file changes with StatReloader
+INFO 2025-10-29 01:29:06,860 pesapal_service 43972 23428 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:29:45,126 autoreload 43972 23428 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:29:47,652 autoreload 17512 26652 Watching for file changes with StatReloader
+INFO 2025-10-29 01:29:48,529 pesapal_service 17512 26652 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:29:51,874 autoreload 17512 26652 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:29:53,938 autoreload 32444 28384 Watching for file changes with StatReloader
+INFO 2025-10-29 01:29:54,459 pesapal_service 32444 28384 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:30:39,865 autoreload 32444 28384 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\tasks.py changed, reloading.
+INFO 2025-10-29 01:30:42,200 autoreload 13028 20188 Watching for file changes with StatReloader
+INFO 2025-10-29 01:30:42,612 pesapal_service 13028 20188 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:30:57,649 autoreload 13028 20188 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\app\tasks.py changed, reloading.
+INFO 2025-10-29 01:30:59,790 autoreload 35292 41168 Watching for file changes with StatReloader
+INFO 2025-10-29 01:31:00,343 pesapal_service 35292 41168 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:31:24,878 autoreload 35292 41168 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 01:31:27,665 autoreload 45712 46840 Watching for file changes with StatReloader
+INFO 2025-10-29 01:31:28,188 pesapal_service 45712 46840 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:33:39,788 autoreload 45712 46840 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-29 01:33:42,223 autoreload 26368 20428 Watching for file changes with StatReloader
+INFO 2025-10-29 01:33:42,713 pesapal_service 26368 20428 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:33:48,568 autoreload 26368 20428 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-29 01:33:50,498 autoreload 20044 33508 Watching for file changes with StatReloader
+INFO 2025-10-29 01:33:50,902 pesapal_service 20044 33508 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:35:58,055 autoreload 20044 33508 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\urls.py changed, reloading.
+INFO 2025-10-29 01:36:00,613 autoreload 20864 26952 Watching for file changes with StatReloader
+INFO 2025-10-29 01:36:01,193 pesapal_service 20864 26952 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:36:04,580 pesapal_service 5816 27632 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:42:30,964 pesapal_service 19268 27028 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:48:30,129 pesapal_service 25588 27968 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 01:50:54,666 views 20864 16308 CreatePropertyView: User 61 attempting to create property
+INFO 2025-10-29 01:50:54,667 views 20864 16308 Subscription found: free
+INFO 2025-10-29 01:50:54,670 views 20864 16308 Serializer valid, saving property for user 61
+INFO 2025-10-29 01:50:58,545 subscription_utils 20864 16308 Approaching limit email sent to ggichuru@usiu.ac.ke
+INFO 2025-10-29 01:50:58,587 views 20864 16308 Cache cleared for user 61
+INFO 2025-10-29 01:50:58,587 views 20864 16308 Property created successfully: 26, tracked in 1
+WARNING 2025-10-29 01:56:21,443 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,463 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,465 log 20864 36088 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,466 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,474 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,493 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,508 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,509 log 20864 36088 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,528 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,530 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,576 log 20864 36088 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,578 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,579 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,586 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,589 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,614 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,628 log 20864 36088 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,631 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,636 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,642 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,683 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,689 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,695 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,699 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,707 log 20864 36088 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,727 log 20864 45964 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,732 log 20864 16308 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,742 log 20864 16284 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,745 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 01:56:21,749 log 20864 19540 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:27,855 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:27,862 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,003 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,005 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,008 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,050 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,053 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,065 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,072 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,093 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,139 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,146 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,170 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,180 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,182 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,199 log 20864 24992 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,215 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,231 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,232 log 20864 12344 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,247 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,294 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,297 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,302 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,303 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,306 log 20864 24992 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,314 log 20864 12344 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,330 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,343 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,346 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,363 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,411 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,413 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,415 log 20864 24992 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,418 log 20864 12344 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,420 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,421 log 20864 3616 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,452 log 20864 8240 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,465 log 20864 27116 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,468 log 20864 24992 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,472 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:13:28,490 log 20864 28184 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:15:57,130 log 20864 28184 Unauthorized: /api/communication/reports/open/
+WARNING 2025-10-29 02:17:09,593 log 20864 46596 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,596 log 20864 6192 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,627 log 20864 46596 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,635 log 20864 6192 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,658 log 20864 46596 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,661 log 20864 6192 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,696 log 20864 46596 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,726 log 20864 6192 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,748 log 20864 6192 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:17:09,756 log 20864 46596 Bad Request: /api/accounts/units/create/
+INFO 2025-10-29 02:18:36,221 autoreload 15872 31440 Watching for file changes with StatReloader
+INFO 2025-10-29 02:18:36,914 pesapal_service 15872 31440 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+WARNING 2025-10-29 02:22:20,509 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,570 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,591 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,608 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,626 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,646 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,799 log 15872 37348 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,836 log 15872 42896 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,842 log 15872 40560 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,859 log 15872 45204 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,890 log 15872 40560 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,891 log 15872 42896 Bad Request: /api/accounts/units/create/
+WARNING 2025-10-29 02:22:20,903 log 15872 45204 Bad Request: /api/accounts/units/create/
+INFO 2025-10-29 02:26:55,901 subscription_utils 15872 37348 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:55,902 views 15872 37348 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:55,903 log 15872 37348 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:26:55,998 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:55,998 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:55,999 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:26:56,242 subscription_utils 15872 40560 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:56,242 views 15872 40560 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:56,243 log 15872 40560 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:26:58,701 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:58,702 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:58,702 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:26:59,042 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:59,042 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:59,043 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:26:59,120 subscription_utils 15872 42896 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:26:59,120 views 15872 42896 Unit limit reached for user 61
+WARNING 2025-10-29 02:26:59,122 log 15872 42896 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:00,166 subscription_utils 15872 37348 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:00,167 views 15872 37348 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:00,168 log 15872 37348 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:00,443 subscription_utils 15872 40560 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:00,444 views 15872 40560 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:00,445 log 15872 40560 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:00,603 subscription_utils 15872 45204 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:00,604 views 15872 45204 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:00,605 log 15872 45204 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:02,715 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:02,716 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:02,717 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:04,963 subscription_utils 15872 45204 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:04,964 views 15872 45204 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:04,965 log 15872 45204 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:05,176 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:05,177 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:05,177 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:05,479 subscription_utils 15872 42896 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:05,479 views 15872 42896 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:05,480 log 15872 42896 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:05,789 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:05,790 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:05,791 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:07,086 subscription_utils 15872 37348 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:07,087 views 15872 37348 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:07,088 log 15872 37348 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:07,640 subscription_utils 15872 40560 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:07,641 views 15872 40560 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:07,642 log 15872 40560 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:07,684 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:07,685 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:07,686 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:09,374 subscription_utils 15872 42896 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:09,375 views 15872 42896 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:09,376 log 15872 42896 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:09,656 subscription_utils 15872 45204 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:09,656 views 15872 45204 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:09,657 log 15872 45204 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:11,287 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:11,287 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:11,289 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:13,870 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:13,871 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:13,872 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:14,050 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:14,051 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:14,052 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:14,306 subscription_utils 15872 42896 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:14,307 views 15872 42896 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:14,308 log 15872 42896 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:14,529 subscription_utils 15872 45204 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:14,530 views 15872 45204 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:14,531 log 15872 45204 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:17,015 subscription_utils 15872 40560 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:17,016 views 15872 40560 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:17,017 log 15872 40560 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:17,289 subscription_utils 15872 37348 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:17,289 views 15872 37348 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:17,290 log 15872 37348 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:17,679 subscription_utils 15872 13968 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:17,679 views 15872 13968 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:17,680 log 15872 13968 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:19,902 subscription_utils 15872 45204 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:19,902 views 15872 45204 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:19,903 log 15872 45204 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:20,100 subscription_utils 15872 42896 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:20,100 views 15872 42896 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:20,101 log 15872 42896 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:27:20,338 subscription_utils 15872 30412 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:27:20,339 views 15872 30412 Unit limit reached for user 61
+WARNING 2025-10-29 02:27:20,340 log 15872 30412 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:37,807 subscription_utils 15872 20208 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:37,808 views 15872 20208 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:37,809 log 15872 20208 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:38,042 subscription_utils 15872 23148 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:38,042 views 15872 23148 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:38,043 log 15872 23148 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:38,237 subscription_utils 15872 38928 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:38,237 views 15872 38928 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:38,238 log 15872 38928 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:38,476 subscription_utils 15872 8296 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:38,476 views 15872 8296 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:38,477 log 15872 8296 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:40,489 subscription_utils 15872 40812 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:40,489 views 15872 40812 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:40,490 log 15872 40812 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:40,773 subscription_utils 15872 43360 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:40,774 views 15872 43360 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:40,775 log 15872 43360 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:41,165 subscription_utils 15872 23148 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:41,165 views 15872 23148 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:41,166 log 15872 23148 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:42,276 subscription_utils 15872 38928 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:42,277 views 15872 38928 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:42,277 log 15872 38928 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:42,652 subscription_utils 15872 20208 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:42,652 views 15872 20208 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:42,653 log 15872 20208 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:33:42,808 subscription_utils 15872 8296 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:33:42,809 views 15872 8296 Unit limit reached for user 61
+WARNING 2025-10-29 02:33:42,809 log 15872 8296 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:21,915 subscription_utils 15872 11616 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:21,916 views 15872 11616 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:21,918 log 15872 11616 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:22,112 subscription_utils 15872 43504 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:22,113 views 15872 43504 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:22,115 log 15872 43504 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:22,392 subscription_utils 15872 7272 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:22,401 views 15872 7272 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:22,457 log 15872 7272 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:22,591 subscription_utils 15872 6664 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:22,591 views 15872 6664 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:22,592 log 15872 6664 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:24,008 subscription_utils 15872 26240 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:24,009 views 15872 26240 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:24,010 log 15872 26240 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:24,390 subscription_utils 15872 24252 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:24,390 views 15872 24252 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:24,391 log 15872 24252 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:25,457 subscription_utils 15872 43504 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:25,457 views 15872 43504 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:25,458 log 15872 43504 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:25,723 subscription_utils 15872 11616 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:25,723 views 15872 11616 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:25,724 log 15872 11616 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:25,882 subscription_utils 15872 6664 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:25,882 views 15872 6664 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:25,883 log 15872 6664 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:36:27,730 subscription_utils 15872 7272 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:36:27,731 views 15872 7272 Unit limit reached for user 61
+WARNING 2025-10-29 02:36:27,731 log 15872 7272 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:00,071 subscription_utils 15872 37996 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:00,071 views 15872 37996 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:00,072 log 15872 37996 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:00,248 subscription_utils 15872 36528 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:00,257 views 15872 36528 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:00,258 log 15872 36528 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:00,530 subscription_utils 15872 44168 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:00,532 views 15872 44168 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:00,532 log 15872 44168 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:00,783 subscription_utils 15872 41908 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:00,924 views 15872 41908 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:00,927 log 15872 41908 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:02,745 subscription_utils 15872 19352 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:02,746 views 15872 19352 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:02,747 log 15872 19352 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:03,127 subscription_utils 15872 41696 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:03,127 views 15872 41696 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:03,128 log 15872 41696 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:04,186 subscription_utils 15872 36528 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:04,186 views 15872 36528 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:04,187 log 15872 36528 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:04,465 subscription_utils 15872 37996 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:04,465 views 15872 37996 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:04,466 log 15872 37996 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:04,724 subscription_utils 15872 44168 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:04,725 views 15872 44168 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:04,725 log 15872 44168 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:40:06,516 subscription_utils 15872 41908 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:40:06,517 views 15872 41908 Unit limit reached for user 61
+WARNING 2025-10-29 02:40:06,518 log 15872 41908 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:46,653 subscription_utils 15872 28292 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:46,654 views 15872 28292 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:46,655 log 15872 28292 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:46,895 subscription_utils 15872 13264 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:46,895 views 15872 13264 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:46,896 log 15872 13264 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:47,135 subscription_utils 15872 20048 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:47,379 views 15872 20048 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:47,380 log 15872 20048 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:47,502 subscription_utils 15872 40700 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:47,503 views 15872 40700 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:47,503 log 15872 40700 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:50,207 subscription_utils 15872 11960 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:50,208 views 15872 11960 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:50,208 log 15872 11960 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:50,473 subscription_utils 15872 44120 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:50,473 views 15872 44120 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:50,474 log 15872 44120 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:51,678 subscription_utils 15872 13264 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:51,678 views 15872 13264 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:51,679 log 15872 13264 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:51,914 subscription_utils 15872 28292 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:51,914 views 15872 28292 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:51,915 log 15872 28292 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:52,069 subscription_utils 15872 20048 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:52,070 views 15872 20048 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:52,071 log 15872 20048 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:46:54,372 subscription_utils 15872 40700 Limit reached email sent to ggichuru@usiu.ac.ke
+WARNING 2025-10-29 02:46:54,373 views 15872 40700 Unit limit reached for user 61
+WARNING 2025-10-29 02:46:54,373 log 15872 40700 Forbidden: /api/accounts/units/create/
+INFO 2025-10-29 02:52:26,195 views 15872 27860 No document uploaded for session 178ca976-5359-4b6e-9240-faa9075df979; proceeding with optional step 4 data
+INFO 2025-10-29 02:52:39,174 views 15872 27860 No document uploaded for session 178ca976-5359-4b6e-9240-faa9075df979; proceeding with optional step 4 data
+INFO 2025-10-29 03:06:42,579 autoreload 15872 31440 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:06:46,208 autoreload 10604 22432 Watching for file changes with StatReloader
+INFO 2025-10-29 03:06:47,077 pesapal_service 10604 22432 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:07:04,750 autoreload 10604 22432 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:07:07,080 autoreload 33496 44776 Watching for file changes with StatReloader
+INFO 2025-10-29 03:07:08,335 pesapal_service 33496 44776 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:07:14,373 autoreload 33496 44776 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:07:16,875 autoreload 41392 12632 Watching for file changes with StatReloader
+INFO 2025-10-29 03:07:17,357 pesapal_service 41392 12632 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:07:20,844 autoreload 41392 12632 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:07:23,969 autoreload 42904 23868 Watching for file changes with StatReloader
+INFO 2025-10-29 03:07:24,520 pesapal_service 42904 23868 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:07:32,689 autoreload 42904 23868 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:07:35,021 autoreload 12052 44072 Watching for file changes with StatReloader
+INFO 2025-10-29 03:07:35,518 pesapal_service 12052 44072 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:07:43,652 autoreload 12052 44072 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:07:45,706 autoreload 37556 13136 Watching for file changes with StatReloader
+INFO 2025-10-29 03:07:46,221 pesapal_service 37556 13136 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:08:18,407 autoreload 37556 13136 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:08:20,496 autoreload 17760 21808 Watching for file changes with StatReloader
+INFO 2025-10-29 03:08:21,030 pesapal_service 17760 21808 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:11:24,446 autoreload 17760 21808 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-29 03:11:26,996 autoreload 23080 24428 Watching for file changes with StatReloader
+INFO 2025-10-29 03:11:27,501 pesapal_service 23080 24428 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:11:40,099 autoreload 23080 24428 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-29 03:11:43,055 autoreload 44192 25196 Watching for file changes with StatReloader
+INFO 2025-10-29 03:11:43,651 pesapal_service 44192 25196 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:11:48,552 autoreload 44192 25196 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:11:50,658 autoreload 24244 35536 Watching for file changes with StatReloader
+INFO 2025-10-29 03:11:51,154 pesapal_service 24244 35536 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:11:58,082 autoreload 24244 35536 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\accounts\views.py changed, reloading.
+INFO 2025-10-29 03:12:00,143 autoreload 39952 38616 Watching for file changes with StatReloader
+INFO 2025-10-29 03:12:00,668 pesapal_service 39952 38616 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:12:18,633 autoreload 39952 38616 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-29 03:12:21,345 autoreload 42792 44520 Watching for file changes with StatReloader
+INFO 2025-10-29 03:12:21,811 pesapal_service 42792 44520 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu
+INFO 2025-10-29 03:12:24,102 autoreload 42792 44520 C:\Users\George Mwangi\Desktop\MAKAU-RENTALS-V5\Makau Rentals\app\payments\views_pesapal.py changed, reloading.
+INFO 2025-10-29 03:12:26,055 autoreload 40932 36332 Watching for file changes with StatReloader
+INFO 2025-10-29 03:12:26,539 pesapal_service 40932 36332 PesaPal configured: env=live, base_url=https://pay.pesapal.com/v3, key=GUSA***QYJu

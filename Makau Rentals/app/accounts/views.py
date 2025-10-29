@@ -19,6 +19,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
 from django.core.mail import send_mail
+from django.conf import settings
 from .models import Property, Unit, CustomUser, Subscription, UnitType,TenantProfile
 from payments.models import Payment
 from django.shortcuts import get_object_or_404
@@ -188,7 +189,7 @@ class LandlordDashboardStatsView(APIView):
         monthly_revenue_agg = Payment.objects.filter(
             unit__property_obj__landlord=landlord,
             payment_type='rent',
-            status='Success',
+            status='completed',  # ✅ FIXED: Changed from 'Success' to 'completed'
             created_at__gte=start_of_month,  # Changed from transaction_date
             created_at__lte=now  # Changed from transaction_date
         ).aggregate(total=Sum('amount'))
@@ -356,7 +357,7 @@ class UserCreateView(APIView):
                             tenant=user,
                             unit=unit,
                             payment_type='deposit',
-                            status='Success',
+                            status='completed',  # ✅ FIXED: Changed from 'Success' to 'completed'
                             amount__gte=unit.deposit
                         )
                         if deposit_payments.exists():
@@ -392,6 +393,13 @@ class CreatePropertyView(APIView):
     permission_classes = [IsAuthenticated, IsLandlord, HasActiveSubscription]
 
     def post(self, request):
+        from accounts.subscription_utils import (
+            check_subscription_limits,
+            send_limit_reached_email,
+            send_approaching_limit_email
+        )
+        from accounts.models import PropertyUnitTracker
+        
         logger.info(f"CreatePropertyView: User {request.user.id} attempting to create property")
         user = request.user
 
@@ -408,19 +416,33 @@ class CreatePropertyView(APIView):
         # Check if subscription is active
         if not subscription.is_active():
             logger.warning(f"Subscription expired for user {user.id}")
-            return Response({"error": "Your subscription has expired. Please renew or upgrade."}, status=403)
-
-        # Get plan limit
-        max_properties = PLAN_LIMITS.get(plan)
-        if max_properties is None and plan != "onetime":
-            return Response({"error": f"Unknown plan type: {plan}"}, status=400)
-
-        # Count current properties
-        current_count = Property.objects.filter(landlord=user).count()
-        logger.info(f"Current properties count: {current_count}, max: {max_properties}")
-        if plan != "onetime" and current_count >= max_properties:
             return Response({
-                "error": f"Your current plan ({plan}) allows a maximum of {max_properties} properties. Upgrade to add more."
+                "error": "Your subscription has expired. Please renew to continue.",
+                "action_required": "renew_subscription",
+                "redirect_to": "/admin/subscription"
+            }, status=403)
+
+        # Use new subscription limit checker
+        limit_check = check_subscription_limits(user, action_type='property')
+        
+        if not limit_check['can_create']:
+            # Send email notification about limit reached
+            send_limit_reached_email(
+                landlord=user,
+                limit_type='property',
+                current_plan=plan,
+                suggested_plan=limit_check.get('suggested_plan')
+            )
+            
+            logger.warning(f"Property limit reached for user {user.id}")
+            return Response({
+                "error": limit_check['message'],
+                "current_count": limit_check['current_count'],
+                "limit": limit_check['limit'],
+                "upgrade_needed": True,
+                "suggested_plan": limit_check.get('suggested_plan'),
+                "action_required": "upgrade_subscription",
+                "redirect_to": "/admin/subscription"
             }, status=403)
 
         # Proceed with creation
@@ -428,13 +450,45 @@ class CreatePropertyView(APIView):
         if serializer.is_valid():
             logger.info(f"Serializer valid, saving property for user {user.id}")
             property = serializer.save(landlord=user)
+            
+            # Track property creation
+            tracker = PropertyUnitTracker.track_property_creation(user, property)
+            
+            # Check if approaching limit and send warning email
+            new_count = limit_check['current_count'] + 1
+            if limit_check.get('upgrade_needed') or (limit_check['limit'] and new_count >= limit_check['limit'] - 1):
+                send_approaching_limit_email(
+                    landlord=user,
+                    limit_type='property',
+                    current_count=new_count,
+                    limit=limit_check['limit'],
+                    current_plan=plan
+                )
+                tracker.upgrade_notification_sent = True
+                tracker.save(update_fields=['upgrade_notification_sent'])
+            
+            # Check if limit reached with this creation
+            if limit_check['limit'] and new_count >= limit_check['limit']:
+                tracker.limit_reached = True
+                tracker.save(update_fields=['limit_reached'])
+            
             try:
-                cache.delete(f"landlord:{user.id}:properties")  # clear cache if you're caching landlord properties
+                cache.delete(f"landlord:{user.id}:properties")
                 logger.info(f"Cache cleared for user {user.id}")
             except Exception as e:
                 logger.warning(f"Cache delete failed: {e}")
-            logger.info(f"Property created successfully: {property.id}")
-            return Response(serializer.data, status=201)
+            
+            logger.info(f"Property created successfully: {property.id}, tracked in {tracker.id}")
+            
+            response_data = serializer.data
+            response_data['tracking'] = {
+                'total_properties': tracker.total_properties_after,
+                'limit': limit_check['limit'],
+                'approaching_limit': limit_check.get('upgrade_needed', False),
+                'limit_reached': tracker.limit_reached
+            }
+            
+            return Response(response_data, status=201)
 
         logger.error(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=400)
@@ -462,6 +516,13 @@ class CreateUnitView(APIView):
     permission_classes = [IsAuthenticated, IsLandlord, HasActiveSubscription]
 
     def post(self, request):
+        from accounts.subscription_utils import (
+            check_subscription_limits,
+            send_limit_reached_email,
+            send_approaching_limit_email
+        )
+        from accounts.models import PropertyUnitTracker
+        
         print("CreateUnitView: Received data:", request.data)  # Debug logging
         
         try:
@@ -474,6 +535,29 @@ class CreateUnitView(APIView):
                 property_obj = Property.objects.get(id=property_id, landlord=request.user)
             except Property.DoesNotExist:
                 return Response({"error": "Property not found or you do not have permission"}, status=404)
+
+            # Check subscription limits BEFORE creating unit
+            limit_check = check_subscription_limits(request.user, action_type='unit')
+            
+            if not limit_check['can_create']:
+                # Send email notification about limit reached
+                send_limit_reached_email(
+                    landlord=request.user,
+                    limit_type='unit',
+                    current_plan=request.user.subscription.plan if hasattr(request.user, 'subscription') else None,
+                    suggested_plan=limit_check.get('suggested_plan')
+                )
+                
+                logger.warning(f"Unit limit reached for user {request.user.id}")
+                return Response({
+                    "error": limit_check['message'],
+                    "current_count": limit_check['current_count'],
+                    "limit": limit_check['limit'],
+                    "upgrade_needed": True,
+                    "suggested_plan": limit_check.get('suggested_plan'),
+                    "action_required": "upgrade_subscription",
+                    "redirect_to": "/admin/subscription"
+                }, status=403)
 
             # Validate unit number
             unit_number = request.data.get('unit_number')
@@ -509,19 +593,53 @@ class CreateUnitView(APIView):
                 print("CreateUnitView: Serializer is valid")  # Debug logging
                 unit = serializer.save()
                 
+                # Track unit creation
+                tracker = PropertyUnitTracker.track_unit_creation(request.user, unit)
+                
+                # Check if approaching limit and send warning email
+                new_count = limit_check['current_count'] + 1
+                subscription = getattr(request.user, 'subscription', None)
+                plan = subscription.plan if subscription else 'unknown'
+                
+                if limit_check.get('upgrade_needed') or (limit_check['limit'] and new_count >= limit_check['limit'] - 1):
+                    send_approaching_limit_email(
+                        landlord=request.user,
+                        limit_type='unit',
+                        current_count=new_count,
+                        limit=limit_check['limit'],
+                        current_plan=plan
+                    )
+                    tracker.upgrade_notification_sent = True
+                    tracker.save(update_fields=['upgrade_notification_sent'])
+                
+                # Check if limit reached with this creation
+                if limit_check['limit'] and new_count >= limit_check['limit']:
+                    tracker.limit_reached = True
+                    tracker.save(update_fields=['limit_reached'])
+                
                 # Invalidate caches
                 cache.delete(f"landlord:{request.user.id}:properties")
                 cache.delete(f"property:{unit.property_obj.id}:units")
                 
-                print(f"CreateUnitView: Unit created successfully - ID: {unit.id}")  # Debug logging
+                print(f"CreateUnitView: Unit created successfully - ID: {unit.id}, tracked in {tracker.id}")
                 
-                return Response(serializer.data, status=201)
+                response_data = serializer.data
+                response_data['tracking'] = {
+                    'total_units': tracker.total_units_after,
+                    'limit': limit_check['limit'],
+                    'approaching_limit': limit_check.get('upgrade_needed', False),
+                    'limit_reached': tracker.limit_reached
+                }
+                
+                return Response(response_data, status=201)
             else:
                 print("CreateUnitView: Serializer errors:", serializer.errors)  # Debug logging
                 return Response(serializer.errors, status=400)
                 
         except Exception as e:
             print(f"CreateUnitView: Unexpected error: {str(e)}")  # Debug logging
+            import traceback
+            traceback.print_exc()
             return Response({"error": "Internal server error while creating unit"}, status=500)
 
 
@@ -804,17 +922,104 @@ class UpdateUserView(APIView):
             return Response({"error": "User not found"}, status=404)
 
     def delete(self, request, user_id):
-        if request.user.id != user_id:
-            return Response({"error": "You do not have permission to delete this user."}, status=403)
+        """
+        Delete/Evict a user
+        - Users can delete their own account
+        - Landlords can evict tenants from their properties
+        """
         try:
-            user = CustomUser.objects.get(id=user_id)
-            user.delete()
+            user_to_delete = CustomUser.objects.get(id=user_id)
+            
+            logger.info(f"🗑️ Delete request: User {request.user.id} ({request.user.email}) attempting to delete user {user_id} ({user_to_delete.email})")
+            logger.info(f"🔍 Requesting user is_landlord: {getattr(request.user, 'is_landlord', False)}")
+            logger.info(f"🔍 Target user is_tenant: {getattr(user_to_delete, 'is_tenant', False)}")
+            
+            # Check permissions
+            is_self_delete = request.user.id == user_id
+            
+            # Check if landlord is evicting their tenant (through unit assignment OR tenant profile)
+            is_landlord_evicting_tenant = False
+            if getattr(request.user, 'is_landlord', False) and getattr(user_to_delete, 'is_tenant', False):
+                # Check if tenant is assigned to landlord's unit
+                units_query = Unit.objects.filter(
+                    property_obj__landlord=request.user,
+                    tenant=user_to_delete
+                )
+                has_unit = units_query.exists()
+                
+                # Check if tenant has a profile linked to this landlord
+                profile_query = TenantProfile.objects.filter(
+                    tenant=user_to_delete,
+                    landlord=request.user
+                )
+                has_profile = profile_query.exists()
+                
+                # Debug: Check what landlord the tenant actually belongs to
+                actual_profile = TenantProfile.objects.filter(tenant=user_to_delete).first()
+                if actual_profile:
+                    logger.info(f"📋 Tenant's actual landlord: {actual_profile.landlord.email} (ID: {actual_profile.landlord.id})")
+                    logger.info(f"📋 Current request user: {request.user.email} (ID: {request.user.id})")
+                else:
+                    logger.info(f"📋 Tenant has no TenantProfile at all")
+                
+                is_landlord_evicting_tenant = has_unit or has_profile
+                
+                logger.info(f"✅ Tenant has unit with landlord: {has_unit}")
+                logger.info(f"✅ Tenant has profile with landlord: {has_profile}")
+                logger.info(f"✅ Is landlord evicting tenant: {is_landlord_evicting_tenant}")
+            
+            if not (is_self_delete or is_landlord_evicting_tenant):
+                # Also allow superusers to delete any tenant
+                if request.user.is_superuser and getattr(user_to_delete, 'is_tenant', False):
+                    logger.info(f"✅ Superuser {request.user.email} is deleting tenant {user_to_delete.email}")
+                    is_landlord_evicting_tenant = True  # Treat superuser as having permission
+                else:
+                    logger.warning(f"❌ Permission denied: is_self_delete={is_self_delete}, is_landlord_evicting_tenant={is_landlord_evicting_tenant}, is_superuser={request.user.is_superuser}")
+                    return Response({
+                        "error": "You do not have permission to delete this user. This tenant belongs to a different landlord."
+                    }, status=403)
+            
+            # If landlord is evicting tenant, remove them from their unit first
+            if is_landlord_evicting_tenant:
+                units = Unit.objects.filter(
+                    property_obj__landlord=request.user,
+                    tenant=user_to_delete
+                )
+                for unit in units:
+                    logger.info(f"Removing tenant {user_to_delete.full_name} from unit {unit.unit_number}")
+                    unit.tenant = None
+                    unit.is_available = True
+                    unit.assigned_date = None
+                    unit.save()
+                
+                # Invalidate caches
+                cache.delete(f"landlord:{request.user.id}:properties")
+                for unit in units:
+                    cache.delete(f"property:{unit.property_obj.id}:units")
+            
+            tenant_name = user_to_delete.full_name
+            user_to_delete.delete()
+            
+            # Clear caches
             cache.delete(f"user:{user_id}")
-            if user.user_type == "tenant":
+            if getattr(user_to_delete, 'is_tenant', False):
                 cache.delete("tenants:list")
-            return Response({"message": "User deleted successfully."}, status=200)
+            
+            logger.info(f"✅ User {tenant_name} (ID: {user_id}) deleted successfully")
+            
+            return Response({
+                "message": f"User {tenant_name} deleted successfully.",
+                "status": "success"
+            }, status=200)
+            
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting user {user_id}: {str(e)}")
+            return Response({
+                "error": "An error occurred while deleting the user",
+                "status": "failed"
+            }, status=500)
 
 
 class AdjustRentView(APIView):
@@ -1208,8 +1413,9 @@ class ValidateLandlordView(APIView):
             
             if not properties_data:
                 return Response({
-                    'error': 'This landlord has no available units at the moment'
-                }, status=404)
+                    'error': 'This landlord has no available units at the moment. All units are currently occupied. Please contact the landlord for more information.',
+                    'no_available_units': True
+                }, status=400)
             
             return Response({
                 'landlord_id': landlord.id,
@@ -1261,16 +1467,13 @@ class TenantRegistrationStepView(APIView):
                             'status': 'failed'
                         }, status=400)
             
-            # STEP 4: Validate and save document
+            # STEP 4: Document upload is optional; cache flags and document if provided
             if step == 4:
                 id_document = data.get('id_document')
-                if not id_document:
-                    return Response({
-                        'error': 'ID document is required',
-                        'status': 'failed'
-                    }, status=400)
-                
-                logger.info(f"Document uploaded for session {session_id}: {data.get('id_document_name', 'unknown')}")
+                if id_document:
+                    logger.info(f"Document uploaded for session {session_id}: {data.get('id_document_name', 'unknown')}")
+                else:
+                    logger.info(f"No document uploaded for session {session_id}; proceeding with optional step 4 data")
             
             # Store step data in cache
             cache_key = f"tenant_registration_{session_id}_step_{step}"
@@ -1310,6 +1513,7 @@ class CompleteTenantRegistrationView(APIView):
     def post(self, request):
         """
         Complete tenant registration with proper landlord validation
+        Handles both deposit-required and existing-tenant registration flows
         """
         try:
             data = request.data
@@ -1331,6 +1535,10 @@ class CompleteTenantRegistrationView(APIView):
 
             # Merge with final data
             all_data.update(data)
+
+            # Get flags for deposit and existing tenant
+            already_living_in_property = all_data.get('already_living_in_property', False)
+            requires_deposit = all_data.get('requires_deposit', True)
 
             # Validate landlord code exists
             landlord_code = all_data.get('landlord_code')
@@ -1370,6 +1578,7 @@ class CompleteTenantRegistrationView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Create the tenant user
+            # Create as INACTIVE by default - will be activated after deposit payment or landlord approval
             user = CustomUser.objects.create_user(
                 email=all_data['email'],
                 full_name=all_data['full_name'],
@@ -1377,7 +1586,8 @@ class CompleteTenantRegistrationView(APIView):
                 password=all_data['password'],
                 phone_number=all_data['phone_number'],
                 national_id=all_data.get('national_id'),
-                emergency_contact=all_data.get('emergency_contact')
+                emergency_contact=all_data.get('emergency_contact'),
+                is_active=False  # All tenants start as inactive
             )
 
             # Handle ID document if provided (base64 encoded)
@@ -1410,8 +1620,9 @@ class CompleteTenantRegistrationView(APIView):
 
             logger.info(f"✅ Tenant {user.full_name} registered with landlord {landlord.full_name}")
 
-            # Handle unit assignment if unit_code provided (optional)
+            # Get unit if provided
             unit_code = all_data.get('unit_code')
+            unit = None
             if unit_code:
                 try:
                     unit = Unit.objects.get(
@@ -1419,46 +1630,117 @@ class CompleteTenantRegistrationView(APIView):
                         property_obj__landlord=landlord,
                         is_available=True
                     )
-                    
-                    # Check for deposit payments
+                except Unit.DoesNotExist:
+                    logger.warning(f"Unit with code {unit_code} not found or not available")
+
+            # Create TenantApplication
+            from accounts.models import TenantApplication
+            application = TenantApplication.objects.create(
+                tenant=user,
+                landlord=landlord,
+                unit=unit,
+                already_living_in_property=already_living_in_property,
+                deposit_required=requires_deposit,
+                deposit_paid=False,  # Will be updated when payment is verified
+                status='pending' if already_living_in_property else 'pending',
+                notes=all_data.get('notes', '')
+            )
+
+            # Handle unit assignment for deposit-paid registrations
+            if not already_living_in_property and unit:
+                try:
+                    # Check for deposit payments by session_id or tenant
                     from payments.models import Payment
-                    deposit_payments = Payment.objects.filter(
+                    from datetime import timedelta
+                    
+                    logger.info(f"🔍 Checking for deposit payments for session_id={session_id}, unit={unit.unit_number}, tenant={user.email}")
+                    
+                    # Look for recent successful deposit payments for this unit (within last 2 hours for safety)
+                    recent_time = timezone.now() - timedelta(hours=2)
+                    
+                    # FIRST: Try to find payment by session_id in description (most reliable)
+                    session_deposit_payments = Payment.objects.filter(
+                        unit=unit,
+                        payment_type='deposit',
+                        status='completed',
+                        tenant__isnull=True,
+                        description__icontains=f"Session: {session_id}",  # ✅ Match by session_id
+                        created_at__gte=recent_time
+                    )
+                    
+                    # FALLBACK: If no session match, look for any unlinked payments for this unit
+                    if not session_deposit_payments.exists():
+                        session_deposit_payments = Payment.objects.filter(
+                            unit=unit,
+                            payment_type='deposit',
+                            status='completed',
+                            tenant__isnull=True,
+                            created_at__gte=recent_time
+                        )
+                        logger.warning(f"⚠️ No session_id match found, using fallback query for unit {unit.unit_number}")
+                    
+                    logger.info(f"📊 Found {session_deposit_payments.count()} unlinked deposit payment(s) for unit {unit.unit_number}")
+                    
+                    # Also check if payment is already linked to this tenant
+                    tenant_deposit_payments = Payment.objects.filter(
                         tenant=user,
                         unit=unit,
                         payment_type='deposit',
-                        status='Success',
-                        amount__gte=unit.deposit
+                        status='completed'
                     )
+                    
+                    logger.info(f"📊 Found {tenant_deposit_payments.count()} deposit payment(s) already linked to tenant {user.email}")
+                    
+                    # Check if any valid deposit payment exists
+                    deposit_paid = session_deposit_payments.exists() or tenant_deposit_payments.exists()
 
-                    if deposit_payments.exists():
-                        unit.tenant = user
+                    if deposit_paid:
+                        # Link any unlinked payments to this tenant
+                        linked_count = session_deposit_payments.update(tenant=user)
+                        logger.info(f"🔗 Linked {linked_count} deposit payment(s) to tenant {user.full_name}")
+                        
+                        # Mark deposit as paid but keep status as 'pending' for landlord approval
+                        # Tenant remains inactive until landlord approves
+                        application.deposit_paid = True
+                        application.status = 'pending'  # Keep pending until landlord approval
+                        application.save()
+
+                        # Reserve the unit but don't assign tenant yet
                         unit.is_available = False
                         unit.save()
 
-                        # Update tenant profile with unit
+                        # Update tenant profile with unit (reserved)
                         user.tenant_profile.current_unit = unit
                         user.tenant_profile.save()
 
-                        logger.info(f"✅ Tenant {user.full_name} assigned to unit {unit.unit_number}")
+                        # DO NOT activate user - must wait for landlord approval
+                        # user.is_active remains False
+
+                        logger.info(f"⏳ Tenant {user.full_name} registered with deposit paid - awaiting landlord approval for unit {unit.unit_number}")
+                    else:
+                        logger.info(f"⏳ Tenant {user.full_name} created but no deposit payment found - account remains inactive")
                     
-                except Unit.DoesNotExist:
-                    logger.warning(f"Unit with code {unit_code} not found or not available")
+                except Exception as e:
+                    logger.error(f"❌ Error processing deposit payment: {str(e)}")
 
             # Clean up cache
             for step in range(2, 7):
                 cache_key = f"tenant_registration_{session_id}_step_{step}"
                 cache.delete(cache_key)
 
-            return Response({
+            response_data = {
                 'status': 'success',
                 'user_id': user.id,
                 'email': user.email,
                 'full_name': user.full_name,
-                'landlord_id': landlord.id,  # Return landlord ID for reference
-                'landlord_name': landlord.full_name,
-                'landlord_code': landlord.landlord_code,
-                'message': 'Tenant registration completed successfully'
-            }, status=status.HTTP_201_CREATED)
+                'requires_approval': True,  # All tenants now require approval
+                'application_id': application.id
+            }
+
+            # All tenants must wait for landlord approval
+            response_data['message'] = 'Registration submitted! Your application is pending landlord approval. You will be notified once approved.'
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             logger.error(f"Unexpected error in tenant registration: {str(e)}")
@@ -1554,7 +1836,13 @@ class CompleteLandlordRegistrationView(APIView):
                         
                         for i, unit_data in enumerate(units_data, 1):
                             # Create unit type if it doesn't exist
-                            room_type = unit_data.get('room_type', 'studio')
+                            room_type = unit_data.get('room_type') or unit_data.get('roomType')
+                            
+                            # Validate that room_type is provided
+                            if not room_type:
+                                logger.error(f"Missing room_type for unit {i} in property {property_data.get('name')}")
+                                raise ValidationError(f"Room type is required for all units. Unit {i} is missing room type.")
+                            
                             unit_type, created = UnitType.objects.get_or_create(
                                 landlord=landlord,
                                 name=room_type,
@@ -2086,7 +2374,8 @@ class CompleteTenantRegistrationView(APIView):
                 password=all_data['password'],
                 phone_number=all_data['phone_number'],
                 national_id=all_data.get('national_id'),
-                emergency_contact=all_data.get('emergency_contact')
+                emergency_contact=all_data.get('emergency_contact'),
+                is_active=False  # All tenants start as inactive - require landlord approval
             )
 
             # Create tenant profile linked to landlord
@@ -2097,35 +2386,65 @@ class CompleteTenantRegistrationView(APIView):
 
             logger.info(f"✅ Tenant {user.full_name} registered with landlord {landlord.full_name}")
 
-            # Handle unit assignment if unit_code provided
+            # Get unit if provided
             unit_code = all_data.get('unit_code')
+            unit = None
             if unit_code:
                 try:
                     unit = Unit.objects.get(
                         unit_code=unit_code,
-                        property_obj__landlord=landlord
+                        property_obj__landlord=landlord,
+                        is_available=True
                     )
-                    
+                except Unit.DoesNotExist:
+                    logger.warning(f"Unit with code {unit_code} not found or not available")
+
+            # Create TenantApplication - REQUIRED for all tenants
+            from accounts.models import TenantApplication
+            application = TenantApplication.objects.create(
+                tenant=user,
+                landlord=landlord,
+                unit=unit,
+                already_living_in_property=False,
+                deposit_required=True,
+                deposit_paid=False,
+                status='pending',
+                notes=all_data.get('notes', '')
+            )
+
+            # Handle unit assignment if deposit paid
+            if unit_code and unit:
+                try:
                     # Check for deposit payments
                     from payments.models import Payment
                     deposit_payments = Payment.objects.filter(
                         tenant=user,
                         unit=unit,
                         payment_type='deposit',
-                        status='Success',
+                        status='completed',  # ✅ FIXED: Changed from 'Success' to 'completed'
                         amount__gte=unit.deposit
                     )
 
                     if deposit_payments.exists():
-                        unit.tenant = user
+                        # Mark deposit as paid but keep tenant inactive until landlord approves
+                        application.deposit_paid = True
+                        application.status = 'pending'  # Keep pending
+                        application.save()
+
+                        # Reserve the unit but don't assign tenant yet
                         unit.is_available = False
                         unit.save()
 
-                        # Update tenant profile with unit
+                        # Update tenant profile with unit (reserved)
                         user.tenantprofile.current_unit = unit
                         user.tenantprofile.save()
 
-                        logger.info(f"✅ Tenant {user.full_name} assigned to unit {unit.unit_number}")
+                        # DO NOT activate user - must wait for landlord approval
+                        # user.is_active remains False
+
+                        logger.info(f"⏳ Tenant {user.full_name} registered with deposit paid - awaiting landlord approval for unit {unit.unit_number}")
+                    else:
+                        logger.info(f"⏳ Tenant {user.full_name} registered - no deposit payment found, awaiting landlord approval")
                     
                 except Unit.DoesNotExist:
                     logger.warning(f"Unit with code {unit_code} not found for landlord {landlord.landlord_code}")
@@ -2142,7 +2461,9 @@ class CompleteTenantRegistrationView(APIView):
                 'full_name': user.full_name,
                 'landlord_name': landlord.full_name,
                 'landlord_code': landlord.landlord_code,
-                'message': 'Tenant registration completed successfully'
+                'requires_approval': True,
+                'application_id': application.id,
+                'message': 'Registration submitted! Your application is pending landlord approval. You will be notified once approved.'
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -2151,3 +2472,276 @@ class CompleteTenantRegistrationView(APIView):
                 'status': 'error',
                 'message': 'Internal server error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===== TENANT APPLICATION MANAGEMENT VIEWS =====
+
+class PendingTenantApplicationsView(APIView):
+    """
+    Get all pending tenant applications for a landlord
+    """
+    permission_classes = [IsAuthenticated, IsLandlord, HasActiveSubscription]
+
+    def get(self, request):
+        from accounts.models import TenantApplication
+        
+        applications = TenantApplication.objects.filter(
+            landlord=request.user,
+            status='pending'
+        ).select_related('tenant', 'unit', 'unit__property_obj')
+
+        data = []
+        for app in applications:
+            data.append({
+                'id': app.id,
+                'tenant_id': app.tenant.id,
+                'tenant_name': app.tenant.full_name,
+                'tenant_email': app.tenant.email,
+                'tenant_phone': app.tenant.phone_number,
+                'tenant_national_id': app.tenant.national_id,
+                'unit_number': app.unit.unit_number if app.unit else None,
+                'unit_id': app.unit.id if app.unit else None,
+                'property_name': app.unit.property_obj.name if app.unit else None,
+                'already_living_in_property': app.already_living_in_property,
+                'deposit_required': app.deposit_required,
+                'deposit_paid': app.deposit_paid,
+                'applied_at': app.applied_at,
+                'notes': app.notes,
+                'status': app.status
+            })
+
+        return Response({
+            'status': 'success',
+            'count': len(data),
+            'applications': data
+        })
+
+
+class ApproveTenantApplicationView(APIView):
+    """
+    Approve a tenant application
+    """
+    permission_classes = [IsAuthenticated, IsLandlord, HasActiveSubscription]
+
+    def post(self, request, application_id):
+        from accounts.models import TenantApplication
+        
+        try:
+            application = TenantApplication.objects.get(
+                id=application_id,
+                landlord=request.user,
+                status='pending'
+            )
+        except TenantApplication.DoesNotExist:
+            return Response({
+                'error': 'Application not found or already processed'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Approve the application
+        application.approve(reviewed_by_user=request.user)
+
+        # Activate tenant account
+        tenant = application.tenant
+        tenant.is_active = True
+        tenant.save()
+
+        logger.info(f"✅ Landlord {request.user.full_name} approved application for tenant {tenant.full_name}")
+
+        return Response({
+            'status': 'success',
+            'message': f'Tenant {tenant.full_name} has been approved and can now log in',
+            'application_id': application.id,
+            'tenant_id': tenant.id
+        })
+
+
+class DeclineTenantApplicationView(APIView):
+    """
+    Decline a tenant application and delete the tenant account
+    """
+    permission_classes = [IsAuthenticated, IsLandlord, HasActiveSubscription]
+
+    def post(self, request, application_id):
+        from accounts.models import TenantApplication
+        
+        try:
+            application = TenantApplication.objects.get(
+                id=application_id,
+                landlord=request.user,
+                status='pending'
+            )
+        except TenantApplication.DoesNotExist:
+            return Response({
+                'error': 'Application not found or already processed'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        reason = request.data.get('reason', '')
+        tenant = application.tenant
+        tenant_name = tenant.full_name
+        tenant_email = tenant.email
+
+        # Decline the application
+        application.decline(reviewed_by_user=request.user, reason=reason)
+
+        # Delete the tenant account and all related data
+        tenant_id = tenant.id
+        tenant.delete()  # This will cascade delete TenantProfile and TenantApplication
+
+        logger.info(f"❌ Landlord {request.user.full_name} declined and deleted tenant {tenant_name} (ID: {tenant_id})")
+
+        # TODO: Send email notification to tenant about declined application
+        try:
+            send_mail(
+                subject='Application Status Update',
+                message=f'Dear {tenant_name},\n\nYour application has been reviewed. Unfortunately, we are unable to proceed with your application at this time.\n\n{reason if reason else ""}\n\nThank you for your interest.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[tenant_email],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to send decline email: {str(e)}")
+
+        return Response({
+            'status': 'success',
+            'message': f'Application for {tenant_name} has been declined and account deleted',
+            'application_id': application.id,
+            'deleted_tenant_id': tenant_id
+        })
+
+
+# ===== Subscription Management Endpoints =====
+
+class SubscriptionSuggestionView(APIView):
+    """
+    Get subscription plan suggestions based on current usage
+    """
+    permission_classes = [IsAuthenticated, IsLandlord]
+
+    def get(self, request):
+        from accounts.subscription_utils import (
+            suggest_plan_upgrade,
+            get_plan_limits,
+            check_subscription_limits
+        )
+        
+        landlord = request.user
+        
+        # Get current counts
+        current_properties = Property.objects.filter(landlord=landlord).count()
+        current_units = Unit.objects.filter(property_obj__landlord=landlord).count()
+        
+        # Get current subscription
+        try:
+            subscription = Subscription.objects.get(user=landlord)
+            current_plan = subscription.plan
+            is_active = subscription.is_active()
+            expiry_date = subscription.expiry_date
+        except Subscription.DoesNotExist:
+            current_plan = None
+            is_active = False
+            expiry_date = None
+        
+        # Get plan suggestion
+        suggestion = suggest_plan_upgrade(current_properties, current_units)
+        
+        # Get limits for current plan
+        current_limits = get_plan_limits(current_plan) if current_plan else {}
+        
+        # Check current status
+        property_check = check_subscription_limits(landlord, action_type='property')
+        unit_check = check_subscription_limits(landlord, action_type='unit')
+        
+        # Get all plan options
+        from accounts.subscription_utils import PLAN_LIMITS
+        all_plans = []
+        for plan_name, limits in PLAN_LIMITS.items():
+            if plan_name == 'free':
+                continue  # Don't suggest free plan
+            
+            can_accommodate = (
+                (limits['properties'] is None or current_properties <= limits['properties']) and
+                (limits['units'] is None or current_units <= limits['units'])
+            )
+            
+            all_plans.append({
+                'plan': plan_name,
+                'description': limits['description'],
+                'properties_limit': limits['properties'],
+                'units_limit': limits['units'],
+                'price': limits['price'],
+                'duration_days': limits['duration_days'],
+                'can_accommodate': can_accommodate,
+                'is_current': plan_name == current_plan
+            })
+        
+        return Response({
+            'current_usage': {
+                'properties': current_properties,
+                'units': current_units
+            },
+            'current_subscription': {
+                'plan': current_plan,
+                'is_active': is_active,
+                'expiry_date': expiry_date,
+                'properties_limit': current_limits.get('properties'),
+                'units_limit': current_limits.get('units'),
+                'price': current_limits.get('price', 0)
+            },
+            'status': {
+                'can_create_property': property_check['can_create'],
+                'properties_remaining': property_check['limit'] - property_check['current_count'] if property_check['limit'] else None,
+                'can_create_unit': unit_check['can_create'],
+                'units_remaining': unit_check['limit'] - unit_check['current_count'] if unit_check['limit'] else None
+            },
+            'suggested_plan': {
+                'plan': suggestion['suggested_plan'],
+                'reason': suggestion['reason'],
+                'limits': suggestion['limits']
+            },
+            'all_plans': all_plans
+        })
+
+
+class SubscriptionTrackingHistoryView(APIView):
+    """
+    Get tracking history for property and unit creation
+    """
+    permission_classes = [IsAuthenticated, IsLandlord]
+
+    def get(self, request):
+        from accounts.models import PropertyUnitTracker
+        
+        landlord = request.user
+        limit = int(request.GET.get('limit', 50))
+        action_type = request.GET.get('action_type')  # Optional filter
+        
+        # Build query
+        queryset = PropertyUnitTracker.objects.filter(landlord=landlord)
+        
+        if action_type:
+            queryset = queryset.filter(action=action_type)
+        
+        # Get tracking records
+        tracking_records = queryset[:limit]
+        
+        # Serialize data
+        data = []
+        for record in tracking_records:
+            data.append({
+                'id': record.id,
+                'action': record.action,
+                'subscription_plan': record.subscription_plan,
+                'total_properties_after': record.total_properties_after,
+                'total_units_after': record.total_units_after,
+                'limit_reached': record.limit_reached,
+                'upgrade_notification_sent': record.upgrade_notification_sent,
+                'created_at': record.created_at,
+                'property_name': record.property.name if record.property else None,
+                'unit_number': record.unit.unit_number if record.unit else None,
+                'notes': record.notes
+            })
+        
+        return Response({
+            'count': len(data),
+            'results': data
+        })

@@ -475,15 +475,7 @@ Makao Center`,
             />
           </div>
           
-          <div className="flex items-center">
-            <input 
-              type="checkbox" 
-              checked={enable2FA}
-              onChange={(e) => setEnable2FA(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 mr-2" 
-            />
-            <label className="text-sm text-gray-700">Enable Two-Factor Authentication</label>
-          </div>
+          {/* Two-Factor Authentication checkbox removed as requested */}
           
           <div className="flex justify-end">
             <button

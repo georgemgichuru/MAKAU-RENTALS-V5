@@ -52,11 +52,15 @@ const LoginForm = ({ onLogin }) => {
     emergencyContact: '',
     selectedProperty: '',
     selectedRoom: null,
+    selectedRoomId: null,
     monthlyRent: 0,
     depositAmount: 0,
     idDocument: null,
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    alreadyLivingInProperty: false,
+    requiresDeposit: true,
+    depositPaymentCompleted: false // Track if deposit payment was successfully completed
   });
 
   // Available properties based on landlord ID
@@ -185,19 +189,23 @@ const LoginForm = ({ onLogin }) => {
       let errorMessage = 'Invalid email or password';
       
       if (err.response?.data) {
-        // Handle non-field errors (detail)
-        if (err.response.data.detail) {
-          errorMessage = err.response.data.detail;
-        } 
-        // Handle form-level errors (error key)
-        else if (err.response.data.error) {
-          errorMessage = err.response.data.error;
-        }
-        // Handle field-specific errors
-        else if (err.response.data.non_field_errors) {
+        // Handle DRF non_field_errors (most common for ValidationError)
+        if (err.response.data.non_field_errors) {
           errorMessage = Array.isArray(err.response.data.non_field_errors) 
             ? err.response.data.non_field_errors[0] 
             : err.response.data.non_field_errors;
+        }
+        // Handle non-field errors (detail)
+        else if (err.response.data.detail) {
+          errorMessage = Array.isArray(err.response.data.detail) 
+            ? err.response.data.detail[0] 
+            : err.response.data.detail;
+        } 
+        // Handle form-level errors (error key)
+        else if (err.response.data.error) {
+          errorMessage = Array.isArray(err.response.data.error)
+            ? err.response.data.error[0]
+            : err.response.data.error;
         }
         // Handle user_type validation errors
         else if (err.response.data.user_type) {
@@ -207,12 +215,22 @@ const LoginForm = ({ onLogin }) => {
         }
       }
       
+      // Ensure errorMessage is a string before calling toLowerCase
+      const errorStr = typeof errorMessage === 'string' ? errorMessage : String(errorMessage);
+      
+      // Check for inactive account (pending landlord approval)
+      if (errorStr.toLowerCase().includes('inactive') || 
+          errorStr.toLowerCase().includes('disabled') ||
+          errorStr.toLowerCase().includes('not active') ||
+          errorStr.toLowerCase().includes('pending approval')) {
+        errorMessage = 'Your account is pending approval. Please await approval from your landlord or contact us for support.';
+      }
       // Check for account type mismatch error and provide user-friendly message
-      if (errorMessage.toLowerCase().includes('invalid account type') || 
-          errorMessage.toLowerCase().includes('not a')) {
+      else if (errorStr.toLowerCase().includes('invalid account type') || 
+          errorStr.toLowerCase().includes('not a')) {
         // Extract actual user type from error message if available
-        const actualUserType = errorMessage.includes('landlord') ? 'landlord' : 
-                              errorMessage.includes('tenant') ? 'tenant' : 'different user type';
+        const actualUserType = errorStr.includes('landlord') ? 'landlord' : 
+                              errorStr.includes('tenant') ? 'tenant' : 'different user type';
         const currentUserType = userType === 'landlord' ? 'Landlord' : 'Tenant';
         
         errorMessage = `This account is registered as a ${actualUserType}, not as a ${currentUserType}. Please log in with the correct account type.`;
@@ -287,9 +305,14 @@ const LoginForm = ({ onLogin }) => {
       setAvailableProperties(properties);
       return true;
     } catch (err) {
+      // Check if the error is specifically about no available units
+      const isNoUnitsAvailable = err.response?.data?.no_available_units === true;
       const errorMessage = err.response?.data?.error || 'Landlord ID not found. Please check and try again.';
+      
       setError(errorMessage);
       setAvailableProperties([]);
+      
+      // If no units available, we should not allow progression
       return false;
     }
   };
@@ -320,13 +343,15 @@ const LoginForm = ({ onLogin }) => {
 
       console.log('Room selected:', {
         roomId,
+        unitCode: room.unit_code,
         rent: rentAmount,
         deposit: depositAmount
       });
 
       setTenantData(prev => ({
         ...prev,
-        selectedRoom: roomId,
+        selectedRoom: room.unit_code, // Store unit_code for registration
+        selectedRoomId: room.id,      // Store id for payment
         monthlyRent: rentAmount,
         depositAmount: depositAmount
       }));
@@ -384,15 +409,18 @@ const LoginForm = ({ onLogin }) => {
       }
 
       console.log('Processing deposit payment:', {
-        unit_id: tenantData.selectedRoom,
+        unit_id: tenantData.selectedRoomId,
         amount: tenantData.depositAmount,
-        session_id: currentSessionId
+        session_id: currentSessionId,
+        email: tenantData.email
       });
 
       // Real payment processing for registration (use unauthenticated endpoint)
       const paymentData = {
-        unit_id: parseInt(tenantData.selectedRoom),
+        unit_id: parseInt(tenantData.selectedRoomId),
         amount: Math.round(tenantData.depositAmount),
+        phone_number: tenantData.phone,
+        email: tenantData.email,  // ✅ Send tenant email for better tracking
         session_id: currentSessionId
       };
 
@@ -405,6 +433,9 @@ const LoginForm = ({ onLogin }) => {
         localStorage.setItem('pending_payment_id', response.data.payment_id);
         localStorage.setItem('payment_type', 'deposit');
         localStorage.setItem('registration_session_id', currentSessionId);
+        
+        // Mark deposit as initiated (will be completed after payment verification)
+        setTenantData(prev => ({ ...prev, depositPaymentCompleted: true }));
         
         setPaymentStatus({
           type: 'redirecting',
@@ -456,7 +487,7 @@ const LoginForm = ({ onLogin }) => {
         return;
       }
       if (!validateKenyanID(tenantData.governmentId)) {
-        setError('Invalid Government ID format');
+        setError('National ID must be 7-10 alphanumeric characters (e.g., 12345678 or AB1234567)');
         return;
       }
       if (!validateEmail(tenantData.email)) {
@@ -504,29 +535,42 @@ const LoginForm = ({ onLogin }) => {
       }
     }
 
-    // Step 4: Document Upload validation
+    // Step 4: Document Upload (optional)
     if (currentStep === 4) {
-      if (!tenantData.idDocument) {
-        setError('Please upload your ID document');
-        return;
-      }
+        // Always persist step 4 flags; include document only if provided
+        try {
+          const payload = {
+            session_id: currentSessionId,
+            already_living_in_property: tenantData.alreadyLivingInProperty,
+            requires_deposit: tenantData.requiresDeposit
+          };
+          if (tenantData.idDocument?.base64) {
+            payload.id_document = tenantData.idDocument.base64;
+            payload.id_document_name = tenantData.idDocument.name;
+          }
+          await authAPI.registerTenantStep(4, payload);
+        } catch (err) {
+          console.error('Error saving step 4 (optional document):', err);
+          // Don't block progression if document upload fails; just show a warning
+          setError(err.response?.data?.error || 'We could not save your document right now. You can proceed and upload later.');
+        }
 
-      // Save document to backend
-      try {
-        await authAPI.registerTenantStep(4, {
-          session_id: currentSessionId,
-          id_document: tenantData.idDocument.base64,
-          id_document_name: tenantData.idDocument.name
-        });
-      } catch (err) {
-        console.error('Error saving document:', err);
-        setError(err.response?.data?.error || 'Failed to upload document. Please try again.');
-        return;
+        // If tenant is already living in property, skip deposit payment
+        if (tenantData.alreadyLivingInProperty) {
+          setCurrentStep(6); // Skip step 5 (deposit payment) and go to step 6 (password)
+          return;
+        }
       }
-    }
 
     // Step 5: Deposit Payment
     if (currentStep === 5) {
+      // If deposit payment already completed (returning from next step), just proceed
+      if (tenantData.depositPaymentCompleted) {
+        setCurrentStep(6);
+        return;
+      }
+      
+      // Otherwise, initiate deposit payment
       const success = await processTenantDepositPayment();
       if (!success) return;
     }
@@ -556,12 +600,20 @@ const LoginForm = ({ onLogin }) => {
           emergency_contact: tenantData.emergencyContact,
           landlord_code: tenantData.landlordId,
           unit_code: tenantData.selectedRoom,
-          id_document: tenantData.idDocument?.base64 // Send base64 encoded file
+          id_document: tenantData.idDocument?.base64,
+          already_living_in_property: tenantData.alreadyLivingInProperty,
+          requires_deposit: tenantData.requiresDeposit
         };
 
-        await authAPI.registerTenant(registrationData);
+        const response = await authAPI.registerTenant(registrationData);
 
-        alert('Tenant registration successful! Please login.');
+        // Show success message based on whether approval is needed
+        if (tenantData.alreadyLivingInProperty) {
+          alert('Registration submitted successfully! Your application has been sent to the landlord for approval. You will be notified once approved.');
+        } else {
+          alert('Tenant registration successful! Please login.');
+        }
+        
         setAuthMode('login');
         resetTenantForm();
       } catch (err) {
@@ -586,16 +638,21 @@ const LoginForm = ({ onLogin }) => {
       emergencyContact: '',
       selectedProperty: '',
       selectedRoom: '',
+      selectedRoomId: null,
       monthlyRent: 0,
       depositAmount: 0,
       idDocument: null,
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      alreadyLivingInProperty: false,
+      requiresDeposit: true,
+      depositPaymentCompleted: false
     });
     setCurrentStep(1);
     setAvailableProperties([]);
     setAvailableRooms([]);
     setPaymentStatus(null);
+    setSessionId(null);
   };
 
   // Calculate total units for landlord
@@ -714,19 +771,30 @@ const LoginForm = ({ onLogin }) => {
 
       // Save step 3 data to backend
       try {
-        await authAPI.registerLandlordStep(3, {
-          properties: landlordData.properties.map(property => ({
-            name: property.propertyName,
-            address: property.propertyAddress,
-            units: property.units.map(unit => ({
+        // Log the data being sent
+        const propertiesPayload = landlordData.properties.map(property => ({
+          name: property.propertyName,
+          address: property.propertyAddress,
+          units: property.units.map(unit => {
+            // Validate room type before sending
+            if (!unit.roomType || unit.roomType.trim() === '') {
+              throw new Error(`Unit ${unit.unitNumber} is missing a room type`);
+            }
+            return {
               unit_number: unit.unitNumber,
               room_type: unit.roomType,
               monthly_rent: unit.monthlyRent
-            }))
-          }))
+            };
+          })
+        }));
+        
+        console.log('📤 Sending landlord step 3 data:', JSON.stringify(propertiesPayload, null, 2));
+        
+        await authAPI.registerLandlordStep(3, {
+          properties: propertiesPayload
         });
       } catch (err) {
-        const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to save property information';
+        const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to save property information';
         setError(errorMessage);
         return;
       }
@@ -736,6 +804,35 @@ const LoginForm = ({ onLogin }) => {
     if (currentStep === 4) {
       setIsLoading(true);
       try {
+        // Prepare properties payload with validation - use snake_case for backend compatibility
+        const propertiesPayload = landlordData.properties.map(property => ({
+          name: property.propertyName,  // Backend expects 'name'
+          address: property.propertyAddress,  // Backend expects 'address'
+          units: property.units.map(unit => {
+            // Final validation
+            if (!unit.roomType || unit.roomType.trim() === '') {
+              throw new Error(`Unit ${unit.unitNumber || 'unnamed'} is missing a room type`);
+            }
+            if (!unit.monthlyRent || parseFloat(unit.monthlyRent) <= 0) {
+              throw new Error(`Unit ${unit.unitNumber || 'unnamed'} must have a valid rent amount`);
+            }
+            return {
+              unitNumber: unit.unitNumber,  // Send both for backend compatibility
+              unit_number: unit.unitNumber,
+              roomType: unit.roomType,      // Send both camelCase and snake_case
+              room_type: unit.roomType,
+              monthlyRent: unit.monthlyRent,
+              monthly_rent: unit.monthlyRent
+            };
+          })
+        }));
+        
+        console.log('📤 Final landlord registration data:', {
+          session_id: sessionId,
+          email: landlordData.email,
+          properties: propertiesPayload
+        });
+        
         // Complete the registration
         const response = await authAPI.registerLandlord({
           session_id: sessionId,
@@ -747,7 +844,7 @@ const LoginForm = ({ onLogin }) => {
           mpesa_till_number: landlordData.tillNumber,
           address: landlordData.address,
           website: landlordData.website,
-          properties: landlordData.properties
+          properties: propertiesPayload
         });
 
         // Determine landlord identifier from response (best-effort)
@@ -767,7 +864,7 @@ const LoginForm = ({ onLogin }) => {
           // NOTE: Ideally you'd call a backend endpoint here to register the trial server-side.
           // If such an endpoint exists (e.g. subscriptionAPI.createTrial) call it.
 
-          alert(`Registration successful! You have a 30-day free trial until ${new Date(trialEnds).toLocaleString()}. Please login to continue.`);
+          alert(`🎉 Registration Successful!\n\nYour FREE 30-day trial has started!\n\nTrial ends: ${new Date(trialEnds).toLocaleDateString()}\n\nYou can now login and start managing your properties immediately with full access to all features.\n\nNo payment required until ${new Date(trialEnds).toLocaleDateString()}.`);
           setAuthMode('login');
           resetLandlordForm();
         } else {
@@ -869,7 +966,7 @@ const LoginForm = ({ onLogin }) => {
 
   // Unit Management Functions
   // Add Unit with selected type
-  const addUnit = (propertyId, selectedRoomType = 'studio', selectedRent = '') => {
+  const addUnit = (propertyId, selectedRoomType = 'studio', selectedRent = '', selectedDeposit = '') => {
     setLandlordData(prev => ({
       ...prev,
       properties: prev.properties.map(property => {
@@ -880,7 +977,8 @@ const LoginForm = ({ onLogin }) => {
               id: Date.now(),
               unitNumber: '',
               roomType: selectedRoomType,
-              monthlyRent: selectedRent
+              monthlyRent: selectedRent,
+              depositAmount: selectedDeposit
             }]
           };
         }
@@ -890,17 +988,29 @@ const LoginForm = ({ onLogin }) => {
   };
 
   const addBulkUnits = (propertyId, bulkData) => {
-    const { count, roomType, rentAmount, startNumber } = bulkData;
+    const { count, roomType, rentAmount, depositAmount, startNumber } = bulkData;
+    
+    // Validation: Ensure room type is provided
+    if (!roomType || roomType.trim() === '') {
+      setError('Room type is required for bulk units');
+      return;
+    }
+    
+    console.log('🏠 Adding bulk units:', { count, roomType, rentAmount, depositAmount, startNumber });
+    
     const newUnits = [];
     
     for (let i = 0; i < parseInt(count); i++) {
       newUnits.push({
         id: Date.now() + i,
         unitNumber: startNumber ? `${startNumber}${i + 1}` : `Unit ${i + 1}`,
-        roomType: roomType,
-        monthlyRent: rentAmount
+        roomType: roomType, // Ensure this is the actual selected value
+        monthlyRent: rentAmount,
+        depositAmount: depositAmount || rentAmount // Default to rent amount if not specified
       });
     }
+    
+    console.log('✅ Created units:', newUnits);
 
     setLandlordData(prev => ({
       ...prev,
@@ -953,7 +1063,14 @@ const LoginForm = ({ onLogin }) => {
   const prevStep = () => {
     setError('');
     setPaymentStatus(null);
-    setCurrentStep(prev => prev - 1);
+    
+    // Smart navigation: If coming from Account Security (step 6) and user already lives in property,
+    // skip Deposit Payment (step 5) and go back to Document Upload (step 4)
+    if (currentStep === 6 && tenantData.alreadyLivingInProperty) {
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(prev => prev - 1);
+    }
   };
 
   // Step Indicator Component
@@ -1117,6 +1234,7 @@ const LoginForm = ({ onLogin }) => {
                   ...prev,
                   selectedProperty: propertyId,
                   selectedRoom: null,
+                  selectedRoomId: null,
                   monthlyRent: 0,
                   depositAmount: 0
                 }));
@@ -1153,7 +1271,7 @@ const LoginForm = ({ onLogin }) => {
                   key={room.id}
                   onClick={() => handleRoomSelection(room.id)}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    tenantData.selectedRoom?.toString() === room.id.toString()
+                    tenantData.selectedRoom === room.unit_code
                       ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                       : 'border-gray-200 hover:border-blue-300'
                   }`}
@@ -1168,7 +1286,7 @@ const LoginForm = ({ onLogin }) => {
                       <p className="text-sm text-gray-600">Deposit: KES {room.rent}</p>
                     </div>
                   </div>
-                  {tenantData.selectedRoom?.toString() === room.id.toString() && (
+                  {tenantData.selectedRoom === room.unit_code && (
                     <div className="flex items-center mt-2 text-green-600 text-sm">
                       <CheckCircle className="w-4 h-4 mr-1" />
                       Selected
@@ -1180,15 +1298,49 @@ const LoginForm = ({ onLogin }) => {
           </div>
         )}
 
+        {tenantData.selectedProperty && availableRooms.length === 0 && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
+            <AlertCircle className="w-12 h-12 mx-auto mb-3 text-orange-500" />
+            <h3 className="font-semibold text-orange-900 mb-2">No Available Units</h3>
+            <p className="text-sm text-orange-700">
+              All units in this property are currently occupied. Please select a different property or contact the landlord for more information.
+            </p>
+          </div>
+        )}
+
         {tenantData.selectedRoom && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
               <p className="text-green-700">
-                Selected: Unit {availableRooms.find(r => r.id.toString() === tenantData.selectedRoom.toString())?.unit_number}
+                Selected: Unit {availableRooms.find(r => r.unit_code === tenantData.selectedRoom)?.unit_number}
                 - KES {tenantData.monthlyRent}/month
               </p>
             </div>
+          </div>
+        )}
+
+        {tenantData.selectedRoom && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <label className="flex items-start cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tenantData.alreadyLivingInProperty}
+                onChange={(e) => setTenantData(prev => ({
+                  ...prev,
+                  alreadyLivingInProperty: e.target.checked,
+                  requiresDeposit: !e.target.checked
+                }))}
+                className="mt-1 mr-3 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <div>
+                <p className="font-medium text-blue-900">I am already living in this property</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Check this box if you're already a resident and don't need to pay a deposit. 
+                  Your application will be sent to the landlord for approval.
+                </p>
+              </div>
+            </label>
           </div>
         )}
       </div>
@@ -1217,13 +1369,26 @@ const LoginForm = ({ onLogin }) => {
 
   const renderTenantStep4 = () => (
     <div>
-      <h2 className="text-2xl font-bold mb-2">Document Upload</h2>
-      <p className="text-gray-600 mb-6">Upload your government ID for verification</p>
+      <h2 className="text-2xl font-bold mb-2">Document Upload <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
+      <p className="text-gray-600 mb-6">You can upload your government ID now or skip and upload it later from your profile.</p>
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
           <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {tenantData.alreadyLivingInProperty && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start">
+          <Info className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-yellow-900">Application Pending Approval</p>
+            <p className="text-sm text-yellow-700 mt-1">
+              Since you're already living in this property, you won't need to pay a deposit. 
+              Your application will be submitted to the landlord for approval after you create your password.
+            </p>
+          </div>
         </div>
       )}
 
@@ -1269,9 +1434,8 @@ const LoginForm = ({ onLogin }) => {
           <div className="flex items-start">
             <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-blue-700 text-sm">
-                Your document will be securely stored and used for verification purposes only.
-              </p>
+              <p className="text-blue-700 text-sm">Your document will be securely stored and used for verification purposes only.</p>
+              <p className="text-blue-700 text-xs mt-1">This step is optional. You can proceed without uploading and add it later.</p>
             </div>
           </div>
         </div>
@@ -1286,101 +1450,172 @@ const LoginForm = ({ onLogin }) => {
         </button>
         <button
           onClick={handleTenantNext}
-          disabled={!tenantData.idDocument}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
         >
-          Continue to Deposit Payment
+          {tenantData.alreadyLivingInProperty 
+            ? 'Continue to Account Setup' 
+            : 'Continue to Deposit Payment'}
         </button>
       </div>
     </div>
   );
 
-  const renderTenantStep5 = () => (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Deposit Payment</h2>
-      <p className="text-gray-600 mb-6">Pay your security deposit via M-Pesa</p>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
-          <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
+  const renderTenantStep5 = () => {
+    // If deposit payment was already completed, show confirmation instead of payment form
+    if (tenantData.depositPaymentCompleted) {
+      return (
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Deposit Payment</h2>
+          <p className="text-gray-600 mb-6">Your deposit payment has been processed</p>
+          
+          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-6">
+            <div className="flex items-start mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-green-900 mb-2">Payment Initiated Successfully!</h3>
+                <p className="text-green-700 text-sm mb-3">
+                  Your deposit payment has been initiated and is being processed. You will receive a confirmation once the payment is verified.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 text-sm">Amount Paid:</span>
+                <span className="font-bold text-green-700">KES {tenantData.depositAmount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 text-sm">Status:</span>
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                  Processing
+                </span>
+              </div>
+            </div>
+          </div>
 
-      {paymentStatus && (
-        <div className={`mb-4 p-3 rounded-lg flex items-start ${
-          paymentStatus.type === 'success' 
-            ? 'bg-green-50 border border-green-200' 
-            : 'bg-red-50 border border-red-200'
-        }`}>
-          {paymentStatus.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
-          ) : (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-blue-700 text-sm font-medium mb-2">Next Steps:</p>
+                <ul className="text-blue-700 text-sm space-y-1 list-disc list-inside">
+                  <li>Complete your account setup in the next step</li>
+                  <li>Your payment will be verified within a few minutes</li>
+                  <li>You'll receive an email confirmation once verified</li>
+                  <li>Your landlord will also be notified of your registration</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={prevStep}
+              className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleTenantNext}
+              className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+            >
+              Continue to Account Setup
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Normal payment form if deposit not yet paid
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Deposit Payment</h2>
+        <p className="text-gray-600 mb-6">Pay your security deposit via M-Pesa</p>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
             <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-          )}
-          <p className={`text-sm ${
-            paymentStatus.type === 'success' ? 'text-green-700' : 'text-red-700'
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {paymentStatus && (
+          <div className={`mb-4 p-3 rounded-lg flex items-start ${
+            paymentStatus.type === 'success' 
+              ? 'bg-green-50 border border-green-200' 
+              : 'bg-red-50 border border-red-200'
           }`}>
-            {paymentStatus.message}
-          </p>
-        </div>
-      )}
+            {paymentStatus.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+            )}
+            <p className={`text-sm ${
+              paymentStatus.type === 'success' ? 'text-green-700' : 'text-red-700'
+            }`}>
+              {paymentStatus.message}
+            </p>
+          </div>
+        )}
 
-      <div className="space-y-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">Monthly Rent:</span>
-            <span className="font-bold">KES {tenantData.monthlyRent}</span>
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Monthly Rent:</span>
+              <span className="font-bold">KES {tenantData.monthlyRent}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Security Deposit:</span>
+              <span className="font-bold">KES {tenantData.depositAmount}</span>
+            </div>
+            <div className="flex justify-between items-center border-t pt-2">
+              <span className="font-medium">Total to Pay:</span>
+              <span className="font-bold text-lg">KES {tenantData.depositAmount}</span>
+            </div>
           </div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">Security Deposit:</span>
-            <span className="font-bold">KES {tenantData.depositAmount}</span>
-          </div>
-          <div className="flex justify-between items-center border-t pt-2">
-            <span className="font-medium">Total to Pay:</span>
-            <span className="font-bold text-lg">KES {tenantData.depositAmount}</span>
-          </div>
-        </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <CreditCard className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-blue-700 text-sm">
-                Click "Pay Now" to be redirected to PesaPal payment gateway. You can pay using M-Pesa, cards, or other available payment methods.
-              </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <CreditCard className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-blue-700 text-sm">
+                  Click "Pay Now" to be redirected to PesaPal payment gateway. You can pay using M-Pesa, cards, or other available payment methods.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={prevStep}
-          className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleTenantNext}
-          disabled={isLoading}
-          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Pay Now
-            </>
-          )}
-        </button>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={prevStep}
+            className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleTenantNext}
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Pay Now
+              </>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderTenantStep6 = () => (
     <div>
@@ -1838,7 +2073,8 @@ const LoginForm = ({ onLogin }) => {
                       onClick={() => {
                         const selectedType = singleUnitSelection[property.id]?.roomType || 'studio';
                         const selectedRent = singleUnitSelection[property.id]?.rentAmount || '';
-                        addUnit(property.id, selectedType, selectedRent);
+                        const selectedDeposit = singleUnitSelection[property.id]?.depositAmount || '';
+                        addUnit(property.id, selectedType, selectedRent, selectedDeposit);
                       }}
                       className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm border border-blue-700"
                     >
@@ -1850,7 +2086,7 @@ const LoginForm = ({ onLogin }) => {
                 {/* Single Unit Type Selection */}
                 <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
                   <h5 className="font-medium mb-2 text-sm">Quick Add Unit Settings</h5>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-medium mb-1">Room Type *</label>
                       <select
@@ -1883,6 +2119,20 @@ const LoginForm = ({ onLogin }) => {
                         onChange={(e) => setSingleUnitSelection(prev => ({
                           ...prev,
                           [property.id]: { ...prev[property.id], rentAmount: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Deposit (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full px-3 py-2 border rounded text-sm"
+                        placeholder="e.g., 15000"
+                        value={singleUnitSelection[property.id]?.depositAmount || ''}
+                        onChange={(e) => setSingleUnitSelection(prev => ({
+                          ...prev,
+                          [property.id]: { ...prev[property.id], depositAmount: e.target.value }
                         }))}
                       />
                     </div>
@@ -1959,6 +2209,21 @@ const LoginForm = ({ onLogin }) => {
                         />
                       </div>
                       <div>
+                        <label className="block text-xs font-medium mb-1">Deposit Amount (KES)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          placeholder="e.g., 15000"
+                          value={bulkUnitMode[property.id]?.depositAmount || ''}
+                          onChange={(e) => setBulkUnitMode(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], depositAmount: e.target.value }
+                          }))}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Leave empty to use rent amount</p>
+                      </div>
+                      <div>
                         <label className="block text-xs font-medium mb-1">Start Number (Optional)</label>
                         <input
                           type="text"
@@ -2006,9 +2271,15 @@ const LoginForm = ({ onLogin }) => {
                             <span className="font-bold text-blue-700 text-sm">Unit {unit.unitNumber || unitIndex + 1}</span>
                             <span className="text-xs text-gray-500">{unit.roomType}</span>
                           </div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-600">Rent:</span>
-                            <span className="font-bold text-green-700 text-sm">KES {unit.monthlyRent}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Rent:</span>
+                              <span className="font-bold text-green-700 text-sm">KES {unit.monthlyRent}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Deposit:</span>
+                              <span className="font-bold text-blue-700 text-sm">KES {unit.depositAmount || unit.monthlyRent}</span>
+                            </div>
                           </div>
                           <div className="flex gap-2 mt-2">
                             <button
@@ -2084,39 +2355,73 @@ const LoginForm = ({ onLogin }) => {
       )}
 
       <div className="space-y-4">
-        <div className="bg-gray-50 rounded-lg p-4">
+        {/* Free Trial Banner */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-6 text-white text-center shadow-lg">
+          <div className="flex items-center justify-center mb-3">
+            <CheckCircle className="w-8 h-8 mr-2" />
+            <h3 className="text-2xl font-bold">🎉 1 Month FREE Trial!</h3>
+          </div>
+          <p className="text-green-50 text-sm mb-2">
+            Start managing your properties today with no upfront payment
+          </p>
+          <p className="text-xs text-green-100">
+            No credit card required • Cancel anytime • Full access to all features
+          </p>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4 border-2 border-blue-500">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-600">Total Units:</span>
-            <span className="font-bold">{calculateTotalUnits()}</span>
+            <span className="font-bold text-lg">{calculateTotalUnits()}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Monthly Subscription:</span>
-            <span className="font-bold text-lg">KES {calculateMonthlyFee()}</span>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-gray-600">Your Plan:</span>
+            <span className="font-bold text-blue-600">
+              {pricingTiers.find(tier => calculateTotalUnits() >= tier.min && calculateTotalUnits() <= tier.max)?.label || 'Custom'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center pt-2 border-t border-gray-300">
+            <span className="text-gray-600">Monthly Subscription (after trial):</span>
+            <span className="font-bold text-lg text-blue-600">KES {calculateMonthlyFee()}</span>
+          </div>
+          <div className="mt-3 p-2 bg-green-100 rounded text-center">
+            <p className="text-sm font-semibold text-green-700">
+              First month: <span className="line-through text-gray-500">KES {calculateMonthlyFee()}</span> <span className="text-xl">FREE</span>
+            </p>
           </div>
         </div>
 
         <div className="space-y-3">
+          <h4 className="font-semibold text-gray-700">Available Plans:</h4>
           {pricingTiers.map((tier, index) => (
             <div
               key={index}
-              className={`p-4 border rounded-lg ${
+              className={`p-4 border-2 rounded-lg transition-all ${
                 calculateTotalUnits() >= tier.min && calculateTotalUnits() <= tier.max
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200'
+                  ? 'border-blue-500 bg-blue-50 shadow-md'
+                  : 'border-gray-200 bg-white'
               }`}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-medium">{tier.label}</h3>
+                  <h3 className="font-medium text-lg">{tier.label}</h3>
                   {tier.max === Infinity && (
-                    <p className="text-sm text-gray-600">Custom pricing</p>
+                    <p className="text-sm text-gray-600">Custom pricing - Contact us</p>
+                  )}
+                  {calculateTotalUnits() >= tier.min && calculateTotalUnits() <= tier.max && (
+                    <span className="inline-block mt-1 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                      Your Current Plan
+                    </span>
                   )}
                 </div>
                 <div className="text-right">
                   {tier.price > 0 ? (
-                    <p className="font-bold">KES {tier.price}/month</p>
+                    <>
+                      <p className="font-bold text-xl">KES {tier.price}<span className="text-sm text-gray-500">/month</span></p>
+                      <p className="text-xs text-gray-500">After free trial</p>
+                    </>
                   ) : (
-                    <p className="font-bold">Contact Us</p>
+                    <p className="font-bold text-blue-600">Contact Us</p>
                   )}
                 </div>
               </div>
@@ -2128,9 +2433,15 @@ const LoginForm = ({ onLogin }) => {
           <div className="flex items-start">
             <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-blue-700 text-sm">
-                Your subscription will be automatically billed monthly. You can upgrade or downgrade your plan at any time.
+              <p className="text-blue-700 text-sm font-semibold mb-2">
+                ✓ Start your FREE 30-day trial now
               </p>
+              <ul className="text-blue-700 text-sm space-y-1">
+                <li>• No payment required today</li>
+                <li>• Access all features immediately</li>
+                <li>• Cancel anytime during trial</li>
+                <li>• After trial, subscription auto-renews monthly</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -2146,7 +2457,7 @@ const LoginForm = ({ onLogin }) => {
         <button
           onClick={handleLandlordNext}
           disabled={isLoading || calculateMonthlyFee() === 0}
-          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center"
+          className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-bold text-lg shadow-lg flex items-center justify-center"
         >
           {isLoading ? (
             <>
@@ -2154,7 +2465,10 @@ const LoginForm = ({ onLogin }) => {
               Creating Account...
             </>
           ) : (
-            'Complete Registration'
+            <>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Start Free Trial
+            </>
           )}
         </button>
       </div>
