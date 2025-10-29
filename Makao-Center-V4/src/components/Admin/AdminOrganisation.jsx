@@ -1235,11 +1235,16 @@ const AdminOrganisation = () => {
       }
 
       // Call the API to create the unit
+      // Parse deposit - if empty or 0, use rent value
+      const depositValue = unitData.deposit && parseInt(unitData.deposit) > 0 
+        ? parseInt(unitData.deposit) 
+        : parseInt(unitData.rent);
+      
       const unitPayload = {
         unit_number: unitData.unitNumber,
         unit_type: unitTypeToSend,
         rent: parseInt(unitData.rent),
-        deposit: parseInt(unitData.deposit || unitData.rent),
+        deposit: depositValue,
         property_obj: parseInt(selectedPropertyId),
         is_available: true
       };
@@ -1342,11 +1347,16 @@ const AdminOrganisation = () => {
           if (shouldStop) return { success: false, unitNumber: unitData.unitNumber, skipped: true };
           
           try {
+            // Parse deposit - if empty or 0, use rent value
+            const depositValue = unitData.deposit && parseInt(unitData.deposit) > 0 
+              ? parseInt(unitData.deposit) 
+              : parseInt(unitData.rent);
+            
             const unitPayload = {
               unit_number: unitData.unitNumber,
               unit_type: unitTypeToSend,
               rent: parseInt(unitData.rent),
-              deposit: parseInt(unitData.deposit || unitData.rent),
+              deposit: depositValue,
               property_obj: parseInt(selectedPropertyId),
               is_available: true
             };

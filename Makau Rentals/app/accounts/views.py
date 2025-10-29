@@ -608,6 +608,13 @@ class CreateUnitView(APIView):
             # Generate unique unit code
             unit_code = f"U-{property_obj.id}-{unit_number}-{uuid.uuid4().hex[:8]}"
             
+            # Get rent value
+            rent = request.data.get('rent', 0)
+            # Get deposit value - if not provided or empty, default to rent
+            deposit = request.data.get('deposit')
+            if deposit is None or deposit == '' or deposit == 0:
+                deposit = rent  # Default deposit to rent if not specified
+            
             # Prepare unit data
             unit_data = {
                 'property_obj': property_obj.id,
@@ -617,8 +624,8 @@ class CreateUnitView(APIView):
                 'bedrooms': request.data.get('bedrooms', 0),
                 'bathrooms': request.data.get('bathrooms', 1),
                 'floor': request.data.get('floor', 0),
-                'rent': request.data.get('rent', 0),
-                'deposit': request.data.get('deposit', 0),
+                'rent': rent,
+                'deposit': deposit,
                 'is_available': True
             }
 
