@@ -131,16 +131,22 @@ TEMPLATES = [
     },
 ]
 
-# CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev",
-    "https://makao-center-v4.vercel.app",  # Add your Vercel frontend URL
-]
+# CORS Settings (allow only specific origins)
+# Production origin hard-limit (can be overridden by FRONTEND_ORIGIN env)
+PROD_FRONTEND_ORIGIN = "https://nyumbanirentals.com"
+FRONTEND_ORIGIN = config('FRONTEND_ORIGIN', default=None)
 
-# For development - allow all origins (easier but less secure)
-# IMPORTANT: Set to False in production for security
+if DEBUG:
+    # Local development
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+else:
+    # Strict production: only allow the official frontend
+    CORS_ALLOWED_ORIGINS = [FRONTEND_ORIGIN or PROD_FRONTEND_ORIGIN]
+
+# Never allow all origins in production
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 
 # Allow credentials
@@ -160,6 +166,15 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+
+# Align CSRF trusted origins with allowed frontend (mostly for admin/session forms)
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = [ (FRONTEND_ORIGIN or PROD_FRONTEND_ORIGIN) ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
 

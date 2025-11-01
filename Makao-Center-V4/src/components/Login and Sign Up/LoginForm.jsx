@@ -35,6 +35,9 @@ const LoginForm = ({ onLogin }) => {
 
   // Add this state
   const [sessionId, setSessionId] = useState(null);
+  // Prevent rapid navigation clicks and support optional doc acknowledgement
+  const [navBusy, setNavBusy] = useState(false);
+  const [idUploadAcknowledged, setIdUploadAcknowledged] = useState(false);
 
   // Login Form Data
   const [loginData, setLoginData] = useState({
@@ -135,6 +138,134 @@ const LoginForm = ({ onLogin }) => {
       hasLowercase: /[a-z]/.test(password),
       hasNumber: /\d/.test(password)
     };
+  };
+
+  // ---------- Step validity helpers ----------
+  const isTenantStep2Valid = () => {
+    try {
+      if (!tenantData.landlordId?.trim()) return false;
+      if (!tenantData.name?.trim()) return false;
+      if (!validateKenyanID(tenantData.governmentId || '')) return false;
+      if (!validateEmail(tenantData.email || '')) return false;
+      if (!validateKenyanPhone(tenantData.phone || '')) return false;
+      if (!validateKenyanPhone(tenantData.emergencyContact || '')) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const isTenantStep3Valid = () => Boolean(tenantData.selectedProperty) && Boolean(tenantData.selectedRoom);
+  const isTenantStep4Valid = () => Boolean(tenantData.idDocument) || Boolean(idUploadAcknowledged);
+  const isTenantStep5Valid = () => (tenantData.alreadyLivingInProperty || tenantData.requiresDeposit === false) || tenantData.depositPaymentCompleted === true;
+  const isTenantStep6Valid = () => {
+    const v = validatePassword(tenantData.password || '');
+    return v.isValid && tenantData.password === tenantData.confirmPassword;
+  };
+
+  const isLandlordStep2Valid = () => {
+    const v = validatePassword(landlordData.password || '');
+    const tillOk = !landlordData.tillNumber || /^\d{5,8}$/.test((landlordData.tillNumber || '').trim());
+    return (
+      Boolean(landlordData.fullName?.trim()) &&
+      validateKenyanID(landlordData.nationalId || '') &&
+      validateEmail(landlordData.email || '') &&
+      validateKenyanPhone(landlordData.phone || '') &&
+      Boolean(landlordData.address?.trim()) &&
+      v.isValid &&
+      landlordData.password === landlordData.confirmPassword &&
+      tillOk
+    );
+  };
+
+  const isLandlordStep3Valid = () => {
+    if (!landlordData.properties || landlordData.properties.length === 0) return false;
+    for (const p of landlordData.properties) {
+      if (!p.propertyName?.trim() || !p.propertyAddress?.trim()) return false;
+      if (!p.units || p.units.length === 0) return false;
+    }
+    return true;
+  };
+
+  // ---------- Guarded next handlers ----------
+  const handleTenantNextSafe = async () => {
+    if (navBusy) return;
+    setError('');
+    if (!sessionId) setSessionId(generateUUID());
+    try {
+      setNavBusy(true);
+      if (currentStep === 2 && !isTenantStep2Valid()) { setError('Please complete all required personal information with valid details.'); return; }
+      if (currentStep === 3 && !isTenantStep3Valid()) { setError('Please select a property and an available room to continue.'); return; }
+      if (currentStep === 4 && !isTenantStep4Valid()) { setError('Upload your government ID or check “I will upload later” to proceed.'); return; }
+      if (currentStep === 5 && !isTenantStep5Valid()) { setError('Please complete the deposit payment or indicate you are already living in the property.'); return; }
+      if (currentStep === 6 && !isTenantStep6Valid()) { setError('Please create a strong password and ensure both passwords match.'); return; }
+      await handleTenantNext();
+    } finally {
+      setNavBusy(false);
+    }
+  };
+
+  const handleLandlordNextSafe = async () => {
+    if (navBusy) return;
+    setError('');
+    if (!sessionId) setSessionId(generateUUID());
+    try {
+      setNavBusy(true);
+      if (currentStep === 2 && !isLandlordStep2Valid()) { setError('Please fill in all required personal and business details with valid information.'); return; }
+      if (currentStep === 3 && !isLandlordStep3Valid()) { setError('Please add at least one property with address and at least one unit.'); return; }
+      await handleLandlordNext();
+    } finally {
+      setNavBusy(false);
+    }
+  };
+
+  // ---------- Mode/type switching helpers ----------
+  const handleAuthModeChange = (mode) => {
+    if (mode === authMode) return;
+    if (authMode === 'signup' && currentStep > 1) {
+      const ok = window.confirm('Switching modes will clear your current signup progress. Continue?');
+      if (!ok) return;
+    }
+    setAuthMode(mode);
+    setError('');
+    setPaymentStatus(null);
+    setShowForgotPassword(false);
+    setForgotEmail('');
+    setForgotLoading(false);
+    setForgotSuccess('');
+    setForgotError('');
+    setCurrentStep(1);
+    setLoginData({ email: '', password: '' });
+    resetTenantForm();
+    resetLandlordForm();
+    setIdUploadAcknowledged(false);
+  };
+
+  const handleSwitchUserType = (newType) => {
+    if (newType === userType) return;
+    const hasTenantProgress = Boolean(
+      tenantData.landlordId || tenantData.name || tenantData.email || tenantData.phone || tenantData.selectedProperty || tenantData.selectedRoom
+    );
+    const hasLandlordProgress = Boolean(
+      landlordData.fullName || landlordData.email || (landlordData.properties && landlordData.properties.some(p => p.propertyName || (p.units && p.units.length)))
+    );
+    const hasProgress = currentStep > 1 && (hasTenantProgress || hasLandlordProgress);
+    if (authMode === 'signup' && hasProgress) {
+      const ok = window.confirm('Switching between Tenant and Landlord will clear your current signup progress. Continue?');
+      if (!ok) return;
+    }
+    setUserType(newType);
+    resetTenantForm();
+    resetLandlordForm();
+    setError('');
+    setPaymentStatus(null);
+    setCurrentStep(1);
+    setIdUploadAcknowledged(false);
+  };
+
+  const handleRemoveIdDocument = () => {
+    setTenantData(prev => ({ ...prev, idDocument: null }));
+    setIdUploadAcknowledged(false);
   };
 
   // Handle Login
@@ -637,7 +768,7 @@ const LoginForm = ({ onLogin }) => {
       phone: '',
       emergencyContact: '',
       selectedProperty: '',
-      selectedRoom: '',
+      selectedRoom: null,
       selectedRoomId: null,
       monthlyRent: 0,
       depositAmount: 0,
@@ -653,6 +784,7 @@ const LoginForm = ({ onLogin }) => {
     setAvailableRooms([]);
     setPaymentStatus(null);
     setSessionId(null);
+    setIdUploadAcknowledged(false);
   };
 
   // Calculate total units for landlord
@@ -1211,8 +1343,9 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleTenantNext}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          onClick={handleTenantNextSafe}
+          disabled={!isTenantStep2Valid() || navBusy}
+          className={`flex-1 px-4 py-3 rounded-lg font-medium ${(!isTenantStep2Valid() || navBusy) ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
         >
           Continue to Property Selection
         </button>
@@ -1363,10 +1496,10 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleTenantNext}
-          disabled={!tenantData.selectedRoom}
+          onClick={handleTenantNextSafe}
+          disabled={!isTenantStep3Valid() || navBusy}
           className={`flex-1 px-4 py-3 rounded-lg font-medium ${
-            tenantData.selectedRoom
+            isTenantStep3Valid() && !navBusy
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
@@ -1410,7 +1543,7 @@ const LoginForm = ({ onLogin }) => {
               <p className="font-medium text-green-700">Document Uploaded Successfully</p>
               <p className="text-sm text-gray-600">{tenantData.idDocument.name}</p>
               <button
-                onClick={() => setTenantData(prev => ({ ...prev, idDocument: null }))}
+                onClick={handleRemoveIdDocument}
                 className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm"
               >
                 Remove File
@@ -1436,6 +1569,18 @@ const LoginForm = ({ onLogin }) => {
               >
                 Choose File
               </label>
+              <div className="mt-4 flex items-start">
+                <input
+                  id="ackSkipId"
+                  type="checkbox"
+                  checked={idUploadAcknowledged}
+                  onChange={(e) => setIdUploadAcknowledged(e.target.checked)}
+                  className="mt-1 mr-3 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="ackSkipId" className="text-sm text-gray-700">
+                  I will upload my ID later from my profile.
+                </label>
+              </div>
             </div>
           )}
         </div>
@@ -1459,8 +1604,9 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleTenantNext}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          onClick={handleTenantNextSafe}
+          disabled={!isTenantStep4Valid() || navBusy}
+          className={`flex-1 px-4 py-3 rounded-lg font-medium ${(!isTenantStep4Valid() || navBusy) ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
         >
           {tenantData.alreadyLivingInProperty 
             ? 'Continue to Account Setup' 
@@ -1713,8 +1859,8 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleTenantNext}
-          disabled={isLoading}
+          onClick={handleTenantNextSafe}
+          disabled={!isTenantStep6Valid() || isLoading || navBusy}
           className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center"
         >
           {isLoading ? (
@@ -1818,8 +1964,9 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleLandlordNext}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          onClick={handleLandlordNextSafe}
+          disabled={!isLandlordStep2Valid() || navBusy}
+          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
         >
           Continue to Properties
         </button>
@@ -2355,8 +2502,9 @@ const LoginForm = ({ onLogin }) => {
             Back
           </button>
           <button
-            onClick={handleLandlordNext}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            onClick={handleLandlordNextSafe}
+            disabled={!isLandlordStep3Valid() || navBusy}
+            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
           >
             Continue to Subscription
           </button>
@@ -2495,7 +2643,7 @@ const LoginForm = ({ onLogin }) => {
           Back
         </button>
         <button
-          onClick={handleLandlordNext}
+          onClick={handleLandlordNextSafe}
           disabled={isLoading}
           className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-bold text-lg shadow-lg flex items-center justify-center"
         >
@@ -2533,12 +2681,7 @@ const LoginForm = ({ onLogin }) => {
           <div className="p-6">
             <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
               <button
-                onClick={() => {
-                  setAuthMode('login');
-                  setError('');
-                  setForgotError('');
-                  setForgotSuccess('');
-                }}
+                onClick={() => handleAuthModeChange('login')}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors ${
                   authMode === 'login'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -2548,12 +2691,7 @@ const LoginForm = ({ onLogin }) => {
                 Login
               </button>
               <button
-                onClick={() => {
-                  setAuthMode('signup');
-                  setError('');
-                  setForgotError('');
-                  setForgotSuccess('');
-                }}
+                onClick={() => handleAuthModeChange('signup')}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors ${
                   authMode === 'signup'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -2567,7 +2705,7 @@ const LoginForm = ({ onLogin }) => {
             {/* User Type Selection */}
             <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
               <button
-                onClick={() => setUserType('tenant')}
+                onClick={() => handleSwitchUserType('tenant')}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
                   userType === 'tenant'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -2578,7 +2716,7 @@ const LoginForm = ({ onLogin }) => {
                 Tenant
               </button>
               <button
-                onClick={() => setUserType('landlord')}
+                onClick={() => handleSwitchUserType('landlord')}
                 className={`flex-1 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
                   userType === 'landlord'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -2696,11 +2834,7 @@ const LoginForm = ({ onLogin }) => {
                       <button
                         type="button"
                         className="text-gray-600 hover:underline text-sm font-medium"
-                        onClick={() => {
-                          setShowForgotPassword(false);
-                          setForgotError('');
-                          setForgotSuccess('');
-                        }}
+                        onClick={() => handleAuthModeChange('login')}
                       >
                         Back to Login
                       </button>
