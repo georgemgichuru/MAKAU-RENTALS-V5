@@ -191,11 +191,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Subscription(models.Model):
     PLAN_CHOICES = [
-        ("free", "Free (60-day trial)"),
-        ("starter", "Starter (up to 10 units)"),
-        ("basic", "Basic (10-50 units)"),
-        ("professional", "Professional (50-100 units)"),
-        ("onetime", "One-time (Unlimited properties)"),
+        ("free", "Free (30-day trial)"),
+        ("starter", "Tier 1 (1-10 units)"),
+        ("basic", "Tier 2 (11-20 units)"),
+        ("premium", "Tier 3 (21-50 units)"),
+        ("professional", "Tier 4 (51-100 units)"),
+        ("onetime", "One-time (Lifetime, up to 50 units)"),
     ]
 
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="subscription")
@@ -207,17 +208,11 @@ class Subscription(models.Model):
         # Set expiry dates based on plan
         if not self.expiry_date:
             if self.plan == "free":
-                self.expiry_date = timezone.now() + timedelta(days=60)
-            elif self.plan == "starter":
-                # monthly subscription
+                self.expiry_date = timezone.now() + timedelta(days=30)  # 30-day free trial
+            elif self.plan in ["starter", "basic", "premium", "professional"]:
+                # All monthly subscriptions
                 self.expiry_date = timezone.now() + timedelta(days=30)
-            elif self.plan == "basic":
-                # monthly subscription
-                self.expiry_date = timezone.now() + timedelta(days=30)
-            elif self.plan == "professional":
-                # monthly subscription
-                self.expiry_date = timezone.now() + timedelta(days=30)
-            # "onetime" could remain None for lifetime access
+            # "onetime" has no expiry (lifetime access)
         
         super().save(*args, **kwargs)
 

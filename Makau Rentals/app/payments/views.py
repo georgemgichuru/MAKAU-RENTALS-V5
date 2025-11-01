@@ -215,10 +215,11 @@ def stk_push_subscription(request):
 
         # Validate plan and get amount
         plan_amounts = {
-            'starter': 2000,        # tier1: 1-10 units
-            'basic': 2500,          # tier2: 11-20 units  
-            'professional': 4500,   # tier3/tier4: 21-100 units
-            'onetime': 40000        # Lifetime access
+            'starter': 2000,        # Tier 1: 1-10 units
+            'basic': 2500,          # Tier 2: 11-20 units  
+            'premium': 4500,        # Tier 3: 21-50 units
+            'professional': 7500,   # Tier 4: 51-100 units
+            'onetime': 40000        # Lifetime access (up to 50 units)
         }
 
         if plan not in plan_amounts:

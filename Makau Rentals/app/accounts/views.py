@@ -503,6 +503,8 @@ class CreatePropertyView(APIView):
                 suggested_tier = None
                 suggested_price = 0
                 contact_number = None
+                is_one_time_eligible = False
+                
                 if total_units <= 10:
                     suggested_tier = "Tier 1 (1-10 Units)"
                     suggested_price = 2000
@@ -512,6 +514,7 @@ class CreatePropertyView(APIView):
                 elif total_units <= 50:
                     suggested_tier = "Tier 3 (21-50 Units)"
                     suggested_price = 4500
+                    is_one_time_eligible = True  # Can choose One-Time plan (up to 50 units)
                 elif total_units <= 100:
                     suggested_tier = "Tier 4 (51-100 Units)"
                     suggested_price = 7500
@@ -539,6 +542,11 @@ class CreatePropertyView(APIView):
                         'total_units': total_units,
                         'suggested_tier': suggested_tier,
                         'monthly_cost': suggested_price,
+                        'one_time_option': {
+                            'available': is_one_time_eligible,
+                            'price': 40000,
+                            'description': 'One-Time Payment (Lifetime Access, up to 50 units)'
+                        } if is_one_time_eligible else None,
                         'contact_number': contact_number,
                         'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
                         'tier_changed': tier_changed
@@ -712,6 +720,8 @@ class CreateUnitView(APIView):
                     suggested_tier = None
                     suggested_price = 0
                     contact_number = None
+                    is_one_time_eligible = False
+                    
                     if total_units <= 10:
                         suggested_tier = "Tier 1 (1-10 Units)"
                         suggested_price = 2000
@@ -721,6 +731,7 @@ class CreateUnitView(APIView):
                     elif total_units <= 50:
                         suggested_tier = "Tier 3 (21-50 Units)"
                         suggested_price = 4500
+                        is_one_time_eligible = True  # Can choose One-Time plan (up to 50 units)
                     elif total_units <= 100:
                         suggested_tier = "Tier 4 (51-100 Units)"
                         suggested_price = 7500
@@ -748,6 +759,11 @@ class CreateUnitView(APIView):
                             'total_units': total_units,
                             'suggested_tier': suggested_tier,
                             'monthly_cost': suggested_price,
+                            'one_time_option': {
+                                'available': is_one_time_eligible,
+                                'price': 40000,
+                                'description': 'One-Time Payment (Lifetime Access, up to 50 units)'
+                            } if is_one_time_eligible else None,
                             'contact_number': contact_number,
                             'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
                             'tier_changed': tier_changed

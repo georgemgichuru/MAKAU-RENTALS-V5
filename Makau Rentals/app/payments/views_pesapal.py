@@ -184,10 +184,11 @@ def initiate_subscription_payment(request):
 
         # Validate plan and/or derive amount when not explicitly provided
         plan_amounts = {
-            'starter': 2000,
-            'basic': 2500,
-            'professional': 4500,
-            'onetime': 40000
+            'starter': 2000,        # Tier 1: 1-10 units
+            'basic': 2500,          # Tier 2: 11-20 units
+            'premium': 4500,        # Tier 3: 21-50 units
+            'professional': 7500,   # Tier 4: 51-100 units
+            'onetime': 40000        # Lifetime access (up to 50 units)
         }
 
         if amount is None:

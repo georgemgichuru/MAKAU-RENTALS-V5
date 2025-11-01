@@ -25,29 +25,36 @@ PLAN_LIMITS = {
         "properties": 3,
         "units": 10,
         "duration_days": 30,
-        "price": 500,
-        "description": "Starter Plan (Up to 10 units)"
+        "price": 2000,  # Tier 1 (1-10 Units)
+        "description": "Tier 1 - Starter Plan (1-10 units)"
     },
     "basic": {
         "properties": 10,
+        "units": 20,
+        "duration_days": 30,
+        "price": 2500,  # Tier 2 (11-20 Units)
+        "description": "Tier 2 - Basic Plan (11-20 units)"
+    },
+    "premium": {
+        "properties": 10,
         "units": 50,
         "duration_days": 30,
-        "price": 2000,
-        "description": "Basic Plan (10-50 units)"
+        "price": 4500,  # Tier 3 (21-50 Units)
+        "description": "Tier 3 - Premium Plan (21-50 units)"
     },
     "professional": {
         "properties": 25,
         "units": 100,
         "duration_days": 30,
-        "price": 5000,
-        "description": "Professional Plan (50-100 units)"
+        "price": 7500,  # Tier 4 (51-100 Units)
+        "description": "Tier 4 - Professional Plan (51-100 units)"
     },
-    "lifetime": {
+    "onetime": {
         "properties": None,  # Unlimited properties
         "units": 50,        # Strictly 50 units only
         "duration_days": None,  # Lifetime
         "price": 40000,
-        "description": "Lifetime Plan (Up to 50 units only)"
+        "description": "One-Time Payment (Lifetime Access, up to 50 units only)"
     }
 }
 
@@ -147,8 +154,8 @@ def check_subscription_limits(landlord, action_type='property'):
         limit = plan_limits.get('units')
         limit_type = 'units'
     
-    # Unlimited (lifetime plan with unlimited properties, but units capped at 50)
-    if subscription.plan == 'lifetime' and limit is None:
+    # Unlimited (onetime plan with unlimited properties, but units capped at 50)
+    if subscription.plan == 'onetime' and limit is None:
         return {
             'can_create': True,
             'current_count': current_count,
