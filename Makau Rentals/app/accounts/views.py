@@ -949,10 +949,18 @@ class PasswordResetView(APIView):
         serializer = PasswordResetSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(
+            response = Response(
                 {"message": "Password reset email sent."}, status=status.HTTP_200_OK
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response["Access-Control-Allow-Origin"] = "https://nyumbanirentals.com"
+            response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+            response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            return response
+        response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        response["Access-Control-Allow-Origin"] = "https://nyumbanirentals.com"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     
 # Update property
 class UpdatePropertyView(APIView):
