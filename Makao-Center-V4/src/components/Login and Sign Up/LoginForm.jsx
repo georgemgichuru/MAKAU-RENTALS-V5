@@ -2834,7 +2834,12 @@ const LoginForm = ({ onLogin }) => {
                       <button
                         type="button"
                         className="text-gray-600 hover:underline text-sm font-medium"
-                        onClick={() => handleAuthModeChange('login')}
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setForgotError('');
+                          setForgotSuccess('');
+                          setForgotEmail('');
+                        }}
                       >
                         Back to Login
                       </button>

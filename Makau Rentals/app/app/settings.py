@@ -137,10 +137,12 @@ PROD_FRONTEND_ORIGIN = "https://nyumbanirentals.com"
 FRONTEND_ORIGIN = config('FRONTEND_ORIGIN', default=None)
 
 if DEBUG:
-    # Local development
+    # Local development + allow production frontend to hit dev backend
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:3000",
+        "https://nyumbanirentals.com",
+        "https://www.nyumbanirentals.com",
     ]
 else:
     # Strict production: only allow the official frontend
@@ -172,6 +174,8 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:3000",
+        "https://nyumbanirentals.com",
+        "https://www.nyumbanirentals.com",
     ]
 else:
     CSRF_TRUSTED_ORIGINS = [ (FRONTEND_ORIGIN or PROD_FRONTEND_ORIGIN) ]
