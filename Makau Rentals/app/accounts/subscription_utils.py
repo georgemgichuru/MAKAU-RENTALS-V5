@@ -42,12 +42,12 @@ PLAN_LIMITS = {
         "price": 5000,
         "description": "Professional Plan (50-100 units)"
     },
-    "onetime": {
-        "properties": None,  # Unlimited
-        "units": 50,       # Unlimited
+    "lifetime": {
+        "properties": None,  # Unlimited properties
+        "units": 50,        # Strictly 50 units only
         "duration_days": None,  # Lifetime
         "price": 40000,
-        "description": "One-time Payment (Unlimited)"
+        "description": "Lifetime Plan (Up to 50 units only)"
     }
 }
 
@@ -69,13 +69,12 @@ def suggest_plan_upgrade(current_properties, current_units):
             'new_limits': dict
         }
     """
-    # Sort plans by unit capacity (excluding onetime for now)
+    # Sort plans by unit capacity (excluding lifetime for now)
     sorted_plans = [
         ('starter', PLAN_LIMITS['starter']),
         ('basic', PLAN_LIMITS['basic']),
         ('professional', PLAN_LIMITS['professional']),
     ]
-    
     for plan_name, limits in sorted_plans:
         if (current_properties <= limits['properties'] and 
             current_units <= limits['units']):
@@ -85,12 +84,11 @@ def suggest_plan_upgrade(current_properties, current_units):
                 'limits': limits,
                 'can_accommodate': True
             }
-    
-    # If no plan fits, suggest one-time
+    # If no plan fits, suggest lifetime
     return {
-        'suggested_plan': 'onetime',
+        'suggested_plan': 'lifetime',
         'reason': f'You have {current_properties} properties and {current_units} units, which exceeds all monthly plans',
-        'limits': PLAN_LIMITS['onetime'],
+        'limits': PLAN_LIMITS['lifetime'],
         'can_accommodate': True
     }
 
@@ -149,13 +147,13 @@ def check_subscription_limits(landlord, action_type='property'):
         limit = plan_limits.get('units')
         limit_type = 'units'
     
-    # Unlimited (onetime plan)
-    if limit is None:
+    # Unlimited (lifetime plan with unlimited properties, but units capped at 50)
+    if subscription.plan == 'lifetime' and limit is None:
         return {
             'can_create': True,
             'current_count': current_count,
             'limit': None,
-            'message': 'You have unlimited access',
+            'message': 'You have unlimited access to properties, but units are capped at 50.',
             'upgrade_needed': False,
             'suggested_plan': None
         }
