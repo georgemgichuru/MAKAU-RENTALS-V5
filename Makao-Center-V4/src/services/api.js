@@ -174,6 +174,14 @@ export const authAPI = {
       new_password: newPassword,
     }).then(r => r.data);
   },
+
+  // Request password reset
+  requestPasswordReset: (email, frontendUrl) => {
+    return api.post('/accounts/password/reset/', {
+      email: email,
+      frontend_url: frontendUrl
+    });
+  },
   
 // Update tenant account info
 };

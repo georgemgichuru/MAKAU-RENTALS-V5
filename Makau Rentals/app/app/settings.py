@@ -79,7 +79,9 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev',
     '.vercel.app',  # Allow all Vercel subdomains
-    'makau-rentals-v5.vercel.app',  # Add your specific Vercel domain
+    'makau-rentals-v5.vercel.app',  # Backend Vercel domain
+    'nyumbanirentals.com',  # Production frontend domain
+    'www.nyumbanirentals.com',  # Production frontend with www
 ]
 
 
@@ -137,16 +139,17 @@ PROD_FRONTEND_ORIGIN = "https://nyumbanirentals.com"
 FRONTEND_ORIGIN = config('FRONTEND_ORIGIN', default=None)
 
 if DEBUG:
-    # Local development + allow production frontend to hit dev backend
+    # Local development only
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:3000",
+    ]
+else:
+    # Production: only allow the official frontend
+    CORS_ALLOWED_ORIGINS = [
         "https://nyumbanirentals.com",
         "https://www.nyumbanirentals.com",
     ]
-else:
-    # Strict production: only allow the official frontend
-    CORS_ALLOWED_ORIGINS = [FRONTEND_ORIGIN or PROD_FRONTEND_ORIGIN]
 
 # Never allow all origins in production
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
@@ -174,11 +177,13 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://nyumbanirentals.com",
-        "https://www.nyumbanirentals.com",
     ]
 else:
-    CSRF_TRUSTED_ORIGINS = [ (FRONTEND_ORIGIN or PROD_FRONTEND_ORIGIN) ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://nyumbanirentals.com",
+        "https://www.nyumbanirentals.com",
+        "https://makau-rentals-v5.vercel.app",  # Backend itself
+    ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
 

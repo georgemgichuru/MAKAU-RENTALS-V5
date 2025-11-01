@@ -386,42 +386,23 @@ const LoginForm = ({ onLogin }) => {
     setForgotLoading(true);
     
     try {
-      // Get the API base URL from environment or use default
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://preaccommodatingly-nonabsorbable-joanie.ngrok-free.dev/api';
-      
-      console.log('Sending password reset request to:', `${API_BASE_URL}/accounts/password/reset/`);
-      console.log('Email:', forgotEmail);
+      console.log('Sending password reset request for:', forgotEmail);
       console.log('Frontend URL:', window.location.origin);
       
-      // Call backend API to send reset email
-      const response = await fetch(`${API_BASE_URL}/accounts/password/reset/`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify({ 
-          email: forgotEmail,
-          frontend_url: window.location.origin  // Send actual frontend URL
-        })
-      });
+      // Call backend API to send reset email using the API service
+      const response = await authAPI.requestPasswordReset(forgotEmail, window.location.origin);
       
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const data = await response.json();
-        console.error('Error response:', data);
-        throw new Error(data.error || data.email?.[0] || 'Failed to send reset email');
-      }
-      
-      const result = await response.json();
-      console.log('Success response:', result);
+      console.log('Password reset success:', response.data);
       
       setForgotSuccess('A password reset link has been sent to your email.');
       setForgotEmail('');
     } catch (err) {
       console.error('Forgot password error:', err);
-      setForgotError(err.message || 'An error occurred. Please try again.');
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.email?.[0] || 
+                          err.message || 
+                          'An error occurred. Please try again.';
+      setForgotError(errorMessage);
     } finally {
       setForgotLoading(false);
     }
