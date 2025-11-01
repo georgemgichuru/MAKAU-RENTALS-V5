@@ -502,6 +502,7 @@ class CreatePropertyView(APIView):
                 # Determine which tier they'll be charged for
                 suggested_tier = None
                 suggested_price = 0
+                contact_number = None
                 if total_units <= 10:
                     suggested_tier = "Tier 1 (1-10 Units)"
                     suggested_price = 2000
@@ -517,6 +518,7 @@ class CreatePropertyView(APIView):
                 else:
                     suggested_tier = "Enterprise (100+ Units)"
                     suggested_price = "Custom"
+                    contact_number = "+254722714334"
                 
                 days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
                 
@@ -525,7 +527,10 @@ class CreatePropertyView(APIView):
                 
                 warning_message = f'Property created successfully! You are on a free trial with {days_remaining} days remaining.'
                 if tier_changed:
-                    warning_message = f'Property created! You now have {total_properties} properties. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
+                    if suggested_price == "Custom":
+                        warning_message = f'Property created! You now have {total_properties} properties and {total_units} units. For custom enterprise pricing, please contact us at {contact_number}.'
+                    else:
+                        warning_message = f'Property created! You now have {total_properties} properties. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
                 
                 response_data['trial_warning'] = {
                     'message': warning_message,
@@ -534,10 +539,11 @@ class CreatePropertyView(APIView):
                         'total_units': total_units,
                         'suggested_tier': suggested_tier,
                         'monthly_cost': suggested_price,
+                        'contact_number': contact_number,
                         'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
                         'tier_changed': tier_changed
                     },
-                    'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                    'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else f'Please contact us at {contact_number} for enterprise pricing.'
                 }
             
             return Response(response_data, status=201)
@@ -705,6 +711,7 @@ class CreateUnitView(APIView):
                     # Determine which tier they'll be charged for
                     suggested_tier = None
                     suggested_price = 0
+                    contact_number = None
                     if total_units <= 10:
                         suggested_tier = "Tier 1 (1-10 Units)"
                         suggested_price = 2000
@@ -720,6 +727,7 @@ class CreateUnitView(APIView):
                     else:
                         suggested_tier = "Enterprise (100+ Units)"
                         suggested_price = "Custom"
+                        contact_number = "+254722714334"
                     
                     days_remaining = (subscription.expiry_date - timezone.now()).days if subscription.expiry_date else 0
                     
@@ -728,7 +736,10 @@ class CreateUnitView(APIView):
                     
                     warning_message = f'Unit created successfully! You are on a free trial with {days_remaining} days remaining.'
                     if tier_changed:
-                        warning_message = f'Unit created! You now have {total_units} units. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
+                        if suggested_price == "Custom":
+                            warning_message = f'Unit created! You now have {total_units} units across {total_properties} properties. For custom enterprise pricing, please contact us at {contact_number}.'
+                        else:
+                            warning_message = f'Unit created! You now have {total_units} units. Your subscription plan will automatically adjust to {suggested_tier} (KES {suggested_price}/month) when your trial ends in {days_remaining} days.'
                     
                     response_data['trial_warning'] = {
                         'message': warning_message,
@@ -737,10 +748,11 @@ class CreateUnitView(APIView):
                             'total_units': total_units,
                             'suggested_tier': suggested_tier,
                             'monthly_cost': suggested_price,
+                            'contact_number': contact_number,
                             'billing_starts': subscription.expiry_date.strftime('%Y-%m-%d') if subscription.expiry_date else None,
                             'tier_changed': tier_changed
                         },
-                        'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else 'Please contact us for enterprise pricing.'
+                        'note': f'After your trial ends, you will be charged KES {suggested_price}/month for {suggested_tier} based on your {total_properties} property(ies) and {total_units} unit(s).' if isinstance(suggested_price, int) else f'Please contact us at {contact_number} for enterprise pricing.'
                     }
                 
                 return Response(response_data, status=201)

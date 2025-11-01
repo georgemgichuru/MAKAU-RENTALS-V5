@@ -78,10 +78,11 @@ const SubscriptionPage = () => {
       id: 'tier5',
       min: 101, 
       max: Infinity, 
-      price: 0, 
-      label: '100+ Units',
+      price: 'custom', 
+      label: '100+ Units - Enterprise',
       billingPeriod: 'custom',
       enterprise: true,
+      contactNumber: '+254722714334',
       features: [
         'Unlimited rental units',
         'White-label solution',
@@ -90,7 +91,7 @@ const SubscriptionPage = () => {
         'SLA guarantee',
         'On-premise deployment option',
         'Custom training',
-        'Contact us for pricing'
+        'Contact us for pricing at +254722714334'
       ]
     }
   ];
@@ -122,6 +123,12 @@ const SubscriptionPage = () => {
 
   const handleSelectPlan = (planId) => {
     console.log('Selected plan:', planId);
+    
+    // Handle enterprise tier separately
+    if (planId === 'tier5') {
+      window.location.href = 'tel:+254722714334';
+      return;
+    }
     
     // Map frontend plan IDs to backend plan names
     const planMapping = {
@@ -276,13 +283,26 @@ const SubscriptionPage = () => {
                         <p className="text-sm font-medium text-gray-900 mb-1">
                           After your trial ends:
                         </p>
-                        <p className="text-sm text-gray-700">
-                          You'll be automatically enrolled in the <strong>{suggestedPlan.label}</strong> plan 
-                          at <strong>KES {suggestedPlan.price.toLocaleString()}/month</strong> based on your current {totalUnits} unit{totalUnits !== 1 ? 's' : ''}.
-                        </p>
-                        <p className="text-sm text-gray-600 mt-2">
-                          You can add more properties during your trial. Your billing will be adjusted based on your total units when the trial ends.
-                        </p>
+                        {suggestedPlan.price === 'custom' ? (
+                          <div>
+                            <p className="text-sm text-gray-700">
+                              You'll need <strong>{suggestedPlan.label}</strong> based on your current {totalUnits} unit{totalUnits !== 1 ? 's' : ''}.
+                            </p>
+                            <p className="text-sm text-amber-700 mt-2 font-semibold">
+                              📞 Please contact us at <a href="tel:+254722714334" className="underline">+254722714334</a> for custom enterprise pricing.
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-sm text-gray-700">
+                              You'll be automatically enrolled in the <strong>{suggestedPlan.label}</strong> plan 
+                              at <strong>KES {suggestedPlan.price.toLocaleString()}/month</strong> based on your current {totalUnits} unit{totalUnits !== 1 ? 's' : ''}.
+                            </p>
+                            <p className="text-sm text-gray-600 mt-2">
+                              You can add more properties during your trial. Your billing will be adjusted based on your total units when the trial ends.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -385,10 +405,23 @@ const SubscriptionPage = () => {
                   
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">{tier.label}</h3>
                   <div className="mb-5">
-                    <span className="text-2xl sm:text-3xl font-bold text-gray-900">
-                      KSh {tier.price.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-500 ml-1">/{tier.billingPeriod}</span>
+                    {tier.price === 'custom' ? (
+                      <>
+                        <span className="text-2xl sm:text-3xl font-bold text-amber-600">
+                          Custom Pricing
+                        </span>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-2">
+                          Call {tier.contactNumber} for quote
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                          KSh {tier.price.toLocaleString()}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-1">/{tier.billingPeriod}</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="space-y-2.5 mb-6">
@@ -405,10 +438,12 @@ const SubscriptionPage = () => {
                     className={`w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-colors ${
                       tier.popular
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : tier.enterprise
+                        ? 'bg-amber-600 text-white hover:bg-amber-700'
                         : 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-300'
                     }`}
                   >
-                    Select Plan
+                    {tier.enterprise ? 'Contact Us' : 'Select Plan'}
                   </button>
                 </div>
               </div>

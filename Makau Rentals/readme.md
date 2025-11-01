@@ -1,8 +1,8 @@
-# Makau Rentals
+# Nyumbani Rentals
 
 ## Project Overview
 
-**Makau Rentals** is a comprehensive apartment block management system that facilitates seamless communication and operations between landlords and tenants. The system provides automated rent collection, maintenance reporting, tenant management, and communication tools.
+**Nyumbani Rentals** is a comprehensive apartment block management system that facilitates seamless communication and operations between landlords and tenants. The system provides automated rent collection, maintenance reporting, tenant management, and communication tools.
 
 ## Technology Stack
 
@@ -49,7 +49,7 @@
 
 1. **Clone the repository and navigate to the backend directory:**
    ```bash
-   cd "Makau Rentals/app"
+   cd "Nyumbani Rentals/app"
    ```
 
 2. **Create a virtual environment:**
@@ -143,7 +143,7 @@ Ngrok will provide a public HTTPS URL forwarding to your local backend. Use this
 
 ### Backend Structure
 ```
-Makau Rentals/app/
+Nyumbani Rentals/app/
 ├── manage.py
 ├── app/
 │   ├── __init__.py
@@ -311,7 +311,7 @@ For detailed deployment instructions, refer to the environment variables documen
 ### Running Tests
 ```bash
 # Backend tests
-cd "Makau Rentals/app"
+cd "Nyumbani Rentals/app"
 python manage.py test
 
 # Frontend tests (if configured)

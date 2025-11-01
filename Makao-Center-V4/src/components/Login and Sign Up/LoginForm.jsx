@@ -109,7 +109,7 @@ const LoginForm = ({ onLogin }) => {
     { min: 11, max: 20, price: 2500, label: '11-20 units' },
     { min: 21, max: 50, price: 4500, label: '21-50 units' },
     { min: 51, max: 100, price: 7500, label: '51-100 units' },
-    { min: 101, max: Infinity, price: 0, label: '100+ units (Contact us)' }
+    { min: 101, max: Infinity, price: 'custom', label: '100+ units - Contact us for custom pricing', isCustom: true }
   ];
 
   // Validation functions
@@ -666,7 +666,16 @@ const LoginForm = ({ onLogin }) => {
   const calculateMonthlyFee = () => {
     const totalUnits = calculateTotalUnits();
     const tier = pricingTiers.find(t => totalUnits >= t.min && totalUnits <= t.max);
-    return tier ? tier.price : 0;
+    return tier ? tier.price : 'custom';
+  };
+
+  // Helper function to format the fee display
+  const formatFeeDisplay = () => {
+    const fee = calculateMonthlyFee();
+    if (fee === 'custom') {
+      return 'Contact us for custom pricing at +254722714334';
+    }
+    return `KES ${fee}`;
   };
 
   // Handle Landlord Signup Navigation
@@ -971,11 +980,12 @@ const LoginForm = ({ onLogin }) => {
       ...prev,
       properties: prev.properties.map(property => {
         if (property.id === propertyId) {
+          const unitNumber = singleUnitSelection[propertyId]?.unitNumber || '';
           return {
             ...property,
             units: [...property.units, {
               id: Date.now(),
-              unitNumber: '',
+              unitNumber,
               roomType: selectedRoomType,
               monthlyRent: selectedRent,
               depositAmount: selectedDeposit
@@ -2087,6 +2097,19 @@ const LoginForm = ({ onLogin }) => {
                 <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
                   <h5 className="font-medium mb-2 text-sm">Quick Add Unit Settings</h5>
                   <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Unit Number *</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-2 border rounded text-sm"
+                          placeholder="e.g., 101, A1"
+                          value={singleUnitSelection[property.id]?.unitNumber || ''}
+                          onChange={(e) => setSingleUnitSelection(prev => ({
+                            ...prev,
+                            [property.id]: { ...prev[property.id], unitNumber: e.target.value }
+                          }))}
+                        />
+                      </div>
                     <div>
                       <label className="block text-xs font-medium mb-1">Room Type *</label>
                       <select
@@ -2318,7 +2341,7 @@ const LoginForm = ({ onLogin }) => {
             <div>
               <p className="text-blue-700 text-sm">
                 Total Units: <strong>{calculateTotalUnits()}</strong> | 
-                Monthly Subscription: <strong>KES {calculateMonthlyFee()}</strong>
+                Monthly Subscription: <strong>{formatFeeDisplay()}</strong>
               </p>
             </div>
           </div>
@@ -2382,13 +2405,25 @@ const LoginForm = ({ onLogin }) => {
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-gray-300">
             <span className="text-gray-600">Monthly Subscription (after trial):</span>
-            <span className="font-bold text-lg text-blue-600">KES {calculateMonthlyFee()}</span>
+            <span className="font-bold text-lg text-blue-600">{formatFeeDisplay()}</span>
           </div>
-          <div className="mt-3 p-2 bg-green-100 rounded text-center">
-            <p className="text-sm font-semibold text-green-700">
-              First month: <span className="line-through text-gray-500">KES {calculateMonthlyFee()}</span> <span className="text-xl">FREE</span>
-            </p>
-          </div>
+          {calculateMonthlyFee() !== 'custom' && (
+            <div className="mt-3 p-2 bg-green-100 rounded text-center">
+              <p className="text-sm font-semibold text-green-700">
+                First month: <span className="line-through text-gray-500">KES {calculateMonthlyFee()}</span> <span className="text-xl">FREE</span>
+              </p>
+            </div>
+          )}
+          {calculateMonthlyFee() === 'custom' && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-300 rounded text-center">
+              <p className="text-sm font-semibold text-amber-800 mb-1">
+                📞 Custom Enterprise Pricing
+              </p>
+              <p className="text-xs text-amber-700">
+                Please contact us at <a href="tel:+254722714334" className="underline font-bold">+254722714334</a> for a personalized quote
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -2405,8 +2440,10 @@ const LoginForm = ({ onLogin }) => {
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="font-medium text-lg">{tier.label}</h3>
-                  {tier.max === Infinity && (
-                    <p className="text-sm text-gray-600">Custom pricing - Contact us</p>
+                  {tier.isCustom && (
+                    <p className="text-sm text-amber-600 font-semibold mt-1">
+                      Contact: +254722714334
+                    </p>
                   )}
                   {calculateTotalUnits() >= tier.min && calculateTotalUnits() <= tier.max && (
                     <span className="inline-block mt-1 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
@@ -2415,13 +2452,16 @@ const LoginForm = ({ onLogin }) => {
                   )}
                 </div>
                 <div className="text-right">
-                  {tier.price > 0 ? (
+                  {tier.isCustom ? (
+                    <div>
+                      <p className="font-bold text-xl text-amber-600">Custom Pricing</p>
+                      <p className="text-xs text-gray-500">Call for quote</p>
+                    </div>
+                  ) : (
                     <>
                       <p className="font-bold text-xl">KES {tier.price}<span className="text-sm text-gray-500">/month</span></p>
                       <p className="text-xs text-gray-500">After free trial</p>
                     </>
-                  ) : (
-                    <p className="font-bold text-blue-600">Contact Us</p>
                   )}
                 </div>
               </div>
@@ -2456,7 +2496,7 @@ const LoginForm = ({ onLogin }) => {
         </button>
         <button
           onClick={handleLandlordNext}
-          disabled={isLoading || calculateMonthlyFee() === 0}
+          disabled={isLoading}
           className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-bold text-lg shadow-lg flex items-center justify-center"
         >
           {isLoading ? (
@@ -2467,7 +2507,7 @@ const LoginForm = ({ onLogin }) => {
           ) : (
             <>
               <CheckCircle className="w-5 h-5 mr-2" />
-              Start Free Trial
+              {calculateMonthlyFee() === 'custom' ? 'Complete Registration' : 'Start Free Trial'}
             </>
           )}
         </button>
@@ -2484,7 +2524,7 @@ const LoginForm = ({ onLogin }) => {
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
             <div className="flex items-center justify-center mb-2">
               <Building className="w-8 h-8 mr-2" />
-              <h1 className="text-2xl font-bold">Makao Rentals</h1>
+              <h1 className="text-2xl font-bold">Nyumbani Rentals</h1>
             </div>
             <p className="opacity-90">Streamlined Rental Management</p>
           </div>

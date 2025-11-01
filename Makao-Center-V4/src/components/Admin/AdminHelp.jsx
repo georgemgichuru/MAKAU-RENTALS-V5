@@ -83,7 +83,7 @@ const AdminHelp = () => {
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Mail className="w-8 h-8 mx-auto mb-2 text-blue-600" />
               <h3 className="font-medium">Email Support</h3>
-              <p className="text-sm text-gray-600">makaorentalmanagementsystem@gmail.com</p>
+              <p className="text-sm text-gray-600">nyumbanirentalmanagementsystem@gmail.com</p>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Phone className="w-8 h-8 mx-auto mb-2 text-green-600" />

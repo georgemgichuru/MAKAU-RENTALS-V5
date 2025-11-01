@@ -1,27 +1,27 @@
 # Contact Information Configuration
 
-This document outlines where the official contact information for Makao Rentals Management System is configured.
+This document outlines where the official contact information for Nyumbani Rentals Management System is configured.
 
 ## Official Contact Information
 
-- **Email**: makaorentalmanagementsystem@gmail.com
+- **Email**: nyumbanirentalmanagementsystem@gmail.com
 - **Phone**: +254722714334
 
 ## Configuration Locations
 
 ### Backend (Django)
 
-1. **Email Configuration** (`Makau Rentals/app/app/settings.py`)
+1. **Email Configuration** (`Nyumbani Rentals/app/app/settings.py`)
    - `EMAIL_HOST_USER` - Set via environment variable
    - `DEFAULT_FROM_EMAIL` - Set via environment variable
    - `SERVER_EMAIL` - Set via environment variable
    - All emails sent from the system use these settings
 
-2. **Environment Variables** (`Makau Rentals/app/.env.example`)
-   - `EMAIL_HOST_USER=makaorentalmanagementsystem@gmail.com`
-   - `DEFAULT_FROM_EMAIL=makaorentalmanagementsystem@gmail.com`
-   - `SERVER_EMAIL=makaorentalmanagementsystem@gmail.com`
-   - `DJANGO_SUPERUSER_EMAIL=makaorentalmanagementsystem@gmail.com`
+2. **Environment Variables** (`Nyumbani Rentals/app/.env.example`)
+   - `EMAIL_HOST_USER=nyumbanirentalmanagementsystem@gmail.com`
+   - `DEFAULT_FROM_EMAIL=nyumbanirentalmanagementsystem@gmail.com`
+   - `SERVER_EMAIL=nyumbanirentalmanagementsystem@gmail.com`
+   - `DJANGO_SUPERUSER_EMAIL=nyumbanirentalmanagementsystem@gmail.com`
 
 ### Frontend (React)
 
@@ -37,7 +37,7 @@ This document outlines where the official contact information for Makao Rentals 
    - Contact email in footer
 
 4. **Admin Help Page** (`Makao-Center-V4/src/components/Admin/AdminHelp.jsx`)
-   - Email Support: makaorentalmanagementsystem@gmail.com
+   - Email Support: nyumbanirentalmanagementsystem@gmail.com
    - Phone Support: +254 722 714 334
 
 5. **Tenant Report Issue** (`Makao-Center-V4/src/components/Tenant/TenantReportIssue.jsx`)
@@ -47,7 +47,7 @@ This document outlines where the official contact information for Makao Rentals 
 
 1. **Subscription Payment Flow** (`SUBSCRIPTION_PAYMENT_FLOW.md`)
    - Contact & Support section
-   - Email: makaorentalmanagementsystem@gmail.com
+   - Email: nyumbanirentalmanagementsystem@gmail.com
    - Phone: +254722714334
 
 ## Email System Usage
@@ -67,7 +67,7 @@ The system sends emails for the following purposes:
    - Password reset emails
    - Account notifications
 
-All emails are sent from: `makaorentalmanagementsystem@gmail.com`
+All emails are sent from: `nyumbanirentalmanagementsystem@gmail.com`
 
 ## Setup Instructions
 
@@ -88,8 +88,8 @@ All emails are sent from: `makaorentalmanagementsystem@gmail.com`
 ## Contact Display Format
 
 ### Email
-- Full: makaorentalmanagementsystem@gmail.com
-- Mailto link: `mailto:makaorentalmanagementsystem@gmail.com`
+- Full: nyumbanirentalmanagementsystem@gmail.com
+- Mailto link: `mailto:nyumbanirentalmanagementsystem@gmail.com`
 
 ### Phone
 - Display format: `+254 722 714 334`
